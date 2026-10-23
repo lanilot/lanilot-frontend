@@ -1,3 +1,4 @@
+import {__} from './i18n.js';
 import React,{useLayoutEffect,useRef,useState,useId} from 'react';
 import {createApp,shallowReactive} from 'vue';
 import SearchDropdown from './components/SearchDropdown.js';
@@ -8,7 +9,7 @@ export default function SearchSelect({children,value,defaultValue='',onChange,na
  change.current=onChange;
  const options=React.Children.toArray(children).filter(React.isValidElement).map(o=>({value:String(o.props.value??textOf(o.props.children)),label:textOf(o.props.children),disabled:!!o.props.disabled}));
  const selected=String(value??local);
- const label=attrs['aria-label']||({driver:'Водитель',truck:'Машина',status:'Статус рейса'}[name])||'Выбор значения';
+ const label=attrs['aria-label']||({driver:__("Водитель"),truck:__("Машина"),status:__("Статус рейса")}[name])||__("Выбор значения");
  useLayoutEffect(()=>{
   const model=shallowReactive({options,value:selected,label,disabled:!!disabled,required:!!required,id:id.replaceAll(':',''),choose:v=>{setLocal(v);change.current?.({target:{value:v,name}})}});
   const app=createApp(SearchDropdown,{model});app.mount(host.current);bridge.current=model;
