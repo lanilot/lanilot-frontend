@@ -1,8 +1,10 @@
 /* Sign-in, owner setup and invitation screens */
 .auth-page{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);background:#fff}
-.auth-main{display:flex;flex-direction:column;min-height:100vh;padding:24px clamp(20px,6vw,88px)}
+.auth-main{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px clamp(20px,5vw,72px)}
+/* One centered column: header, form and footer share the same width. */
+.auth-top,.auth-card,.auth-footer{width:100%;max-width:460px}
 .auth-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.auth-card{width:min(400px,100%);margin:auto 0;padding:40px 0}
+.auth-card{margin:auto 0;padding:40px 0}
 .auth-brand{display:flex;align-items:center;gap:9px;font-size:15px}
 .auth-brand .sidebar-logo{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#2858ef;color:#fff}
 .auth-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:#eef3ff;color:#2858ef;margin-bottom:14px}
@@ -38,7 +40,7 @@
 .auth-float-profit{right:2%;top:-8%}.auth-float-profit strong{font-size:20px;color:#179965}
 .auth-float-broker{right:-2%;bottom:4%}
 @media(prefers-reduced-motion:reduce){.auth-route-line,.auth-truck{animation:none}}
-@media(max-width:960px){.auth-page{grid-template-columns:1fr}.auth-visual{display:none}.auth-main{align-items:center}.auth-top{width:100%}}
+@media(max-width:960px){.auth-page{grid-template-columns:1fr}.auth-visual{display:none}}
 .auth-loading{width:28px;height:28px;border-radius:50%;border:3px solid #dfe6f3;border-top-color:#2858ef;animation:auth-spin .8s linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
 /* signed-in user in the sidebar and the read-only badge */
@@ -57,7 +59,6 @@
 .auth-page-loading{grid-template-columns:1fr;place-items:center}
 .auth-card form{margin-top:20px}
 /* Step-by-step sign-up */
-.auth-card.wide{width:min(480px,100%)}
 .ob-progress{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:22px 0 4px;padding:0;list-style:none}
 .ob-progress button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;padding:8px 0 0;border:0;border-top:3px solid #e3e9f4;background:none;font-size:10px;color:#93a0b4;cursor:pointer;text-align:left}
 .ob-progress button:disabled{cursor:default}
