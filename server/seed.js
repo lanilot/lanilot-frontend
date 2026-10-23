@@ -16,5 +16,5 @@ export function seedLoads(){
  // Fictional brokers: demo DNU / FreightGuard warnings never point at a real company.
  ['Chicago, IL','St. Louis, MO','Dry Van',1300,297,10,38000,53,'Rapid Freight Partners','DAT','declined',0,'09:00 – 12:00'],
  ['Dallas, TX','Houston, TX','Reefer',980,239,15,36000,53,'Midwest Haul Brokers','Truckstop','unknown',1,'14:00 – 17:00']
- ].map((v,i)=>({id:`LD-${2041+i}`,origin:v[0],destination:v[1],equipment:v[2],rate:v[3],miles:v[4],deadhead:v[5],weight:v[6],length:v[7],broker:v[8],source:v[9],factoring:v[10],pickup:day(v[11]),delivery:day(v[11]+2),window:v[12],age:3+i*4,contact:`loads@example.com`,commodity:v[2]==='Reefer'?'Упакованные продукты':'Паллетированный груз',notes:'Демонстрационный груз. Условия и доступность не подтверждены реальной площадкой.'}));
+ ].map((v,i)=>({id:`LD-${2041+i}`,origin:v[0],destination:v[1],equipment:v[2],rate:v[3],miles:v[4],deadhead:v[5],weight:v[6],length:v[7],broker:v[8],source:v[9],factoring:v[10],pickup:day(v[11]),delivery:day(v[11]+2),window:v[12],age:3+i*4,contact:`loads@example.com`,commodity:v[2]==='Reefer'?'Упакованные продукты':'Паллетированный груз',notes:'Пример груза. Условия и доступность не подтверждены реальной площадкой.'}));
 }

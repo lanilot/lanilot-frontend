@@ -9,7 +9,7 @@ export function seedDocuments(db){
   if(!db.prepare('SELECT id FROM loads WHERE id=?').get(loadId))continue;
   const id=`seed-document-${loadId}-${kind}`;if(db.prepare('SELECT id FROM documents WHERE id=?').get(id))continue;
   const data=readFileSync(new URL(`../output/pdf/seed-${kind}.pdf`,import.meta.url));
-  db.prepare('INSERT OR IGNORE INTO documents VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,loadId,kind,`${loadId}-${kind}-DEMO.pdf`,'application/pdf',data.length,data,createHash('sha256').update(data).digest('hex'),null,new Date().toISOString(),kind==='pod'?0:1,1);
+  db.prepare('INSERT OR IGNORE INTO documents VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,loadId,kind,`${loadId}-${kind}.pdf`,'application/pdf',data.length,data,createHash('sha256').update(data).digest('hex'),null,new Date().toISOString(),kind==='pod'?0:1,1);
  }
 }
 function mimeOf(data){if(data.subarray(0,5).toString()==='%PDF-')return 'application/pdf';if(data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return 'image/png';if(data.subarray(0,3).equals(Buffer.from([255,216,255])))return 'image/jpeg';return null}

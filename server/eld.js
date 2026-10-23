@@ -5,7 +5,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {locations} from './locations.js';
 import {eldProviders} from './eld-providers.js';
 import {errorText} from './providers.js';
-export const eldProvider='Demo ELD';
+export const eldProvider='Test ELD';
 const routesFile=new URL('./routes.json',import.meta.url);
 const hash=s=>[...s].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
 const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];

@@ -52,10 +52,10 @@ try{
   const password=typeof args.password==='string'?args.password:'Demo-'+crypto.randomUUID().slice(0,8);
   if(password.length<8)fail('--password: at least 8 characters');
   let c=companyBySlug(db,'demo');
-  if(!c){db.raw.prepare("INSERT INTO companies(id,slug,name,demo,internal,created_at) VALUES('co-demo','demo','Lanilot Demo',1,1,?)").run(new Date().toISOString());c=companyBySlug(db,'demo');seedCompany(c);asCompany(c.id,()=>{const st=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);st.company.name=c.name;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(st))})}
+  if(!c){db.raw.prepare("INSERT INTO companies(id,slug,name,demo,internal,created_at) VALUES('co-demo','demo','Lanilot Trucking',1,1,?)").run(new Date().toISOString());c=companyBySlug(db,'demo');seedCompany(c);asCompany(c.id,()=>{const st=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);st.company.name=c.name;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(st))})}
   const now=new Date().toISOString(),hash=hashPassword(password);
   console.log(`Demo company "${c.name}": sign in at https://app.${base} (or ${url(c.slug)}) — password for all accounts: ${password}`);
-  for(const [role,name] of [['owner','Demo Owner'],['dispatcher','Demo Dispatcher'],['viewer','Demo Viewer']]){
+  for(const [role,name] of [['owner','Alex Carter'],['dispatcher','Maria Lopez'],['viewer','Sam Patel']]){
    const email=`${role}@demo.lanilot.com`,user=db.raw.prepare('SELECT id FROM users WHERE email=?').get(email),id=user?.id??'usr-demo-'+role;
    if(user)db.raw.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hash,id);else db.raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(id,email,name,hash,now);
    db.raw.prepare('INSERT INTO memberships VALUES(?,?,?,?) ON CONFLICT(user_id,company_id) DO UPDATE SET role=excluded.role').run(id,c.id,role,now);

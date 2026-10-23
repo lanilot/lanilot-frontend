@@ -2,7 +2,7 @@
 // The factoring lookup is a demo provider until a factoring company API is connected (see factoring.js).
 import {activeFactoring,checkFactoring,lookupFmcsa,parseIdentifiers,factoringPresets} from './factoring.js';
 import {env,errorText} from './providers.js';
-export const factoringProvider='Demo Factoring';
+export const factoringProvider='Test factoring';
 export const factoringStatuses=['approved','unknown','declined'];
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export function installBrokers(db){
@@ -21,11 +21,11 @@ export function seedBrokers(db){
   insert.run('brk-'+slug(l.broker),'broker',l.broker,'','',l.factoring,null,null,'unknown',0,'',0,'','',now);
  }
  for(const f of [
-  ['broker','Rapid Freight Partners','MC-DEMO-5501','DOT-DEMO-9101','declined',0,62,'active',3,'Неоплата перевозчикам, 3 жалобы за 90 дней (демо)',1,'Двойной брокеридж на прошлом рейсе (демо)'],
-  ['broker','Midwest Haul Brokers','MC-DEMO-5502','DOT-DEMO-9102','unknown',null,45,'active',1,'Задержка оплаты 60+ дней (демо)',0,''],
+  ['broker','Rapid Freight Partners','MC-DEMO-5501','DOT-DEMO-9101','declined',0,62,'active',3,'Неоплата перевозчикам, 3 жалобы за 90 дней',1,'Двойной брокеридж на прошлом рейсе'],
+  ['broker','Midwest Haul Brokers','MC-DEMO-5502','DOT-DEMO-9102','unknown',null,45,'active',1,'Задержка оплаты 60+ дней',0,''],
   ['carrier','Blue Ridge Trucking LLC','MC-DEMO-7701','DOT-DEMO-9201','approved',null,null,'active',0,'',0,''],
-  ['carrier','Lone Star Haulers','MC-DEMO-7702','DOT-DEMO-9202','declined',null,null,'inactive',2,'Груз не доставлен, повторная передача груза (демо)',1,'Перевозчик передал груз третьей стороне (демо)']
- ])insert.run('brk-'+slug(f[1]),...f,'Демо-запись для проверки сценария.',now);
+  ['carrier','Lone Star Haulers','MC-DEMO-7702','DOT-DEMO-9202','declined',null,null,'inactive',2,'Груз не доставлен, повторная передача груза',1,'Перевозчик передал груз третьей стороне']
+ ])insert.run('brk-'+slug(f[1]),...f,'Пример записи для проверки сценария.',now);
  if(!db.prepare('SELECT id FROM broker_checks LIMIT 1').get())for(const [i,id] of ['brk-rapid-freight-partners','brk-c-h-robinson'].entries()){const b=db.prepare('SELECT * FROM brokers WHERE id=?').get(id);if(b)db.prepare('INSERT OR IGNORE INTO broker_checks VALUES(?,?,?,?,?)').run('seed-check-'+i,b.name,b.type,b.id,new Date(Date.now()-3600000*(i+2)).toISOString())}
 }
 const shape=b=>b&&({...b,dnu:!!b.dnu,demo:!!b.demo});

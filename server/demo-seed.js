@@ -20,10 +20,10 @@ export function seedDemoData(db){
  const firstPaySeed=!db.prepare("SELECT key FROM seed_markers WHERE key='driver-pay'").get();
  if(firstPaySeed)db.prepare("INSERT INTO seed_markers VALUES('driver-pay')").run();
  if(firstPaySeed)for(const [id,pay] of Object.entries(driverPaySeed))db.prepare('UPDATE drivers SET pay_per_mile=? WHERE id=? AND pay_per_mile IS NULL').run(pay,id);
- db.prepare('INSERT OR IGNORE INTO drivers(id,name,phone,location,equipment,availability,notes) VALUES(?,?,?,?,?,?,?)').run('DRV-501','Taylor Reed','+1 312 555 0151','Chicago, IL','Reefer','vacation','Демо: в отпуске, недоступен для назначений.');
- db.prepare('INSERT OR IGNORE INTO drivers(id,name,phone,location,equipment,availability,notes) VALUES(?,?,?,?,?,?,?)').run('DRV-502','Morgan Lee','+1 312 555 0152','Dallas, TX','Dry Van','off_duty','Демо: не на смене.');
- db.prepare('INSERT OR IGNORE INTO trucks(id,equipment,plate,location,availability,notes) VALUES(?,?,?,?,?,?)').run('TRK-501','Reefer','DEMO-501','Chicago, IL','maintenance','Демо: плановое обслуживание.');
- db.prepare('INSERT OR IGNORE INTO trucks(id,equipment,plate,location,availability,notes) VALUES(?,?,?,?,?,?)').run('TRK-502','Cargo Van','DEMO-502','Dallas, TX','inactive','Демо: машина временно неактивна.');
+ db.prepare('INSERT OR IGNORE INTO drivers(id,name,phone,location,equipment,availability,notes) VALUES(?,?,?,?,?,?,?)').run('DRV-501','Taylor Reed','+1 312 555 0151','Chicago, IL','Reefer','vacation','В отпуске, недоступен для назначений.');
+ db.prepare('INSERT OR IGNORE INTO drivers(id,name,phone,location,equipment,availability,notes) VALUES(?,?,?,?,?,?,?)').run('DRV-502','Morgan Lee','+1 312 555 0152','Dallas, TX','Dry Van','off_duty','Не на смене.');
+ db.prepare('INSERT OR IGNORE INTO trucks(id,equipment,plate,location,availability,notes) VALUES(?,?,?,?,?,?)').run('TRK-501','Reefer','IL-501R','Chicago, IL','maintenance','Плановое обслуживание.');
+ db.prepare('INSERT OR IGNORE INTO trucks(id,equipment,plate,location,availability,notes) VALUES(?,?,?,?,?,?)').run('TRK-502','Cargo Van','TX-502C','Dallas, TX','inactive','Машина временно неактивна.');
  db.exec('BEGIN IMMEDIATE');
  try{
   for(const [loadId,status,rate,tripStatus,driver,truck] of fixtures){
@@ -35,7 +35,7 @@ export function seedDemoData(db){
    }
    const offer=db.prepare('SELECT * FROM offers WHERE id=?').get(id);
    if(tripStatus&&offer?.status==='accepted'&&!db.prepare('SELECT id FROM trips WHERE load_id=?').get(loadId)){
-    db.prepare('INSERT OR IGNORE INTO trips(id,offer_id,load_id,status,driver,truck,created_at,pickup,delivery,cancellation_reason,cancelled_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(`seed-trip-${loadId}`,id,loadId,tripStatus,driver,truck,new Date(Date.now()-3600000*3).toISOString(),l.pickup,l.delivery,tripStatus==='cancelled'?'Брокер отменил погрузку: груз не готов. Демо-сценарий.':null,tripStatus==='cancelled'?new Date(Date.now()-3600000).toISOString():null);
+    db.prepare('INSERT OR IGNORE INTO trips(id,offer_id,load_id,status,driver,truck,created_at,pickup,delivery,cancellation_reason,cancelled_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(`seed-trip-${loadId}`,id,loadId,tripStatus,driver,truck,new Date(Date.now()-3600000*3).toISOString(),l.pickup,l.delivery,tripStatus==='cancelled'?'Брокер отменил погрузку: груз не готов.':null,tripStatus==='cancelled'?new Date(Date.now()-3600000).toISOString():null);
    }
   }
   for(const loadId of ['LD-2050','LD-2051']){

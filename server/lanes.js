@@ -12,9 +12,9 @@ export function installLanes(db){db.exec(`CREATE TABLE IF NOT EXISTS lanes(id TE
 export function seedLanes(db){
  const now=new Date().toISOString(),year=new Date().getFullYear();
  for(const f of [
-  ['seed-lane-chi-dal','Chicago, IL','Dallas, TX','Dry Van','C.H. Robinson',2400,949,'1,3,5',`${year}-01-06`,`${year}-12-31`,'lanes@example.com','Демо: контракт на 3 рейса в неделю.',1],
-  ['seed-lane-ind-dal','Indianapolis, IN','Dallas, TX','Reefer','Arrive Logistics',2700,919,'2,4',`${year}-03-01`,'','reefer@example.com','Демо: температурный режим 34°F.',1],
-  ['seed-lane-atl-clt','Atlanta, GA','Charlotte, NC','Dry Van','C.H. Robinson',1000,259,'1',`${year}-05-01`,`${year}-09-30`,'','Демо: сезонная линия на паузе.',0]
+  ['seed-lane-chi-dal','Chicago, IL','Dallas, TX','Dry Van','C.H. Robinson',2400,949,'1,3,5',`${year}-01-06`,`${year}-12-31`,'lanes@example.com','Контракт на 3 рейса в неделю.',1],
+  ['seed-lane-ind-dal','Indianapolis, IN','Dallas, TX','Reefer','Arrive Logistics',2700,919,'2,4',`${year}-03-01`,'','reefer@example.com','Температурный режим 34°F.',1],
+  ['seed-lane-atl-clt','Atlanta, GA','Charlotte, NC','Dry Van','C.H. Robinson',1000,259,'1',`${year}-05-01`,`${year}-09-30`,'','Сезонная линия на паузе.',0]
  ])db.prepare('INSERT OR IGNORE INTO lanes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').run(...f,now,now);
 }
 export function listLanes(db){return db.prepare('SELECT * FROM lanes ORDER BY active DESC,created_at,id').all().map(l=>({...l,active:!!l.active,days:l.days.split(',').filter(Boolean).map(Number)}))}

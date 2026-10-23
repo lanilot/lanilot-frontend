@@ -78,7 +78,7 @@ export default function Onboarding(){
    {step.key==='account'&&<>
     <dl className="ob-summary"><div><dt>{__('Компания')}</dt><dd>{form.company.company}</dd></div><div><dt>Email</dt><dd>{form.contact.email}</dd></div></dl>
     <Field label={__('Пароль (от 8 символов)')} type="password" required minLength={8} autoFocus autoComplete="new-password" value={account.password} onChange={e=>setAccount({...account,password:e.target.value})}/>
-    <label className="auth-check"><input type="checkbox" checked={account.demo} onChange={e=>setAccount({...account,demo:e.target.checked})}/><span>{__('Заполнить кабинет демо-данными (грузы, водители, рейсы)')}</span></label>
+    <label className="auth-check"><input type="checkbox" checked={account.demo} onChange={e=>setAccount({...account,demo:e.target.checked})}/><span>{__('Заполнить кабинет примерами (грузы, водители, рейсы)')}</span></label>
    </>}
    {error&&<p className="chat-error" role="alert">{error}</p>}
    <div className="ob-actions">
