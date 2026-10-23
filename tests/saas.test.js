@@ -201,3 +201,28 @@ test('step-by-step onboarding saves each step, records the funnel and creates th
   assert.ok(!s.db.raw.prepare('SELECT data FROM signup_leads').all().some(r=>r.data.includes('roadrunner1')));
  }finally{await s.close();s.db.close()}
 });
+
+test('employee cards: owner-only, validated, documents sealed at rest, invitation created for new people',async()=>{
+ const s=await start({setupToken:'setup-code-123'});
+ try{
+  const p=s.port,owner=(await call(p,'POST','/auth/setup',{body:{setupToken:'setup-code-123',name:'Owner',email:'owner@acme.test',password:'longpassword'}})).cookie;
+  const person={lastName:'Karimov',firstName:'Aziz',middleName:'Bakhtiyorovich',birthDate:'1994-05-12',gender:'male',citizenship:'Uzbekistan',documentType:'passport',documentNumber:'aa 1234567',documentIssued:'2020-01-10',documentExpires:'2030-01-09',taxId:'31205940123456',email:'aziz@acme.test',phone:'+998 90 123 45 67',position:'Dispatcher',role:'dispatcher'};
+  for(const bad of [{...person,lastName:''},{...person,birthDate:'2020-01-01'},{...person,citizenship:''},{...person,documentType:'visa'},{...person,documentNumber:'#'},{...person,documentExpires:'2019-01-01'},{...person,role:'admin'}])assert.equal((await call(p,'POST','/users/staff',{cookie:owner,body:bad})).status,400);
+  const created=await call(p,'POST','/users/staff',{cookie:owner,body:person});assert.equal(created.status,201);assert.match(created.data.path,/^\/invite\//);
+  assert.equal((await call(p,'POST','/users/staff',{cookie:owner,body:person})).status,409);
+  const list=(await call(p,'GET','/users/staff',{cookie:owner})).data;assert.equal(list.length,1);assert.equal(list[0].document,'•••• 4567');
+  const card=(await call(p,'GET','/users/staff/'+created.data.id,{cookie:owner})).data;assert.equal(card.documentNumber,'AA 1234567');assert.equal(card.middleName,'Bakhtiyorovich');
+  assert.equal((await call(p,'GET','/users')).status,401);
+  // The invitation works; the new dispatcher cannot read employee cards.
+  const disp=(await call(p,'POST','/auth/invites/'+created.data.path.split('/').pop()+'/accept',{body:{name:'Aziz',password:'azizpassword'}})).cookie;
+  assert.equal((await call(p,'GET','/users/staff',{cookie:disp})).status,403);assert.equal((await call(p,'GET','/users/staff/'+created.data.id,{cookie:disp})).status,403);
+  assert.equal((await call(p,'PUT','/users/staff/'+created.data.id,{cookie:disp,body:person})).status,403);
+  // Edit keeps the email; a card for an existing member creates no invitation.
+  assert.equal((await call(p,'PUT','/users/staff/'+created.data.id,{cookie:owner,body:{...card,email:'other@acme.test'}})).status,400);
+  assert.equal((await call(p,'PUT','/users/staff/'+created.data.id,{cookie:owner,body:{...card,position:'Senior dispatcher'}})).status,200);
+  const own=await call(p,'POST','/users/staff',{cookie:owner,body:{...person,email:'owner@acme.test',documentNumber:'AB7654321',role:undefined}});assert.equal(own.status,201);assert.equal(own.data.path,null);
+  // Sealed at rest: no document number or tax ID in the stored row.
+  const raw=JSON.stringify(s.db.raw.prepare('SELECT * FROM t_staff').all());assert.ok(!raw.includes('1234567')&&!raw.includes('31205940123456')&&!raw.includes('Uzbekistan'));
+  assert.equal((await call(p,'DELETE','/users/staff/'+own.data.id,{cookie:owner})).status,200);
+ }finally{await s.close();s.db.close()}
+});

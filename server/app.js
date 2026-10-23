@@ -20,6 +20,7 @@ import {installProviderStatus} from './providers.js';
 import {listProviders,registerProviderRoutes,activeFactoring,factoringPresets} from './factoring.js';
 import {installTenancy,tenantizeTables,asCompany,listCompanies,tenantEnv,currentTenant,companyById,DEFAULT_COMPANY} from './tenancy.js';
 import {installAuth} from './auth.js';
+import {installStaff,registerStaffRoutes} from './staff.js';
 
 // One database, many companies: see tenancy.js. Startup (schema, migrations, seeds) runs as the primary company.
 export function createApp(dbPath=':memory:',options={}){
@@ -47,7 +48,7 @@ function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANI
  const readSettings=()=>normalizeSettings(JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data));
  {const s=readSettings();if(s.costs?.driverPerMile===0.65){s.costs.driverPerMile=defaultCosts.driverPerMile;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))}}
  const integrationVault=installIntegrations(db,dbPath,integrationOptions);installFinances(db);installDocuments(db);installAttachments(db);
- installRadar(db);installBrokers(db);installProviderStatus(db);installLanes(db);
+ installRadar(db);installBrokers(db);installProviderStatus(db);installLanes(db);const staffVault=installStaff(db,dbPath);
  const telegram=installTelegram(db,dbPath,telegramOptions);
  db.exec('CREATE TABLE IF NOT EXISTS seed_markers(key TEXT PRIMARY KEY)');
  tenantizeTables(db);
@@ -59,7 +60,7 @@ function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANI
   if(seedDemo){seedDemoData(db);seedRadars(db);seedBrokers(db);seedLanes(db);seedDocuments(db);seedAttachments(db);seedFinances(db);seedIntegrations(db,integrationVault);telegram.seed()}
  });
  for(const company of listCompanies(db))seedCompany(company);
- const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken,signup,seedCompany});app.use(access.resolveTenant);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));access.register(app);telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);
+ const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken,signup,seedCompany});app.use(access.resolveTenant);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));access.register(app);telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);registerStaffRoutes(app,db,staffVault,access);
  const enrichLoad=l=>({...l,originCoordinates:locations[l.origin]??null,destinationCoordinates:locations[l.destination]??null});
  const loadById=id=>{const r=db.prepare('SELECT data FROM loads WHERE id=?').get(id);return r?enrichLoad(JSON.parse(r.data)):null};
  const offerById=id=>db.prepare('SELECT * FROM offers WHERE id=?').get(id);
