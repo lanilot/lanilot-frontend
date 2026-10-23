@@ -226,3 +226,35 @@ test('employee cards: owner-only, validated, documents sealed at rest, invitatio
   assert.equal((await call(p,'DELETE','/users/staff/'+own.data.id,{cookie:owner})).status,200);
  }finally{await s.close();s.db.close()}
 });
+
+function raw(port,method,path,{host='app.lanilot.com',cookie,body,type}={}){
+ return new Promise((resolve,reject)=>{const r=http.request({host:'127.0.0.1',port,method,path:'/api'+path,headers:{Host:host,...(cookie?{Cookie:cookie}:{}),...(type?{'Content-Type':type}:{}),...(body?{'Content-Length':body.length}:{})}},res=>{const chunks=[];res.on('data',c=>chunks.push(c));res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body:Buffer.concat(chunks)}))});r.on('error',reject);if(body)r.write(body);r.end()});
+}
+test('branding: color, logo and the public company page are per company and owner-only',async()=>{
+ const s=await start({});
+ try{
+  const p=s.port,reg=await call(p,'POST','/auth/register',{body:{name:'Bo Brand',company:'Brand Haul',email:'bo@brand.test',password:'brandhaul1'}}),bo=reg.cookie,host='brand-haul.lanilot.com';
+  let t=(await call(p,'GET','/tenant',{host})).data.company.brand;assert.equal(t.color,'#2858ef');assert.equal(t.logo,null);assert.equal(t.name,'Brand Haul');assert.ok(t.landing);
+  const settings=(await call(p,'GET','/state',{cookie:bo})).data.settings;
+  for(const color of ['blue','#fff','#ffff00'])assert.equal((await call(p,'PUT','/settings',{cookie:bo,body:{...settings,branding:{...settings.branding,color}}})).status,400);
+  assert.equal((await call(p,'PUT','/settings',{cookie:bo,body:{...settings,company:{...settings.company,phone:'+1 555 0199'},branding:{color:'#0F766E',landingEnabled:true,headline:'Reefer lanes across Texas',description:'Family carrier since 2015.'}}})).status,200);
+  t=(await call(p,'GET','/tenant',{host})).data.company.brand;assert.equal(t.color,'#0f766e');assert.equal(t.landing.headline,'Reefer lanes across Texas');assert.equal(t.landing.phone,'+1 555 0199');
+  // Another company keeps its own brand.
+  assert.equal((await call(p,'GET','/tenant')).data.company.brand.color,'#2858ef');
+  // Logo: images only, owner only, served publicly with safe headers.
+  const png=Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),Buffer.alloc(40)]);
+  assert.equal((await raw(p,'PUT','/settings/logo',{cookie:bo,body:Buffer.from('<svg onload="alert(1)"/>'),type:'image/svg+xml'})).status,400);
+  assert.equal((await raw(p,'PUT','/settings/logo',{body:png,type:'image/png'})).status,401);
+  assert.equal((await raw(p,'PUT','/settings/logo',{cookie:bo,body:Buffer.alloc(600*1024,1),type:'image/png'})).status,413);
+  assert.equal((await raw(p,'PUT','/settings/logo',{cookie:bo,body:png,type:'image/png'})).status,200);
+  t=(await call(p,'GET','/tenant',{host})).data.company.brand;assert.match(t.logo,/^\/api\/brand\/logo\?v=/);
+  const logo=await raw(p,'GET','/brand/logo',{host});assert.equal(logo.status,200);assert.equal(logo.headers['content-type'],'image/png');assert.equal(logo.headers['x-content-type-options'],'nosniff');assert.ok(logo.body.equals(png));
+  assert.equal((await raw(p,'GET','/brand/logo')).status,404);
+  // Landing off hides the public page data; a dispatcher cannot change branding.
+  assert.equal((await call(p,'PUT','/settings',{cookie:bo,body:{...settings,branding:{...settings.branding,landingEnabled:false}}})).status,200);
+  assert.equal((await call(p,'GET','/tenant',{host})).data.company.brand.landing,null);
+  const inv=await call(p,'POST','/users/invites',{cookie:bo,body:{email:'d@brand.test',role:'dispatcher'}});const d=(await call(p,'POST','/auth/invites/'+inv.data.path.split('/').pop()+'/accept',{body:{name:'D',password:'dispatcher1'}})).cookie;
+  assert.equal((await raw(p,'PUT','/settings/logo',{cookie:d,body:png,type:'image/png'})).status,403);assert.equal((await raw(p,'DELETE','/settings/logo',{cookie:d})).status,403);
+  assert.equal((await raw(p,'DELETE','/settings/logo',{cookie:bo})).status,200);assert.equal((await call(p,'GET','/tenant',{host})).data.company.brand.logo,null);
+ }finally{await s.close();s.db.close()}
+});

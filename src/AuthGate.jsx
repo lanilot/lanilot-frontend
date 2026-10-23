@@ -3,6 +3,8 @@ import {LogIn,KeyRound,UserPlus,AlertCircle,Building2} from 'lucide-react';
 import {__,translateDeep} from './i18n.js';
 import {Shell,Field,post} from './AuthShell.jsx';
 import Onboarding from './Onboarding.jsx';
+import {applyBrand} from './brand.js';
+import CompanyLanding from './CompanyLanding.jsx';
 import './auth.css';
 
 const roleLabel=role=>({owner:__('Владелец'),dispatcher:__('Диспетчер'),viewer:__('Наблюдатель')})[role]||role;
@@ -49,19 +51,23 @@ function AcceptInvite({company:hostCompany,token}){
 export default function AuthGate({render}){
  const [view,setView]=useState({kind:'loading'});
  useEffect(()=>{(async()=>{
-  const t=await fetch('/api/tenant');if(t.status===404)return setView({kind:'missing'});const tenant=await t.json();
+  const t=await fetch('/api/tenant');if(t.status===404)return setView({kind:'missing'});const tenant=await t.json();applyBrand(tenant.company?.brand);
   if(tenant.company?.status==='suspended')return setView({kind:'suspended',company:tenant.company});
   const token=inviteToken();if(token)return setView({kind:'invite',company:tenant.company,token});
   const signup=!!tenant.auth.signup,path=screenPath();
   if(path==='/signup'&&signup)return setView({kind:'register'});
   if(tenant.auth.setupRequired&&path!=='/login')return setView({kind:'setup',company:tenant.company,signup});
-  const me=await fetch('/api/auth/me');if(me.status===401)return setView({kind:'login',company:signup?null:tenant.company,signup});
+  const me=await fetch('/api/auth/me');
+  // A company's own subdomain greets visitors with its public page; /login leads into the workspace.
+  if(me.status===401&&path===''&&tenant.company.slug!=='app'&&tenant.company.brand?.landing)return setView({kind:'landing',company:tenant.company});
+  if(me.status===401)return setView({kind:'login',company:signup?null:tenant.company,signup});
   if(['/login','/signup'].includes(path))window.history.replaceState(null,'','/');
   setView({kind:'ready',session:await me.json()});
  })().catch(()=>setView({kind:'error'}))},[]);
  if(view.kind==='ready')return render(view.session);
  if(view.kind==='login')return <Login company={view.company} signup={view.signup}/>;
  if(view.kind==='register')return <Onboarding/>;
+ if(view.kind==='landing')return <CompanyLanding company={view.company}/>;
  if(view.kind==='setup')return <Setup company={view.company} signup={view.signup}/>;
  if(view.kind==='invite')return <AcceptInvite company={view.company} token={view.token}/>;
  if(view.kind==='loading')return <div className="auth-page auth-page-loading"><div className="auth-loading" aria-label={__('Загрузка')}/></div>;

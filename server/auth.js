@@ -21,7 +21,7 @@ const cleanName=v=>typeof v==='string'&&v.trim().length>=1&&v.trim().length<=100
 const ownerOnly=(method,path)=>method!=='GET'&&/^\/api\/(settings|integrations|providers|telegram|users)(\/|$)/.test(path);
 
 // Self sign-up creates a new company with its owner; LANILOT_SIGNUP=off disables it.
-export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN,signup=process.env.LANILOT_SIGNUP!=='off',seedCompany=()=>{}}={}){
+export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN,signup=process.env.LANILOT_SIGNUP!=='off',seedCompany=()=>{},brandOf=()=>null}={}){
  const raw=db.raw;
  raw.exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE COLLATE NOCASE,name TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
@@ -45,7 +45,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   const s=raw.prepare('SELECT s.*,u.name,u.email,m.role FROM sessions s JOIN users u ON u.id=s.user_id JOIN memberships m ON m.user_id=s.user_id AND m.company_id=s.company_id WHERE s.id=? AND s.company_id=?').get(sha(value),req.company.id);
   if(!s||s.expires_at<new Date().toISOString())return null;return s;
  };
- const publicCompany=c=>c&&{id:c.id,slug:c.slug,name:c.name,status:c.status};
+ const publicCompany=c=>c&&{id:c.id,slug:c.slug,name:c.name,status:c.status,brand:brandOf(c.id)};
  const inviteOf=value=>{const i=typeof value==='string'&&raw.prepare('SELECT * FROM invites WHERE id=?').get(sha(value));return i&&!i.accepted_at&&i.expires_at>new Date().toISOString()?i:null};
  const onAppHost=req=>slugFromHost(req.get('host'),baseDomain)==='app';
  const ownerCount=companyId=>raw.prepare("SELECT count(*) n FROM memberships WHERE company_id=? AND role='owner'").get(companyId).n;

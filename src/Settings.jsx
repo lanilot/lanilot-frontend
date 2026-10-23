@@ -1,9 +1,9 @@
 import {__} from './i18n.js';
 import ProfitBreakdown from './ProfitBreakdown.jsx';
 import React,{useState} from 'react';
-import {Building2,Calculator,Save,RotateCcw,Info,Contact,Truck,LayoutGrid,Users as UsersIcon} from 'lucide-react';
+import {Building2,Calculator,Save,RotateCcw,Info,Contact,Truck,LayoutGrid,Users as UsersIcon,Palette,Upload,Trash2,ExternalLink} from 'lucide-react';
 import {Choice,label} from './Onboarding.jsx';
-import {fmtDate} from './i18n.js';
+import {fmtDate,translateDeep} from './i18n.js';
 import SearchSelect from './SearchSelect.jsx';
 import {calculateProfit} from '../server/domain.js';
 import {money} from './ui.js';
@@ -12,10 +12,38 @@ const profileFields=[['name',__("Название компании"),120],['lega
 const contactFields=[['contactName',__("Контактное лицо"),100],['email','Email',160],['phone',__("Телефон"),40]];
 const planLabel=plan=>({trial:__("Пробный период")})[plan]||plan;
 // Settings of the whole company: profile and requisites, contacts, workspace, fleet and workflow, trip costs.
-export default function Settings({settings,timezones,companyOptions,workspace,isOwner,onSave,onNavigate,busy}){
+const presets=['#2858ef','#0f766e','#7c3aed','#c2410c','#be123c','#1f2937','#15803d','#0369a1'];
+const baseDomain=()=>window.location.hostname.split('.').slice(-2).join('.');
+// Logo upload goes straight to the server; the accent color and landing texts are saved with the form.
+function Branding({draft,setBranding,brand,isOwner,workspace,onBrandChange,busy}){
+ const [error,setError]=useState(''),[uploading,setUploading]=useState(false),b=draft.branding;
+ const upload=async file=>{setError('');if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>512*1024){setError(__('Логотип: PNG, JPEG или WebP до 512 КБ'));return}
+  setUploading(true);try{const r=await fetch('/api/settings/logo',{method:'PUT',headers:{'Content-Type':file.type},body:file});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error?translateDeep(d.error):__('Ошибка сервера'));await onBrandChange()}catch(e){setError(e.message)}setUploading(false)};
+ const remove=async()=>{setUploading(true);try{await fetch('/api/settings/logo',{method:'DELETE'});await onBrandChange()}finally{setUploading(false)}};
+ const site=workspace.slug&&workspace.slug!=='app'?`https://${workspace.slug}.${baseDomain()}`:null;
+ return <section className="panel settings-panel span-2"><div className="settings-heading"><Palette size={18}/><div><h2>{__("Брендинг")}</h2><p>{__("Логотип и цвет применяются к кабинету, экрану входа и странице компании.")}</p></div></div>
+  <div className="brand-editor">
+   <div className="brand-block"><span className="ob-group-title">{__("Логотип")}</span>
+    <div className="brand-logo-row"><div className="brand-logo-preview">{brand?.logo?<img src={brand.logo} alt=""/>:<span>{__("Нет логотипа")}</span>}</div>
+     <div className="brand-logo-actions"><label className={'button secondary'+(!isOwner||uploading?' disabled':'')}><Upload size={14}/>{uploading?__("Загружаем…"):__("Загрузить")}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!isOwner||uploading} onChange={e=>{upload(e.target.files[0]);e.target.value=''}}/></label>
+      {brand?.logo&&<button type="button" className="button danger-outline" disabled={!isOwner||uploading} onClick={remove}><Trash2 size={14}/>{__("Удалить")}</button>}
+      <small>{__("PNG, JPEG или WebP до 512 КБ. Лучше горизонтальный, на прозрачном фоне.")}</small></div></div>
+    {error&&<p className="chat-error" role="alert">{error}</p>}</div>
+   <div className="brand-block"><span className="ob-group-title">{__("Цвет бренда")}</span>
+    <div className="brand-colors">{presets.map(c=><button type="button" key={c} className={b.color===c?'active':''} style={{background:c}} aria-label={c} aria-pressed={b.color===c} disabled={busy} onClick={()=>setBranding('color',c)}/>)}
+     <label className="brand-custom"><input type="color" value={b.color} disabled={busy} onChange={e=>setBranding('color',e.target.value)} aria-label={__("Свой цвет")}/><input value={b.color} maxLength={7} disabled={busy} onChange={e=>setBranding('color',e.target.value)} aria-label={__("Цвет в формате #RRGGBB")}/></label></div>
+    <div className="brand-preview" style={{'--brand':/^#[0-9a-f]{6}$/i.test(b.color)?b.color:undefined}}><span className="brand-preview-chip">{draft.company.name}</span><button type="button" className="button primary" tabIndex={-1}>{__("Кнопка")}</button><a>{__("Ссылка")}</a></div></div>
+  </div>
+  <div className="brand-landing"><label className="auth-check"><input type="checkbox" checked={b.landingEnabled} disabled={busy} onChange={e=>setBranding('landingEnabled',e.target.checked)}/><span>{__("Показывать страницу компании на своём адресе")}{site&&<> — <a href={site} target="_blank" rel="noreferrer">{site.replace('https://','')} <ExternalLink size={11}/></a></>}</span></label>
+   {b.landingEnabled&&<div className="settings-fields"><label className="form-label">{__("Заголовок страницы")}<input maxLength={120} disabled={busy} placeholder={__("Надёжные перевозки по США")} value={b.headline} onChange={e=>setBranding('headline',e.target.value)}/></label><label className="form-label">{__("Описание")}<textarea maxLength={600} disabled={busy} placeholder={__("Чем вы занимаетесь, по каким направлениям возите и почему с вами удобно работать.")} value={b.description} onChange={e=>setBranding('description',e.target.value)}/></label></div>}
+   <p className="settings-note">{__("На странице также показываются контакты, MC/DOT и техника из профиля компании.")}</p></div>
+ </section>;
+}
+export default function Settings({settings,timezones,companyOptions,workspace,isOwner,brand,onBrandChange,onSave,onNavigate,busy}){
  const [draft,setDraft]=useState(()=>structuredClone(settings)),[error,setError]=useState(''),[saved,setSaved]=useState(false);
  const dirty=JSON.stringify(draft)!==JSON.stringify(settings);
  const updateCompany=(key,value)=>{setDraft(d=>({...d,company:{...d.company,[key]:value}}));setSaved(false)};
+ const setBranding=(key,value)=>{setDraft(d=>({...d,branding:{...d.branding,[key]:value}}));setSaved(false)};
  const updateOps=key=>value=>{setDraft(d=>({...d,operations:{...d.operations,[key]:value}}));setSaved(false)};
  const updateCost=(key,value)=>{setDraft(d=>({...d,costs:{...d.costs,[key]:value===''?'':Number(value)}}));setSaved(false)};
  const field=([key,text,max])=>{
@@ -28,6 +56,7 @@ export default function Settings({settings,timezones,companyOptions,workspace,is
  return <form className="settings-page" onSubmit={async e=>{e.preventDefault();if(busy)return;setError('');setSaved(false);const result=await onSave(draft);if(result.ok){setDraft(result.settings);setSaved(true)}else setError(result.error)}}>
  <div className="settings-grid">
  <section className="panel settings-panel span-2"><div className="settings-heading"><Building2 size={18}/><div><h2>{__("Профиль компании")}</h2><p>{__("Название показывается в кабинете, при входе и в письмах брокерам.")}</p></div></div><div className="settings-fields three">{profileFields.map(field)}</div></section>
+ <Branding draft={draft} setBranding={setBranding} brand={brand} isOwner={isOwner} workspace={workspace} onBrandChange={onBrandChange} busy={busy}/>
  <section className="panel settings-panel"><div className="settings-heading"><Contact size={18}/><div><h2>{__("Контакты")}</h2><p>{__("Для брокеров и уведомлений.")}</p></div></div><div className="settings-fields">{contactFields.map(field)}</div></section>
  <section className="panel settings-panel"><div className="settings-heading"><LayoutGrid size={18}/><div><h2>{__("Кабинет компании")}</h2><p>{__("Адрес входа и тариф.")}</p></div></div>
   <dl className="settings-facts"><div><dt>{__("Вход")}</dt><dd>{window.location.host}</dd></div><div><dt>{__("Идентификатор")}</dt><dd>{workspace.slug||'—'}</dd></div><div><dt>{__("Тариф")}</dt><dd>{workspace.plan?planLabel(workspace.plan):'—'}</dd></div><div><dt>{__("Создан")}</dt><dd>{workspace.createdAt?fmtDate(workspace.createdAt,{day:'numeric',month:'short',year:'numeric'},'date'):'—'}</dd></div></dl>
