@@ -1155,5 +1155,10 @@
  "Создаём кабинет…": "Creating workspace…",
  "Создать кабинет": "Create workspace",
  "Уже есть аккаунт?": "Already have an account?",
- "Зарегистрировать компанию": "Register a company"
+ "Зарегистрировать компанию": "Register a company",
+ "Грузы, водители и прибыль — в одном окне": "Loads, drivers and profit in one workspace",
+ "Lanilot находит выгодные грузы, считает прибыль рейса и ведёт переписку с брокерами.": "Lanilot finds profitable loads, calculates trip profit and handles broker conversations.",
+ "Прибыль рейса": "Trip profit",
+ "Брокер проверен": "Broker verified",
+ "Факторинг одобрен": "Factoring approved"
 }

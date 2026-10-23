@@ -1155,5 +1155,10 @@
  "Создаём кабинет…": "Creazione in corso…",
  "Создать кабинет": "Crea spazio di lavoro",
  "Уже есть аккаунт?": "Hai già un account?",
- "Зарегистрировать компанию": "Registra un’azienda"
+ "Зарегистрировать компанию": "Registra un’azienda",
+ "Грузы, водители и прибыль — в одном окне": "Carichi, autisti e profitti in un unico spazio",
+ "Lanilot находит выгодные грузы, считает прибыль рейса и ведёт переписку с брокерами.": "Lanilot trova carichi redditizi, calcola il profitto del viaggio e gestisce la corrispondenza con i broker.",
+ "Прибыль рейса": "Profitto del viaggio",
+ "Брокер проверен": "Broker verificato",
+ "Факторинг одобрен": "Factoring approvato"
 }

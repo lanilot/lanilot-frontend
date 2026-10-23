@@ -1155,5 +1155,10 @@
  "Создаём кабинет…": "Kabinet yaratilmoqda…",
  "Создать кабинет": "Kabinet yaratish",
  "Уже есть аккаунт?": "Akkauntingiz bormi?",
- "Зарегистрировать компанию": "Kompaniyani ro‘yxatdan o‘tkazish"
+ "Зарегистрировать компанию": "Kompaniyani ro‘yxatdan o‘tkazish",
+ "Грузы, водители и прибыль — в одном окне": "Yuklar, haydovchilar va foyda — bitta oynada",
+ "Lanilot находит выгодные грузы, считает прибыль рейса и ведёт переписку с брокерами.": "Lanilot foydali yuklarni topadi, reys foydasini hisoblaydi va brokerlar bilan yozishmalarni olib boradi.",
+ "Прибыль рейса": "Reys foydasi",
+ "Брокер проверен": "Broker tekshirildi",
+ "Факторинг одобрен": "Faktoring tasdiqlangan"
 }
