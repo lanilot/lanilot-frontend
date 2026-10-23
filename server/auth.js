@@ -1,6 +1,7 @@
 // Users, sessions, invitations and roles. Accounts are global (one email, many companies);
 // access is a membership in a company with a role: owner > dispatcher > viewer.
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
+import {installOnboarding} from './onboarding.js';
 import {tenantContext,slugFromHost,companyBySlug,companyById,uniqueSlug,asCompany,DEFAULT_COMPANY} from './tenancy.js';
 
 export const roles=['owner','dispatcher','viewer'];
@@ -64,6 +65,18 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   req.company=company;next();
  };
 
+ // New company with its owner; the profile starts from the sign-up answers, with or without the demo workspace.
+ const createAccount=({name,company,email,password,demo,phone='',city=''})=>{
+  const userId='usr-'+randomBytes(8).toString('hex'),companyId='co-'+randomBytes(8).toString('hex'),now=new Date().toISOString();
+  raw.exec('BEGIN IMMEDIATE');try{
+   raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(companyId,uniqueSlug(db,cleanName(company)),cleanName(company),demo?1:0,now);
+   raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(userId,email.trim(),cleanName(name),hashPassword(password),now);
+   raw.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(userId,companyId,'owner',now);raw.exec('COMMIT');
+  }catch(e){raw.exec('ROLLBACK');throw e}
+  seedCompany({id:companyId,demo:demo?1:0});
+  asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim(),...(phone?{phone}:{}),...(city?{city}:{})};db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
+  return {userId,companyId};
+ };
  const register=app=>{
   // Cross-site writes are refused: browsers send Origin on POST/PUT/PATCH/DELETE.
   app.use((req,res,next)=>{if(req.method==='GET'||req.method==='HEAD'||!req.path.startsWith('/api/'))return next();const origin=req.get('origin');if(origin){let host;try{host=new URL(origin).host}catch{host=null}if(host!==req.get('host'))return res.status(403).json({error:'Запрос с другого сайта отклонён'})}next()});
@@ -95,22 +108,14 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
    if(!user||!verifyPassword(password,user.password_hash)||!member){fail(key);return res.status(401).json({error:'Неверный email или пароль'})}
    attempts.delete(key);startSession(res,req,user.id,member.company_id);res.json({ok:true});
   });
+  installOnboarding(app,db,{enabled:enabled&&signup,onAppHost,limited,fail,createAccount,startSession,cleanName,validEmail,validPassword});
   app.post('/api/auth/register',(req,res)=>{
    if(!enabled||!signup||!onAppHost(req))return res.status(404).json({error:'Регистрация недоступна'});
    const key='signup|'+req.ip;if(limited(key,5,3600000))return res.status(429).json({error:'Слишком много регистраций. Попробуйте через час.'});
    const {name,company,email,password,demo=true}=req.body??{};
    if(!cleanName(name)||!cleanName(company)||!validEmail(email)||!validPassword(password)||typeof demo!=='boolean')return res.status(400).json({error:'Укажите имя, компанию, email и пароль от 8 символов'});
    if(raw.prepare('SELECT id FROM users WHERE email=?').get(email.trim()))return res.status(409).json({error:'Аккаунт с таким email уже есть. Войдите в кабинет.'});
-   fail(key);
-   const userId='usr-'+randomBytes(8).toString('hex'),companyId='co-'+randomBytes(8).toString('hex'),now=new Date().toISOString();
-   raw.exec('BEGIN IMMEDIATE');try{
-    raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(companyId,uniqueSlug(db,cleanName(company)),cleanName(company),demo?1:0,now);
-    raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(userId,email.trim(),cleanName(name),hashPassword(password),now);
-    raw.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(userId,companyId,'owner',now);raw.exec('COMMIT');
-   }catch(e){raw.exec('ROLLBACK');throw e}
-   // The new company's profile starts from the sign-up form, with or without the demo workspace.
-   seedCompany({id:companyId,demo:demo?1:0});
-   asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim()};db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
+   fail(key);const {userId,companyId}=createAccount({name,company,email,password,demo});
    startSession(res,req,userId,companyId);res.status(201).json({ok:true});
   });
   app.post('/api/auth/logout',(req,res)=>{const value=readCookie(req);if(value)raw.prepare('DELETE FROM sessions WHERE id=?').run(sha(value));res.clearCookie(COOKIE,{path:'/'});res.json({ok:true})});

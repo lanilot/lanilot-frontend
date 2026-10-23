@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {createApp} from '../server/app.js';
 import {slugFromHost,asCompany} from '../server/tenancy.js';
+import {onboardingFunnel} from '../server/onboarding.js';
 
 // Real HTTP with a Host header (fetch cannot set it) and cookies, like a browser on <slug>.lanilot.com.
 function call(port,method,path,{host='app.lanilot.com',body,cookie,origin}={}){
@@ -160,4 +161,42 @@ test('sign-up creates an isolated company; the app host opens the signed-in comp
 test('sign-up can be turned off',async()=>{
  const s=await start({signup:false});
  try{assert.equal((await call(s.port,'GET','/tenant')).data.auth.signup,false);assert.equal((await call(s.port,'POST','/auth/register',{body:{name:'A',company:'B Co',email:'a@b.test',password:'longpassword'}})).status,404)}finally{await s.close();s.db.close()}
+});
+
+test('step-by-step onboarding saves each step, records the funnel and creates the account at the end',async()=>{
+ const s=await start({});
+ try{
+  const p=s.port;
+  assert.equal((await call(p,'POST','/onboarding',{host:'acme.lanilot.com',body:{}})).status,404);
+  const a=await call(p,'POST','/onboarding',{body:{source:'google / spring',lang:'en'}});assert.equal(a.status,201);assert.equal(a.data.step,0);
+  const t=a.data.token,put=(step,body)=>call(p,'PUT',`/onboarding/${t}/${step}`,{body});
+  assert.deepEqual(a.data.options.fleetSize,['1','2-5','6-20','21-50','50+']);
+  // Steps go in order and are validated.
+  assert.equal((await put('fleet',{fleetSize:'1',equipment:['Reefer']})).status,409);
+  assert.equal((await put('contact',{name:'Rita',email:'not-an-email'})).status,400);
+  assert.equal((await put('contact',{name:'Rita Road',email:'rita@road.test',phone:'+1 555 0101'})).data.step,1);
+  assert.equal((await put('company',{company:'Road Runner LLC',role:'pilot'})).status,400);
+  assert.equal((await put('company',{company:'Road Runner LLC',role:'fleet',mc:'MC-123456',city:'Dallas, TX'})).data.step,2);
+  assert.equal((await put('fleet',{fleetSize:'6-20',equipment:['Reefer','Tank']})).status,400);
+  assert.equal((await put('fleet',{fleetSize:'6-20',equipment:['Reefer','Dry Van']})).data.step,3);
+  assert.equal((await call(p,'POST',`/onboarding/${t}/complete`,{body:{password:'roadrunner1'}})).status,409);
+  // Resume returns the saved answers; going back and changing a step keeps progress.
+  const resumed=(await call(p,'GET','/onboarding/'+t)).data;assert.equal(resumed.step,3);assert.equal(resumed.data.company.mc,'123456');
+  assert.equal((await put('contact',{name:'Rita Road',email:'rita@road.test',phone:''})).data.step,3);
+  assert.equal((await put('work',{loadBoards:['DAT','Direct brokers'],eld:'samsara',goals:['profit']})).data.step,4);
+  assert.equal((await call(p,'POST',`/onboarding/${t}/complete`,{body:{password:'short'}})).status,400);
+  const done=await call(p,'POST',`/onboarding/${t}/complete`,{body:{password:'roadrunner1',demo:false}});assert.equal(done.status,201);
+  const tenant=(await call(p,'GET','/tenant',{cookie:done.cookie})).data;assert.equal(tenant.company.name,'Road Runner LLC');
+  const settings=(await call(p,'GET','/state',{cookie:done.cookie})).data.settings.company;assert.equal(settings.city,'Dallas, TX');assert.equal(settings.contactName,'Rita Road');
+  assert.equal((await call(p,'GET','/onboarding/'+t)).status,404);
+  assert.equal((await call(p,'POST','/auth/login',{body:{email:'rita@road.test',password:'roadrunner1'}})).status,200);
+  // A second lead that stops after the contact step shows up as unfinished.
+  const b=(await call(p,'POST','/onboarding',{body:{}})).data.token;
+  assert.equal((await call(p,'PUT',`/onboarding/${b}/contact`,{body:{name:'Rita',email:'rita@road.test'}})).status,409);
+  assert.equal((await call(p,'PUT',`/onboarding/${b}/contact`,{body:{name:'Max',email:'max@haul.test'}})).status,200);
+  const f=onboardingFunnel(s.db.raw);assert.equal(f.started,2);assert.deepEqual(f.steps.map(x=>x.reached),[2,1,1,1,1]);
+  assert.equal(f.unfinished.length,1);assert.equal(f.unfinished[0].email,'max@haul.test');assert.equal(f.unfinished[0].step,1);
+  // Passwords never reach the lead record.
+  assert.ok(!s.db.raw.prepare('SELECT data FROM signup_leads').all().some(r=>r.data.includes('roadrunner1')));
+ }finally{await s.close();s.db.close()}
 });

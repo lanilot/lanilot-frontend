@@ -3,12 +3,14 @@
 //   node scripts/tenant.mjs create --slug acme --name "Acme Trucking" --owner owner@acme.com [--demo]
 //   node scripts/tenant.mjs invite --slug acme --email user@acme.com [--role dispatcher]
 //   node scripts/tenant.mjs suspend|activate --slug acme
+//   node scripts/tenant.mjs funnel [--days 30]               where sign-ups stop (step-by-step onboarding)
 //   node scripts/tenant.mjs demo [--password Secret123]   demo company with owner/dispatcher/viewer accounts
 import {existsSync,mkdirSync} from 'node:fs';
 if(existsSync('.env'))process.loadEnvFile('.env');
 const {createApp}=await import('../server/app.js');
 const {companyBySlug,listCompanies,RESERVED_SLUGS,asCompany}=await import('../server/tenancy.js');
 const {hashPassword}=await import('../server/auth.js');
+const {onboardingFunnel}=await import('../server/onboarding.js');
 
 const [command,...rest]=process.argv.slice(2),args={};
 for(let i=0;i<rest.length;i++){if(rest[i].startsWith('--')){const key=rest[i].slice(2),next=rest[i+1];args[key]=next&&!next.startsWith('--')?(i++,next):true}}
@@ -60,5 +62,12 @@ try{
    console.log(`  ${role.padEnd(10)} ${email}`);
   }
  }
- else fail('Commands: list | create | invite | suspend | activate | demo (see the header of scripts/tenant.mjs)');
+ else if(command==='funnel'){
+  const days=Number(args.days)||30,f=onboardingFunnel(db.raw,{days}),pct=n=>f.started?` ${Math.round(n/f.started*100)}%`.padStart(5):'';
+  const labels={contact:'1 contact',company:'2 company',fleet:'3 fleet',work:'4 work',account:'5 account created'};
+  console.log(`Sign-up funnel, last ${days} days`);console.log(`  ${'started'.padEnd(18)} ${String(f.started).padStart(5)}`);
+  for(const s of f.steps)console.log(`  ${labels[s.name].padEnd(18)} ${String(s.reached).padStart(5)}${pct(s.reached)}`);
+  if(f.unfinished.length){console.log('\nUnfinished (latest first):');for(const l of f.unfinished)console.log(`  ${(l.email||'—').padEnd(32)} stopped after step ${l.step}  ${l.updated_at.slice(0,16).replace('T',' ')}  ${l.source||''}`)}
+ }
+ else fail('Commands: list | create | invite | suspend | activate | demo | funnel (see the header of scripts/tenant.mjs)');
 }finally{db.close()}

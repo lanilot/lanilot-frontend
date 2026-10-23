@@ -56,3 +56,27 @@
 .users-role{width:170px}.users-role .search-select .dropdown-trigger{height:30px;min-height:30px;font-size:11px}
 .auth-page-loading{grid-template-columns:1fr;place-items:center}
 .auth-card form{margin-top:20px}
+/* Step-by-step sign-up */
+.auth-card.wide{width:min(480px,100%)}
+.ob-progress{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:22px 0 4px;padding:0;list-style:none}
+.ob-progress button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;padding:8px 0 0;border:0;border-top:3px solid #e3e9f4;background:none;font-size:10px;color:#93a0b4;cursor:pointer;text-align:left}
+.ob-progress button:disabled{cursor:default}
+.ob-progress span{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#eef2f8;font-size:9px;font-weight:700}
+.ob-progress .done button{border-top-color:#9db6f8;color:#4a6fd8}.ob-progress .done span{background:#e3ebff;color:#2858ef}
+.ob-progress .current button{border-top-color:#2858ef;color:#22324d;font-weight:600}.ob-progress .current span{background:#2858ef;color:#fff}
+.ob-group{display:grid;gap:9px;margin:0 0 18px}
+.ob-group-title{font-size:12px;color:#7789a4}.ob-group-title small{margin-left:6px;font-size:10px;color:#a3aec0}
+.ob-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ob-chips button{height:34px;padding:0 14px;border:1px solid #dce3ef;border-radius:999px;background:#fff;color:#33435d;font-size:12px;cursor:pointer}
+.ob-chips button:hover,.ob-cards button:hover{border-color:#a9bce7}
+.ob-chips button.active{border-color:#2858ef;background:#eef3ff;color:#2858ef;font-weight:600}
+.ob-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ob-cards button{display:flex;align-items:center;gap:9px;min-height:44px;padding:9px 12px;border:1px solid #dce3ef;border-radius:9px;background:#fff;color:#33435d;font-size:12px;text-align:left;line-height:1.35;cursor:pointer}
+.ob-cards button i{display:grid;place-items:center;flex-shrink:0;width:16px;height:16px;border:1.5px solid #c6d1e3;border-radius:5px;color:#fff}
+.ob-cards button.active{border-color:#2858ef;background:#f3f6ff;color:#1f3f9e;font-weight:600}.ob-cards button.active i{background:#2858ef;border-color:#2858ef}
+.ob-chips button:focus-visible,.ob-cards button:focus-visible,.ob-progress button:focus-visible{outline:2px solid #7396f9;outline-offset:2px}
+.ob-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ob-summary{display:grid;gap:8px;margin:0 0 16px;padding:12px 14px;border-radius:9px;background:#f5f8fe;font-size:12px}
+.ob-summary div{display:flex;justify-content:space-between;gap:12px}.ob-summary dt{color:#7d8ca5}.ob-summary dd{margin:0;font-weight:600;color:#22324d;overflow-wrap:anywhere;text-align:right}
+.ob-actions{display:flex;gap:10px;margin-top:8px}.ob-actions .button{height:40px;justify-content:center}.ob-actions .button.primary{flex:1}
+@media(max-width:520px){.ob-cards,.ob-row{grid-template-columns:1fr}.ob-progress button{font-size:0;gap:0}.ob-progress span{font-size:9px}}
