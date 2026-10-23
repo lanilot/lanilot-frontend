@@ -6,6 +6,8 @@ import {loadLocale,lang,__} from './i18n.js';
 loadLocale().catch(()=>{}).then(async()=>{
  document.documentElement.lang=lang;
  document.title=__('Lanilot — рабочее место диспетчера');
+ // admin.<domain> is the platform admin, a separate app.
+ if(window.location.hostname.startsWith('admin.')){const {default:AdminApp}=await import('./admin/AdminApp.jsx');createRoot(document.getElementById('root')).render(<AdminApp/>);return}
  const [{default:LoadingBoundary,Skeleton},{default:App},{default:AuthGate}]=await Promise.all([import('./Loading.jsx'),import('./App.jsx'),import('./AuthGate.jsx')]);
  const Pitch=lazy(()=>import('./Pitch.jsx'));
  const isPitch=window.location.pathname.replace(/\/+$/,'')==='/pitch';

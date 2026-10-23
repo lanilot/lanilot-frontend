@@ -26,6 +26,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  raw.exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE COLLATE NOCASE,name TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
  CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),created_at TEXT NOT NULL,expires_at TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS activity(day TEXT NOT NULL,company_id TEXT NOT NULL,user_id TEXT NOT NULL,PRIMARY KEY(day,company_id,user_id));
  CREATE TABLE IF NOT EXISTS invites(id TEXT PRIMARY KEY,company_id TEXT NOT NULL REFERENCES companies(id),email TEXT NOT NULL COLLATE NOCASE,role TEXT NOT NULL,created_by TEXT,created_at TEXT NOT NULL,expires_at TEXT NOT NULL,accepted_at TEXT);`);
  // One-time owner setup for a company without members: token from LANILOT_SETUP_TOKEN or printed at start.
  const members=companyId=>raw.prepare('SELECT count(*) n FROM memberships WHERE company_id=?').get(companyId).n;
@@ -53,7 +54,10 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  // Company from the host name; unknown subdomains get 404, suspended companies 403.
  const resolveTenant=(req,res,next)=>{
   if(!req.path.startsWith('/api/'))return next();
-  const slug=slugFromHost(req.get('host'),baseDomain);let company=slug&&companyBySlug(db,slug);
+  const slug=slugFromHost(req.get('host'),baseDomain);
+  // admin.<domain> serves only the platform admin API.
+  if(slug==='admin'){if(req.path.startsWith('/api/admin/')){req.adminHost=true;return next()}return res.status(404).json({error:'Не найдено'})}
+  let company=slug&&companyBySlug(db,slug);
   // The shared app host serves every company: an invitation link or the signed-in session names it.
   if(enabled&&slug==='app'){
    const invite=inviteOf(req.path.match(/^\/api\/auth\/invites\/([^/]+)/)?.[1]),value=!invite&&readCookie(req);
@@ -80,7 +84,9 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  const register=app=>{
   // Cross-site writes are refused: browsers send Origin on POST/PUT/PATCH/DELETE.
   app.use((req,res,next)=>{if(req.method==='GET'||req.method==='HEAD'||!req.path.startsWith('/api/'))return next();const origin=req.get('origin');if(origin){let host;try{host=new URL(origin).host}catch{host=null}if(host!==req.get('host'))return res.status(403).json({error:'Запрос с другого сайта отклонён'})}next()});
-  app.use((req,res,next)=>{req.session=enabled?sessionOf(req):null;next()});
+  // Daily activity (one row per user, company and day) feeds the platform analytics.
+  const seen=new Map(),touch=s=>{const day=new Date().toISOString().slice(0,10),key=s.user_id+'|'+s.company_id;if(seen.get(key)===day)return;seen.set(key,day);raw.prepare('INSERT OR IGNORE INTO activity VALUES(?,?,?)').run(day,s.company_id,s.user_id)};
+  app.use((req,res,next)=>{req.session=enabled?sessionOf(req):null;if(req.session)touch(req.session);next()});
 
   app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),auth:{enabled,signup:enabled&&signup&&onAppHost(req),setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
   app.get('/api/auth/me',(req,res)=>{

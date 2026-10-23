@@ -4,6 +4,7 @@
 //   node scripts/tenant.mjs invite --slug acme --email user@acme.com [--role dispatcher]
 //   node scripts/tenant.mjs suspend|activate --slug acme
 //   node scripts/tenant.mjs funnel [--days 30]               where sign-ups stop (step-by-step onboarding)
+//   node scripts/tenant.mjs admin --email you@lanilot.com [--name "Your Name"]   platform admin (admin.<domain>); prints a new password
 //   node scripts/tenant.mjs demo [--password Secret123]   demo company with owner/dispatcher/viewer accounts
 import {existsSync,mkdirSync} from 'node:fs';
 if(existsSync('.env'))process.loadEnvFile('.env');
@@ -51,7 +52,7 @@ try{
   const password=typeof args.password==='string'?args.password:'Demo-'+crypto.randomUUID().slice(0,8);
   if(password.length<8)fail('--password: at least 8 characters');
   let c=companyBySlug(db,'demo');
-  if(!c){db.raw.prepare("INSERT INTO companies(id,slug,name,demo,created_at) VALUES('co-demo','demo','Lanilot Demo',1,?)").run(new Date().toISOString());c=companyBySlug(db,'demo');seedCompany(c);asCompany(c.id,()=>{const st=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);st.company.name=c.name;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(st))})}
+  if(!c){db.raw.prepare("INSERT INTO companies(id,slug,name,demo,internal,created_at) VALUES('co-demo','demo','Lanilot Demo',1,1,?)").run(new Date().toISOString());c=companyBySlug(db,'demo');seedCompany(c);asCompany(c.id,()=>{const st=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);st.company.name=c.name;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(st))})}
   const now=new Date().toISOString(),hash=hashPassword(password);
   console.log(`Demo company "${c.name}": sign in at https://app.${base} (or ${url(c.slug)}) — password for all accounts: ${password}`);
   for(const [role,name] of [['owner','Demo Owner'],['dispatcher','Demo Dispatcher'],['viewer','Demo Viewer']]){
@@ -62,6 +63,16 @@ try{
    console.log(`  ${role.padEnd(10)} ${email}`);
   }
  }
+ else if(command==='admin'){
+  // Creates the user if needed, (re)sets a generated password and grants platform admin access.
+  if(typeof args.email!=='string'||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.email))fail('--email is required');
+  const email=args.email.trim(),password=crypto.randomUUID().replace(/-/g,'').slice(0,16),now=new Date().toISOString();
+  let user=db.raw.prepare('SELECT id FROM users WHERE email=?').get(email);
+  if(user)db.raw.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hashPassword(password),user.id);
+  else{user={id:'usr-'+crypto.randomUUID().slice(0,16)};db.raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(user.id,email,typeof args.name==='string'?args.name:'Platform admin',hashPassword(password),now)}
+  db.raw.prepare('INSERT OR IGNORE INTO platform_admins VALUES(?,?)').run(user.id,now);db.raw.prepare('DELETE FROM admin_sessions WHERE user_id=?').run(user.id);
+  console.log(`Platform admin ${email}\n  sign in: https://admin.${base}\n  password: ${password}`);
+ }
  else if(command==='funnel'){
   const days=Number(args.days)||30,f=onboardingFunnel(db.raw,{days}),pct=n=>f.started?` ${Math.round(n/f.started*100)}%`.padStart(5):'';
   const labels={contact:'1 contact',company:'2 company',fleet:'3 fleet',work:'4 work',account:'5 account created'};
@@ -69,5 +80,5 @@ try{
   for(const s of f.steps)console.log(`  ${labels[s.name].padEnd(18)} ${String(s.reached).padStart(5)}${pct(s.reached)}`);
   if(f.unfinished.length){console.log('\nUnfinished (latest first):');for(const l of f.unfinished)console.log(`  ${(l.email||'—').padEnd(32)} stopped after step ${l.step}  ${l.updated_at.slice(0,16).replace('T',' ')}  ${l.source||''}`)}
  }
- else fail('Commands: list | create | invite | suspend | activate | demo | funnel (see the header of scripts/tenant.mjs)');
+ else fail('Commands: list | create | invite | suspend | activate | demo | funnel | admin (see the header of scripts/tenant.mjs)');
 }finally{db.close()}
