@@ -25,7 +25,7 @@ export function createApp(dbPath=':memory:',options={}){
  const db=installTenancy(new DatabaseSync(dbPath));
  return asCompany(DEFAULT_COMPANY,()=>buildApp(db,dbPath,options));
 }
-function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANILOT_BASE_DOMAIN||'lanilot.com',setupToken,integrationOptions={},telegramOptions={}}={}){
+function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANILOT_BASE_DOMAIN||'lanilot.com',setupToken,signup,integrationOptions={},telegramOptions={}}={}){
  // Provider keys in the server environment belong to the primary company only.
  if(!auth)db.setFallbackCompany(DEFAULT_COMPANY);
  integrationOptions={...integrationOptions,env:tenantEnv(integrationOptions.env||process.env)};
@@ -58,7 +58,7 @@ function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANI
   if(seedDemo){seedDemoData(db);seedRadars(db);seedBrokers(db);seedLanes(db);seedDocuments(db);seedAttachments(db);seedFinances(db);seedIntegrations(db,integrationVault);telegram.seed()}
  });
  for(const company of listCompanies(db))seedCompany(company);
- const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken});app.use(access.resolveTenant);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));access.register(app);telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);
+ const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken,signup,seedCompany});app.use(access.resolveTenant);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));access.register(app);telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);
  const enrichLoad=l=>({...l,originCoordinates:locations[l.origin]??null,destinationCoordinates:locations[l.destination]??null});
  const loadById=id=>{const r=db.prepare('SELECT data FROM loads WHERE id=?').get(id);return r?enrichLoad(JSON.parse(r.data)):null};
  const offerById=id=>db.prepare('SELECT * FROM offers WHERE id=?').get(id);

@@ -85,6 +85,14 @@ export function refreshViews(db){
 
 export const companyBySlug=(db,slug)=>db.raw.prepare('SELECT * FROM companies WHERE slug=?').get(slug)??null;
 export const companyById=(db,id)=>db.raw.prepare('SELECT * FROM companies WHERE id=?').get(id)??null;
+// Subdomains kept for the platform itself.
+export const RESERVED_SLUGS=new Set(['app','www','admin','api','mail','static','assets','status','help','docs','demo','login','signup']);
+// Free subdomain from a company name: "Acme Trucking LLC" → acme-trucking-llc, acme-trucking-llc-2, …
+export function uniqueSlug(db,name){
+ const base=String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,28).replace(/-+$/,'');
+ const root=base.length>=3&&!RESERVED_SLUGS.has(base)?base:`company-${base||'new'}`.slice(0,28).replace(/-+$/,'');
+ for(let n=1;;n++){const slug=n===1?root:`${root}-${n}`;if(!companyBySlug(db,slug))return slug}
+}
 export const listCompanies=db=>db.raw.prepare('SELECT * FROM companies ORDER BY created_at').all();
 
 // Run work as a company (startup seeding, scripts, request handling).

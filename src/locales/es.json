@@ -1142,5 +1142,18 @@
  "Выберите другую неделю или создайте рейс из подтверждённого предложения.": "Elija otra semana o cree un viaje a partir de una oferta confirmada.",
  "за неделю": "en la semana",
  "Плановые даты · статусы меняются вручную": "Fechas planificadas · los estados se cambian manualmente",
- "Нет рейсов": "No hay viajes"
+ "Нет рейсов": "No hay viajes",
+ "Регистрация недоступна": "El registro no está disponible",
+ "Слишком много регистраций. Попробуйте через час.": "Demasiados registros. Inténtelo de nuevo en una hora.",
+ "Укажите имя, компанию, email и пароль от 8 символов": "Indique su nombre, empresa, email y una contraseña de al menos 8 caracteres",
+ "Аккаунт с таким email уже есть. Войдите в кабинет.": "Ya existe una cuenta con este email. Inicie sesión.",
+ "Нет аккаунта?": "¿No tiene cuenta?",
+ "Зарегистрироваться": "Registrarse",
+ "Регистрация компании": "Registro de empresa",
+ "Создайте кабинет для своей компании — вы станете его владельцем.": "Cree un espacio de trabajo para su empresa: usted será su propietario.",
+ "Заполнить кабинет демо-данными (грузы, водители, рейсы)": "Rellenar con datos de demostración (cargas, conductores, viajes)",
+ "Создаём кабинет…": "Creando espacio…",
+ "Создать кабинет": "Crear espacio",
+ "Уже есть аккаунт?": "¿Ya tiene cuenta?",
+ "Зарегистрировать компанию": "Registrar una empresa"
 }

@@ -1,7 +1,7 @@
 // Users, sessions, invitations and roles. Accounts are global (one email, many companies);
 // access is a membership in a company with a role: owner > dispatcher > viewer.
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
-import {tenantContext,slugFromHost,companyBySlug,DEFAULT_COMPANY} from './tenancy.js';
+import {tenantContext,slugFromHost,companyBySlug,companyById,uniqueSlug,asCompany,DEFAULT_COMPANY} from './tenancy.js';
 
 export const roles=['owner','dispatcher','viewer'];
 const SESSION_DAYS=30,INVITE_DAYS=7,COOKIE='lanilot_session';
@@ -19,7 +19,8 @@ const cleanName=v=>typeof v==='string'&&v.trim().length>=1&&v.trim().length<=100
 // Writes that change company configuration or access are reserved for owners.
 const ownerOnly=(method,path)=>method!=='GET'&&/^\/api\/(settings|integrations|providers|telegram|users)(\/|$)/.test(path);
 
-export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN}={}){
+// Self sign-up creates a new company with its owner; LANILOT_SIGNUP=off disables it.
+export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN,signup=process.env.LANILOT_SIGNUP!=='off',seedCompany=()=>{}}={}){
  const raw=db.raw;
  raw.exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE COLLATE NOCASE,name TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
@@ -30,7 +31,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  let setup=setupToken||null;
  if(enabled&&!setup&&!members(DEFAULT_COMPANY)){setup=token();console.log(`Lanilot: owner setup token for the first account: ${setup}`)}
  const attempts=new Map();
- const limited=key=>{const now=Date.now(),list=(attempts.get(key)||[]).filter(t=>now-t<15*60000);attempts.set(key,list);return list.length>=10};
+ const limited=(key,max=10,windowMs=15*60000)=>{const now=Date.now(),list=(attempts.get(key)||[]).filter(t=>now-t<windowMs);attempts.set(key,list);return list.length>=max};
  const fail=key=>attempts.set(key,[...(attempts.get(key)||[]),Date.now()]);
 
  const startSession=(res,req,userId,companyId)=>{
@@ -44,12 +45,20 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   if(!s||s.expires_at<new Date().toISOString())return null;return s;
  };
  const publicCompany=c=>c&&{id:c.id,slug:c.slug,name:c.name,status:c.status};
+ const inviteOf=value=>{const i=typeof value==='string'&&raw.prepare('SELECT * FROM invites WHERE id=?').get(sha(value));return i&&!i.accepted_at&&i.expires_at>new Date().toISOString()?i:null};
+ const onAppHost=req=>slugFromHost(req.get('host'),baseDomain)==='app';
  const ownerCount=companyId=>raw.prepare("SELECT count(*) n FROM memberships WHERE company_id=? AND role='owner'").get(companyId).n;
 
  // Company from the host name; unknown subdomains get 404, suspended companies 403.
  const resolveTenant=(req,res,next)=>{
   if(!req.path.startsWith('/api/'))return next();
-  const slug=slugFromHost(req.get('host'),baseDomain),company=slug&&companyBySlug(db,slug);
+  const slug=slugFromHost(req.get('host'),baseDomain);let company=slug&&companyBySlug(db,slug);
+  // The shared app host serves every company: an invitation link or the signed-in session names it.
+  if(enabled&&slug==='app'){
+   const invite=inviteOf(req.path.match(/^\/api\/auth\/invites\/([^/]+)/)?.[1]),value=!invite&&readCookie(req);
+   const id=invite?.company_id??(value&&raw.prepare('SELECT company_id FROM sessions WHERE id=? AND expires_at>?').get(sha(value),new Date().toISOString())?.company_id);
+   if(id)company=companyById(db,id)??company;
+  }
   if(!company)return res.status(404).json({error:'Компания не найдена',code:'company_not_found'});
   if(company.status!=='active'&&req.path!=='/api/tenant')return res.status(403).json({error:'Доступ к кабинету компании приостановлен',code:'company_suspended'});
   req.company=company;next();
@@ -60,7 +69,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   app.use((req,res,next)=>{if(req.method==='GET'||req.method==='HEAD'||!req.path.startsWith('/api/'))return next();const origin=req.get('origin');if(origin){let host;try{host=new URL(origin).host}catch{host=null}if(host!==req.get('host'))return res.status(403).json({error:'Запрос с другого сайта отклонён'})}next()});
   app.use((req,res,next)=>{req.session=enabled?sessionOf(req):null;next()});
 
-  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),auth:{enabled,setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
+  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),auth:{enabled,signup:enabled&&signup&&onAppHost(req),setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
   app.get('/api/auth/me',(req,res)=>{
    if(!enabled)return res.json({user:null,role:'owner',company:publicCompany(req.company),authEnabled:false});
    if(!req.session)return res.status(401).json({error:'Войдите в кабинет',code:'unauthenticated'});
@@ -80,9 +89,29 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
    const {email,password}=req.body??{},key=req.ip+'|'+String(email).toLowerCase();
    if(limited(key))return res.status(429).json({error:'Слишком много попыток. Попробуйте через 15 минут.'});
    const user=validEmail(email)&&raw.prepare('SELECT * FROM users WHERE email=?').get(email.trim());
-   const member=user&&raw.prepare('SELECT role FROM memberships WHERE user_id=? AND company_id=?').get(user.id,req.company.id);
+   // A company subdomain admits its members only; the app host opens this company or the user's first active one.
+   const member=user&&(raw.prepare('SELECT company_id FROM memberships WHERE user_id=? AND company_id=?').get(user.id,req.company.id)
+    ??(onAppHost(req)?raw.prepare("SELECT m.company_id FROM memberships m JOIN companies c ON c.id=m.company_id WHERE m.user_id=? AND c.status='active' ORDER BY m.created_at LIMIT 1").get(user.id):null));
    if(!user||!verifyPassword(password,user.password_hash)||!member){fail(key);return res.status(401).json({error:'Неверный email или пароль'})}
-   attempts.delete(key);startSession(res,req,user.id,req.company.id);res.json({ok:true});
+   attempts.delete(key);startSession(res,req,user.id,member.company_id);res.json({ok:true});
+  });
+  app.post('/api/auth/register',(req,res)=>{
+   if(!enabled||!signup||!onAppHost(req))return res.status(404).json({error:'Регистрация недоступна'});
+   const key='signup|'+req.ip;if(limited(key,5,3600000))return res.status(429).json({error:'Слишком много регистраций. Попробуйте через час.'});
+   const {name,company,email,password,demo=true}=req.body??{};
+   if(!cleanName(name)||!cleanName(company)||!validEmail(email)||!validPassword(password)||typeof demo!=='boolean')return res.status(400).json({error:'Укажите имя, компанию, email и пароль от 8 символов'});
+   if(raw.prepare('SELECT id FROM users WHERE email=?').get(email.trim()))return res.status(409).json({error:'Аккаунт с таким email уже есть. Войдите в кабинет.'});
+   fail(key);
+   const userId='usr-'+randomBytes(8).toString('hex'),companyId='co-'+randomBytes(8).toString('hex'),now=new Date().toISOString();
+   raw.exec('BEGIN IMMEDIATE');try{
+    raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(companyId,uniqueSlug(db,cleanName(company)),cleanName(company),demo?1:0,now);
+    raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(userId,email.trim(),cleanName(name),hashPassword(password),now);
+    raw.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(userId,companyId,'owner',now);raw.exec('COMMIT');
+   }catch(e){raw.exec('ROLLBACK');throw e}
+   // The new company's profile starts from the sign-up form, with or without the demo workspace.
+   seedCompany({id:companyId,demo:demo?1:0});
+   asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim()};db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
+   startSession(res,req,userId,companyId);res.status(201).json({ok:true});
   });
   app.post('/api/auth/logout',(req,res)=>{const value=readCookie(req);if(value)raw.prepare('DELETE FROM sessions WHERE id=?').run(sha(value));res.clearCookie(COOKIE,{path:'/'});res.json({ok:true})});
   app.post('/api/auth/password',(req,res)=>{
@@ -93,7 +122,6 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
    raw.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hashPassword(next),user.id);
    raw.prepare('DELETE FROM sessions WHERE user_id=? AND id<>?').run(user.id,req.session.id);res.json({ok:true});
   });
-  const inviteOf=value=>{const i=typeof value==='string'&&raw.prepare('SELECT * FROM invites WHERE id=?').get(sha(value));return i&&!i.accepted_at&&i.expires_at>new Date().toISOString()?i:null};
   app.get('/api/auth/invites/:token',(req,res)=>{const i=inviteOf(req.params.token);if(!i||i.company_id!==req.company.id)return res.status(404).json({error:'Приглашение недействительно или истекло'});res.json({email:i.email,role:i.role,company:publicCompany(req.company),existingUser:!!raw.prepare('SELECT id FROM users WHERE email=?').get(i.email)})});
   app.post('/api/auth/invites/:token/accept',(req,res)=>{
    const i=inviteOf(req.params.token);if(!i||i.company_id!==req.company.id)return res.status(404).json({error:'Приглашение недействительно или истекло'});

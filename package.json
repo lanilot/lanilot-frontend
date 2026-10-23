@@ -10,7 +10,8 @@
     "test": "node --test tests/*.test.js",
     "seed": "node scripts/seed.mjs",
     "routes:cache": "node scripts/cache-routes.mjs",
-    "tenant": "node scripts/tenant.mjs"
+    "tenant": "node scripts/tenant.mjs",
+    "seed:demo": "node scripts/tenant.mjs demo"
   },
   "dependencies": {
     "express": "^5.1.0",

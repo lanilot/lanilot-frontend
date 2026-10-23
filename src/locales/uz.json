@@ -1142,5 +1142,18 @@
  "Выберите другую неделю или создайте рейс из подтверждённого предложения.": "Boshqa haftani tanlang yoki tasdiqlangan taklifdan reys yarating.",
  "за неделю": "haftada",
  "Плановые даты · статусы меняются вручную": "Rejadagi sanalar · holatlar qoʻlda oʻzgartiriladi",
- "Нет рейсов": "Reyslar yoʻq"
+ "Нет рейсов": "Reyslar yoʻq",
+ "Регистрация недоступна": "Ro‘yxatdan o‘tish mavjud emas",
+ "Слишком много регистраций. Попробуйте через час.": "Juda ko‘p ro‘yxatdan o‘tish urinishlari. Bir soatdan keyin urinib ko‘ring.",
+ "Укажите имя, компанию, email и пароль от 8 символов": "Ism, kompaniya, email va kamida 8 belgili parolni kiriting",
+ "Аккаунт с таким email уже есть. Войдите в кабинет.": "Bu email bilan akkaunt allaqachon mavjud. Kabinetga kiring.",
+ "Нет аккаунта?": "Akkauntingiz yo‘qmi?",
+ "Зарегистрироваться": "Ro‘yxatdan o‘tish",
+ "Регистрация компании": "Kompaniyani ro‘yxatdan o‘tkazish",
+ "Создайте кабинет для своей компании — вы станете его владельцем.": "Kompaniyangiz uchun kabinet yarating — siz uning egasi bo‘lasiz.",
+ "Заполнить кабинет демо-данными (грузы, водители, рейсы)": "Kabinetni demo-ma’lumotlar bilan to‘ldirish (yuklar, haydovchilar, reyslar)",
+ "Создаём кабинет…": "Kabinet yaratilmoqda…",
+ "Создать кабинет": "Kabinet yaratish",
+ "Уже есть аккаунт?": "Akkauntingiz bormi?",
+ "Зарегистрировать компанию": "Kompaniyani ro‘yxatdan o‘tkazish"
 }

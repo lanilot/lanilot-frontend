@@ -1142,5 +1142,18 @@
  "Выберите другую неделю или создайте рейс из подтверждённого предложения.": "Pick another week or create a trip from a confirmed offer.",
  "за неделю": "this week",
  "Плановые даты · статусы меняются вручную": "Planned dates · statuses are updated manually",
- "Нет рейсов": "No trips"
+ "Нет рейсов": "No trips",
+ "Регистрация недоступна": "Sign-up is not available",
+ "Слишком много регистраций. Попробуйте через час.": "Too many sign-ups. Try again in an hour.",
+ "Укажите имя, компанию, email и пароль от 8 символов": "Enter your name, company, email and a password of at least 8 characters",
+ "Аккаунт с таким email уже есть. Войдите в кабинет.": "An account with this email already exists. Please sign in.",
+ "Нет аккаунта?": "No account?",
+ "Зарегистрироваться": "Sign up",
+ "Регистрация компании": "Register your company",
+ "Создайте кабинет для своей компании — вы станете его владельцем.": "Create a workspace for your company — you will be its owner.",
+ "Заполнить кабинет демо-данными (грузы, водители, рейсы)": "Fill the workspace with demo data (loads, drivers, trips)",
+ "Создаём кабинет…": "Creating workspace…",
+ "Создать кабинет": "Create workspace",
+ "Уже есть аккаунт?": "Already have an account?",
+ "Зарегистрировать компанию": "Register a company"
 }

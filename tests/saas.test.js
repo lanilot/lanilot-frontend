@@ -120,3 +120,44 @@ test('owner setup, login, invitations and roles are enforced on the server',asyn
   assert.equal((await call(p,'POST','/auth/login',{body:{email:'owner@acme.test',password:'newpassword1'}})).status,200);
  }finally{await s.close();s.db.close()}
 });
+
+test('sign-up creates an isolated company; the app host opens the signed-in company',async()=>{
+ const s=await start({setupToken:'setup-code-123'});
+ try{
+  const p=s.port,body={name:'Sam Signup',company:'Acme Trucking LLC',email:'sam@acme.test',password:'samsignup1'};
+  assert.equal((await call(p,'GET','/tenant')).data.auth.signup,true);
+  assert.equal((await call(p,'POST','/auth/register',{body:{...body,password:'short'}})).status,400);
+  assert.equal((await call(p,'POST','/auth/register',{host:'acme.lanilot.com',body})).status,404);
+  const reg=await call(p,'POST','/auth/register',{body});assert.equal(reg.status,201);
+  const sam=reg.cookie,tenant=(await call(p,'GET','/tenant',{cookie:sam})).data;
+  assert.equal(tenant.company.slug,'acme-trucking-llc');assert.equal(tenant.company.name,'Acme Trucking LLC');
+  const state=(await call(p,'GET','/state',{cookie:sam})).data;assert.equal(state.loads.length,14);assert.equal(state.settings.company.name,'Acme Trucking LLC');assert.equal(state.settings.company.email,'sam@acme.test');
+  assert.equal((await call(p,'GET','/auth/me',{cookie:sam})).data.role,'owner');
+  assert.equal((await call(p,'POST','/auth/register',{body:{...body,email:'SAM@acme.test'}})).status,409);
+  // Writes stay in the new company; the primary company is untouched.
+  assert.equal((await call(p,'POST','/lanes',{cookie:sam,body:{origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Dry Van',broker:'X',rate:2000,days:[1],startDate:'2026-01-05',active:true}})).status,201);
+  assert.equal(asCompany('workspace',()=>s.db.prepare('SELECT count(*) n FROM lanes').get().n),3);
+  // The same session works on the company's own subdomain, not on another one.
+  assert.equal((await call(p,'GET','/state',{cookie:sam,host:'acme-trucking-llc.lanilot.com'})).status,200);
+  // An empty company without demo data; slugs never repeat.
+  const empty=await call(p,'POST','/auth/register',{body:{...body,email:'eve@acme.test',demo:false}});assert.equal(empty.status,201);
+  assert.equal((await call(p,'GET','/tenant',{cookie:empty.cookie})).data.company.slug,'acme-trucking-llc-2');
+  assert.equal((await call(p,'GET','/state',{cookie:empty.cookie})).data.loads.length,0);
+  // Login on the app host opens the user's company; invitations from it are accepted on the app host too.
+  const login=await call(p,'POST','/auth/login',{body:{email:'sam@acme.test',password:'samsignup1'}});assert.equal(login.status,200);
+  assert.equal((await call(p,'GET','/tenant',{cookie:login.cookie})).data.company.slug,'acme-trucking-llc');
+  const inv=await call(p,'POST','/users/invites',{cookie:sam,body:{email:'dan@acme.test',role:'dispatcher'}}),token=inv.data.path.split('/').pop();
+  assert.equal((await call(p,'GET','/auth/invites/'+token)).data.company.name,'Acme Trucking LLC');
+  const dan=await call(p,'POST','/auth/invites/'+token+'/accept',{body:{name:'Dan',password:'danpassword'}});assert.equal(dan.status,200);
+  assert.equal((await call(p,'GET','/auth/me',{cookie:dan.cookie})).data.company.slug,'acme-trucking-llc');
+  // A forged or expired cookie falls back to the primary company and stays signed out.
+  assert.equal((await call(p,'GET','/state',{cookie:'lanilot_session=forged'})).status,401);
+  for(let i=0;i<5;i++)await call(p,'POST','/auth/register',{body:{...body,email:`x${i}@acme.test`}});
+  assert.equal((await call(p,'POST','/auth/register',{body:{...body,email:'late@acme.test'}})).status,429);
+ }finally{await s.close();s.db.close()}
+});
+
+test('sign-up can be turned off',async()=>{
+ const s=await start({signup:false});
+ try{assert.equal((await call(s.port,'GET','/tenant')).data.auth.signup,false);assert.equal((await call(s.port,'POST','/auth/register',{body:{name:'A',company:'B Co',email:'a@b.test',password:'longpassword'}})).status,404)}finally{await s.close();s.db.close()}
+});
