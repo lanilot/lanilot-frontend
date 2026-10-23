@@ -1,5 +1,7 @@
 // Broker / carrier registry: factoring approval, FreightGuard reports and the company's own DNU list.
-// The factoring lookup is a demo provider until a factoring company API is connected.
+// The factoring lookup is a demo provider until a factoring company API is connected (see factoring.js).
+import {activeFactoring,checkFactoring,lookupFmcsa,parseIdentifiers,factoringPresets} from './factoring.js';
+import {env,errorText} from './providers.js';
 export const factoringProvider='Demo Factoring';
 export const factoringStatuses=['approved','unknown','declined'];
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -33,15 +35,20 @@ export function findBroker(db,query,type){
  const q=query.trim().toLowerCase(),digits=q.replace(/\D/g,'');
  return shape(db.prepare('SELECT * FROM brokers WHERE type=? ORDER BY name').all(type).find(b=>b.name.toLowerCase()===q||b.name.toLowerCase().includes(q)||digits.length>=3&&(b.mc.replace(/\D/g,'').includes(digits)||b.dot.replace(/\D/g,'').includes(digits))))??null;
 }
-export function registerBrokerRoutes(app,db){
+export function registerBrokerRoutes(app,db,context={env:process.env}){
  const text=(v,max)=>v===undefined?'':typeof v==='string'&&v.trim().length<=max?v.trim():null;
- app.post('/api/brokers/check',(req,res)=>{
+ app.post('/api/brokers/check',async(req,res)=>{
   const query=text(req.body?.query,120),type=req.body?.type??'broker';
   if(!query||query.length<2)return res.status(400).json({error:'Введите название, MC или DOT (от 2 символов)'});
   if(!['broker','carrier'].includes(type))return res.status(400).json({error:'Выберите тип проверки'});
-  const found=findBroker(db,query,type),now=new Date().toISOString();
+  let found=findBroker(db,query,type);const now=new Date().toISOString(),errors=[],ids=parseIdentifiers(query,found);
+  // Live sources, when configured on the server: FMCSA (authority, legal name) and the company's factoring API.
+  let fmcsa=null;if(env(context,'LANILOT_FMCSA_WEBKEY')&&(ids.mc||ids.dot)){try{fmcsa=await lookupFmcsa(context,ids)}catch(e){errors.push({source:'FMCSA',error:errorText(e)})}}
+  const fid=activeFactoring(context);let decision=null;if(fid){try{decision=await checkFactoring(context,fid,{...ids,name:fmcsa?.legalName||ids.name})}catch(e){errors.push({source:factoringPresets[fid].name,error:errorText(e)})}}
+  if(!found&&fmcsa?.legalName){const id='brk-'+crypto.randomUUID();db.prepare('INSERT OR IGNORE INTO brokers(id,type,name,mc,dot,updated_at) VALUES(?,?,?,?,?,?)').run(id,type,fmcsa.legalName,ids.mc?'MC-'+ids.mc:'',fmcsa.dotNumber?'DOT-'+fmcsa.dotNumber:'',now);found=shape(db.prepare('SELECT * FROM brokers WHERE type=? AND lower(name)=lower(?)').get(type,fmcsa.legalName))}
+  if(found&&(fmcsa||decision)){db.prepare('UPDATE brokers SET mc=?,dot=?,authority=?,factoring=?,credit_limit=?,days_to_pay=?,demo=0,updated_at=? WHERE id=?').run(found.mc||(ids.mc?'MC-'+ids.mc:''),found.dot||(fmcsa?.dotNumber?'DOT-'+fmcsa.dotNumber:''),fmcsa?(type==='broker'?fmcsa.brokerAuthority:fmcsa.carrierAuthority)==='active'?'active':fmcsa.authority:found.authority,decision?.factoring??found.factoring,decision?decision.creditLimit:found.credit_limit,decision?decision.daysToPay:found.days_to_pay,now,found.id);found=shape(db.prepare('SELECT * FROM brokers WHERE id=?').get(found.id))}
   db.prepare('INSERT INTO broker_checks VALUES(?,?,?,?,?)').run(crypto.randomUUID(),query,type,found?.id??null,now);
-  res.json({found:!!found,result:found,query,type,provider:factoringProvider,checkedAt:now,demo:true});
+  res.json({found:!!found,result:found,query,type,provider:fid?factoringPresets[fid].name:factoringProvider,fmcsa,errors,sources:{factoring:fid?'live':'demo',fmcsa:env(context,'LANILOT_FMCSA_WEBKEY')?'live':'off'},checkedAt:now,demo:!fid&&!fmcsa});
  });
  const save=(req,res)=>{
   const editing=req.method==='PUT',old=editing?db.prepare('SELECT * FROM brokers WHERE id=?').get(req.params.id):null;

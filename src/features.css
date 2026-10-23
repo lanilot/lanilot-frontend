@@ -143,3 +143,18 @@
 .lang-switch-menu button svg{margin-left:auto}
 @keyframes lang-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @media (max-width:680px){.lang-switch-name{display:none}}
+
+/* live ELD notes, live broker check sources, provider integrations */
+.eld-provider-error{display:block;margin-top:4px;color:#dc4a60;font-size:10px}
+.eld-unmatched{display:block;margin-top:4px;font-size:10px;color:#b7791f}
+.broker-sources{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.broker-sources span{padding:4px 8px;border-radius:999px;background:#f2f4f7;font-size:9px;font-weight:600;color:#6d7b92}
+.broker-sources span.live{background:#eaf9f0;color:#179965}
+.broker-fmcsa{margin-top:12px;padding:10px 12px;border-radius:8px;background:#f4f7fd;font-size:10px;color:#4c5870;display:grid;gap:3px}
+.broker-fmcsa strong{font-size:11px;color:#242d3d}
+.provider-section{margin-top:26px}
+.provider-section h2{font-size:14px;margin:0 0 4px}
+.provider-section>p{margin:0 0 12px;font-size:10px;color:#8691a3}
+.provider-vars{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 0}
+.provider-vars code{font-size:9px;padding:3px 6px;border-radius:5px;background:#f2f4f7;color:#4c5870}
+.provider-badge{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:5px;font-size:8px;font-weight:700;background:#e9efff;color:#2858ef;vertical-align:middle}

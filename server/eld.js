@@ -2,6 +2,8 @@
 // trucks on in-transit trips move along the cached road route by the trip's schedule, others stay parked.
 import {readFileSync,existsSync} from 'node:fs';
 import {locations} from './locations.js';
+import {eldProviders} from './eld-providers.js';
+import {errorText} from './providers.js';
 export const eldProvider='Demo ELD';
 const routesFile=new URL('./routes.json',import.meta.url);
 const hash=s=>[...s].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
@@ -43,4 +45,31 @@ export function eldSnapshot(db,now=new Date()){
  });
  return {provider:eldProvider,demo:true,generatedAt:now.toISOString(),units};
 }
-export function registerEldRoutes(app,db){app.get('/api/eld/positions',(req,res)=>res.json(eldSnapshot(db)))}
+// Live mode: every configured ELD is polled (mixed fleets are merged); vehicles are matched to our trucks
+// by name/number vs truck number or plate, and unmatched vehicles are still shown. Cached ~30 s per process.
+const CACHE_MS=30000;
+export const configuredEld=context=>Object.entries(eldProviders).filter(([,p])=>p.configured(context)).map(([id])=>id);
+async function liveSnapshot(db,context,ids){
+ const results=await Promise.allSettled(ids.map(id=>eldProviders[id].fetch(context)));
+ const trucks=db.prepare('SELECT * FROM trucks').all(),norm=v=>String(v??'').trim().toLowerCase();
+ const trips=db.prepare("SELECT * FROM trips WHERE status IN ('planned','in_transit') ORDER BY created_at DESC").all();
+ const loadById=id=>{const r=db.prepare('SELECT data FROM loads WHERE id=?').get(id);return r?JSON.parse(r.data):null};
+ const units=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).map(u=>{
+  const truck=trucks.find(t=>norm(t.id)===norm(u.vehicle)||t.plate&&norm(t.plate)===norm(u.vehicle));
+  const trip=truck&&(trips.find(t=>norm(t.truck)===norm(truck.id)&&t.status==='in_transit')||trips.find(t=>norm(t.truck)===norm(truck.id)));
+  const load=trip?loadById(trip.load_id):null;
+  return {...u,truck:truck?.id??u.vehicle,matched:!!truck,plate:truck?.plate??null,equipment:truck?.equipment??null,driver:u.driver||trip?.driver||null,tripId:trip?.id??null,loadId:load?.id??null,origin:load?.origin??null,destination:load?.destination??null,progress:null,eta:null};
+ });
+ return {provider:ids.map(id=>eldProviders[id].name).join(' + '),demo:false,generatedAt:new Date().toISOString(),units,
+  providers:ids.map((id,i)=>({id,name:eldProviders[id].name,ok:results[i].status==='fulfilled',count:results[i].status==='fulfilled'?results[i].value.length:0,error:results[i].status==='rejected'?errorText(results[i].reason):null}))};
+}
+export function registerEldRoutes(app,db,context={env:process.env}){
+ let cache=null;
+ app.get('/api/eld/positions',async(req,res)=>{
+  const ids=configuredEld(context);
+  if(!ids.length)return res.json({...eldSnapshot(db),providers:[]});
+  const key=ids.join(',');
+  if(!cache||cache.key!==key||Date.now()-cache.at>CACHE_MS)cache={key,at:Date.now(),data:await liveSnapshot(db,context,ids)};
+  res.json(cache.data);
+ });
+}
