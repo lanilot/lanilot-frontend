@@ -12,6 +12,9 @@ export function seedLoads(){
  ['Chicago, IL','Indianapolis, IN','Box Truck',680,184,16,8500,26,'Spot Freight','Truckstop','approved',0,'12:00 – 15:00'],
  ['Milwaukee, WI','Detroit, MI','Dry Van',1450,373,65,39500,53,'Nolan Transportation','DAT','declined',1,'09:00 – 12:00'],
  ['Chicago, IL','Columbus, OH','Dry Van',1550,360,9,41500,53,'Uber Freight','Uber Freight','approved',1,'06:00 – 09:00'],
- ['Indianapolis, IN','Dallas, TX','Reefer',2780,899,20,40000,53,'Arrive Logistics','Truckstop','approved',2,'08:00 – 12:00']
+ ['Indianapolis, IN','Dallas, TX','Reefer',2780,899,20,40000,53,'Arrive Logistics','Truckstop','approved',2,'08:00 – 12:00'],
+ // Fictional brokers: demo DNU / FreightGuard warnings never point at a real company.
+ ['Chicago, IL','St. Louis, MO','Dry Van',1300,297,10,38000,53,'Rapid Freight Partners','DAT','declined',0,'09:00 – 12:00'],
+ ['Dallas, TX','Houston, TX','Reefer',980,239,15,36000,53,'Midwest Haul Brokers','Truckstop','unknown',1,'14:00 – 17:00']
  ].map((v,i)=>({id:`LD-${2041+i}`,origin:v[0],destination:v[1],equipment:v[2],rate:v[3],miles:v[4],deadhead:v[5],weight:v[6],length:v[7],broker:v[8],source:v[9],factoring:v[10],pickup:day(v[11]),delivery:day(v[11]+2),window:v[12],age:3+i*4,contact:`loads@example.com`,commodity:v[2]==='Reefer'?'Упакованные продукты':'Паллетированный груз',notes:'Демонстрационный груз. Условия и доступность не подтверждены реальной площадкой.'}));
 }

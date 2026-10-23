@@ -1,4 +1,5 @@
 import {seedLoads} from './seed.js';
+import {driverPaySeed} from './fleet.js';
 import {defaultCosts,brokerDraft} from './domain.js';
 
 // Stable IDs make startup seeding additive: user edits and cancellations survive.
@@ -14,6 +15,9 @@ export function seedDemoData(db){
  ];
  for(const [id,name] of [['DRV-108','Alex Morgan'],['DRV-204','Daniel Brooks'],['DRV-302','Michael Davis'],['DRV-156','Sam Wilson'],['DRV-401','Jordan Miller'],['DRV-402','Casey Taylor']])db.prepare('INSERT OR IGNORE INTO drivers(id,name) VALUES(?,?)').run(id,name);
  for(const [id,equipment] of [['TRK-108','Dry Van'],['TRK-204','Reefer'],['TRK-302','Dry Van'],['TRK-156','Dry Van'],['TRK-401','Flatbed'],['TRK-402','Box Truck']])db.prepare('INSERT OR IGNORE INTO trucks(id,equipment) VALUES(?,?)').run(id,equipment);
+ // Demo per-mile pay is applied once (marker row), so a rate the user later clears stays cleared.
+ db.exec('CREATE TABLE IF NOT EXISTS seed_markers(key TEXT PRIMARY KEY)');
+ if(db.prepare("INSERT OR IGNORE INTO seed_markers VALUES('driver-pay')").run().changes)for(const [id,pay] of Object.entries(driverPaySeed))db.prepare('UPDATE drivers SET pay_per_mile=? WHERE id=? AND pay_per_mile IS NULL').run(pay,id);
  db.prepare('INSERT OR IGNORE INTO drivers(id,name,phone,location,equipment,availability,notes) VALUES(?,?,?,?,?,?,?)').run('DRV-501','Taylor Reed','+1 312 555 0151','Chicago, IL','Reefer','vacation','Демо: в отпуске, недоступен для назначений.');
  db.prepare('INSERT OR IGNORE INTO drivers(id,name,phone,location,equipment,availability,notes) VALUES(?,?,?,?,?,?,?)').run('DRV-502','Morgan Lee','+1 312 555 0152','Dallas, TX','Dry Van','off_duty','Демо: не на смене.');
  db.prepare('INSERT OR IGNORE INTO trucks(id,equipment,plate,location,availability,notes) VALUES(?,?,?,?,?,?)').run('TRK-501','Reefer','DEMO-501','Chicago, IL','maintenance','Демо: плановое обслуживание.');

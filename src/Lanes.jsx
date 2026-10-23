@@ -1,0 +1,49 @@
+import LoadingBoundary from './Loading.jsx';
+import React,{useState} from 'react';
+import {Repeat,Plus,Pencil,Trash2,ArrowRight,Save,X,CalendarDays,Truck,Search} from 'lucide-react';
+import SearchSelect from './SearchSelect.jsx';
+import BrokerFlags from './BrokerFlags.jsx';
+import {calculateProfit} from '../server/domain.js';
+import {money,number,date,counted} from './ui.js';
+
+const weekdays=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const blank={id:null,origin:'',destination:'',equipment:'Dry Van',broker:'',rate:'',miles:'',days:[1],startDate:new Date().toISOString().slice(0,10),endDate:'',contact:'',notes:'',active:true};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function weekRuns(lanes){const monday=new Date();monday.setHours(12,0,0,0);monday.setDate(monday.getDate()-((monday.getDay()+6)%7));return Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d}).flatMap(d=>lanes.filter(l=>l.active&&l.days.includes(((d.getDay()+6)%7)+1)&&l.start_date<=iso(d)&&(!l.end_date||l.end_date>=iso(d))).map(l=>({lane:l,date:iso(d)})))}
+
+// Dedicated (contract) lanes: fixed broker, rate and weekly schedule.
+export default function Lanes({state,busy,onSave,onDelete,onOpenLoad}){
+ const lanes=state.lanes||[],[editor,setEditor]=useState(null),[error,setError]=useState(''),[confirm,setConfirm]=useState(null);
+ const cities=[...new Set([...state.loads.flatMap(l=>[l.origin,l.destination]),...lanes.flatMap(l=>[l.origin,l.destination])])].sort();
+ const brokers=[...new Set([...(state.brokers||[]).filter(b=>b.type==='broker').map(b=>b.name),...lanes.map(l=>l.broker)])].sort();
+ const economics=l=>{try{return l.miles?calculateProfit(l.rate,l.miles,0,state.defaultCosts):null}catch{return null}};
+ const matches=l=>state.loads.filter(x=>x.origin===l.origin&&x.destination===l.destination&&x.equipment===l.equipment);
+ const active=lanes.filter(l=>l.active),runs=weekRuns(lanes),weekRevenue=runs.reduce((n,r)=>n+r.lane.rate,0),weekProfit=runs.reduce((n,r)=>n+(economics(r.lane)?.profit??0),0);
+ const edit=l=>{setError('');setEditor(l?{id:l.id,origin:l.origin,destination:l.destination,equipment:l.equipment,broker:l.broker,rate:l.rate,miles:l.miles??'',days:l.days,startDate:l.start_date,endDate:l.end_date,contact:l.contact,notes:l.notes,active:l.active}:{...blank})};
+ const update=(key,value)=>{setEditor(e=>({...e,[key]:value}));setError('')};
+ const toggleDay=d=>update('days',editor.days.includes(d)?editor.days.filter(x=>x!==d):[...editor.days,d].sort());
+ const submit=async e=>{e.preventDefault();if(busy)return;const result=await onSave(editor.id,{...editor,rate:Number(editor.rate),miles:editor.miles===''?null:Number(editor.miles)});if(result.ok)setEditor(null);else setError(result.error)};
+ return <LoadingBoundary loadKey={String(editor?.id??(editor?'new':''))} busy={busy}><section className="lanes-page">
+ <div className="radar-page-toolbar"><div><Repeat size={20}/><span><strong>{counted(active.length,'активная линия','активные линии','активных линий')}</strong><small>{counted(runs.length,'рейс','рейса','рейсов')} на этой неделе · {money(weekRevenue)} · прибыль {money(weekProfit)}</small></span></div><button className="button primary" disabled={busy} onClick={()=>edit(null)}><Plus size={14}/>Новая линия</button></div>
+ {editor&&<section className="panel radar-editor"><div className="settings-heading"><Repeat size={18}/><div><h2>{editor.id?'Редактирование линии':'Новая выделенная линия'}</h2></div><button className="icon-button" aria-label="Закрыть форму линии" disabled={busy} onClick={()=>setEditor(null)}><X size={17}/></button></div>
+  <form onSubmit={submit}><div className="radar-form-grid">
+   {[['origin','Откуда'],['destination','Куда']].map(([key,label])=><label key={key} className="form-label">{label}<input required list="lane-cities" maxLength={100} disabled={busy} value={editor[key]} onChange={e=>update(key,e.target.value)} placeholder="Город, штат"/></label>)}
+   <datalist id="lane-cities">{cities.map(c=><option key={c} value={c}/>)}</datalist>
+   <label className="form-label">Тип техники<SearchSelect aria-label="Тип техники линии" disabled={busy} value={editor.equipment} onChange={e=>update('equipment',e.target.value)}>{state.equipmentTypes.map(t=><option key={t} value={t}>{t}</option>)}</SearchSelect></label>
+   <label className="form-label">Брокер<input required list="lane-brokers" maxLength={120} disabled={busy} value={editor.broker} onChange={e=>update('broker',e.target.value)}/></label>
+   <datalist id="lane-brokers">{brokers.map(b=><option key={b} value={b}/>)}</datalist>
+   <label className="form-label">Ставка за рейс, $<input type="number" required min={0.01} max={100000} step="0.01" disabled={busy} value={editor.rate} onChange={e=>update('rate',e.target.value)}/></label>
+   <label className="form-label">Мили<input type="number" min={1} max={6000} step="1" disabled={busy} value={editor.miles} onChange={e=>update('miles',e.target.value)} placeholder="Оценим по городам"/></label>
+   <label className="form-label">Начало контракта<input type="date" required disabled={busy} value={editor.startDate} onChange={e=>update('startDate',e.target.value)}/></label>
+   <label className="form-label">Окончание<input type="date" disabled={busy} value={editor.endDate} onChange={e=>update('endDate',e.target.value)}/></label>
+   <fieldset className="form-label lane-days"><legend>Дни погрузки</legend><div>{weekdays.map((w,i)=><button type="button" key={w} aria-pressed={editor.days.includes(i+1)} className={editor.days.includes(i+1)?'active':''} disabled={busy} onClick={()=>toggleDay(i+1)}>{w}</button>)}</div></fieldset>
+   <label className="form-label">Состояние<SearchSelect aria-label="Состояние линии" disabled={busy} value={editor.active?'on':'off'} onChange={e=>update('active',e.target.value==='on')}><option value="on">Активна</option><option value="off">На паузе</option></SearchSelect></label>
+   <label className="form-label">Контакт брокера<input maxLength={160} disabled={busy} value={editor.contact} onChange={e=>update('contact',e.target.value)} placeholder="Email или телефон"/></label>
+   <label className="form-label">Примечание<input maxLength={1000} disabled={busy} value={editor.notes} onChange={e=>update('notes',e.target.value)}/></label>
+  </div>{error&&<p className="chat-error" role="alert">{error}</p>}<div className="radar-editor-actions"><span>{editor.days.length} рейс. в неделю</span><button type="button" className="button secondary" disabled={busy} onClick={()=>setEditor(null)}>Отмена</button><button type="submit" className="button primary" disabled={busy}><Save size={14}/>{busy?'Сохраняем…':'Сохранить линию'}</button></div></form></section>}
+ {runs.length>0&&<section className="panel lane-week"><h2><CalendarDays size={16}/>Рейсы на этой неделе</h2><div>{runs.map((r,i)=><span key={i} className={r.date<iso(new Date())?'past':''}><strong>{date(r.date)}</strong>{r.lane.origin.split(',')[0]} → {r.lane.destination.split(',')[0]}<small>{money(r.lane.rate)} · {r.lane.broker}</small></span>)}</div></section>}
+ <section className="panel"><div className="dense-table-wrap"><table className="dense-table lanes-table"><thead><tr><th>Линия</th><th>Брокер</th><th>Расписание</th><th className="numeric">Ставка</th><th className="numeric">RPM</th><th className="numeric">Прибыль за рейс</th><th className="numeric">В неделю</th><th>Контракт</th><th>На доске</th><th/></tr></thead><tbody>{lanes.map(l=>{const c=economics(l),found=matches(l);return <tr key={l.id} className={l.active?'':'lane-paused'}><td><strong className="lane-route">{l.origin}<ArrowRight size={12}/>{l.destination}</strong><small><Truck size={11}/>{l.equipment}{l.miles?` · ${number(l.miles)} mi`:''}{!l.active&&' · на паузе'}</small></td><td>{l.broker}<BrokerFlags state={state} name={l.broker}/>{l.contact&&<small>{l.contact}</small>}</td><td><span className="lane-day-chips">{weekdays.map((w,i)=><i key={w} className={l.days.includes(i+1)?'on':''}>{w}</i>)}</span></td><td className="numeric amount">{money(l.rate)}</td><td className="numeric">{c?'$'+c.rpm.toFixed(2):'—'}</td><td className={'numeric '+(c&&c.profit<0?'negative':'profit')}>{c?money(c.profit):'—'}</td><td className="numeric">{money(l.rate*l.days.length)}<small>{l.days.length}× в неделю</small></td><td>{date(l.start_date)} — {l.end_date?date(l.end_date):'без срока'}</td><td>{found.length?<button className="fleet-bookings" onClick={()=>onOpenLoad(found[0])}>{counted(found.length,'груз','груза','грузов')}<small>{money(found[0].rate)} · {found[0].source}</small></button>:<span className="muted">Нет</span>}</td><td className="row-actions"><button className="icon-button" aria-label={'Редактировать линию '+l.origin+' — '+l.destination} disabled={busy} onClick={()=>edit(l)}><Pencil size={14}/></button>{confirm===l.id?<span className="lane-confirm">Удалить?<button className="text-button danger" disabled={busy} onClick={async()=>{const r=await onDelete(l.id);setConfirm(null);if(!r.ok)setError(r.error)}}>Да</button><button className="text-button" onClick={()=>setConfirm(null)}>Нет</button></span>:<button className="icon-button" aria-label={'Удалить линию '+l.origin+' — '+l.destination} disabled={busy} onClick={()=>setConfirm(l.id)}><Trash2 size={14}/></button>}</td></tr>})}</tbody></table></div>
+ {!lanes.length&&<div className="fleet-empty"><Search size={20}/>Нет выделенных линий. Добавьте контрактную линию с брокером.</div>}{error&&!editor&&<p className="chat-error" role="alert">{error}</p>}
+ <div className="pagination"><span>{counted(lanes.length,'линия','линии','линий')}</span><span className="toolbar-muted">Прибыль за рейс — по расходам из настроек, без пустого пробега</span></div></section>
+ </section></LoadingBoundary>
+}

@@ -10,7 +10,7 @@ test('default startup seed is populated, additive and preserves edits after reop
  try{
   ({db}=createApp(file));
   const counts=()=>Object.fromEntries(['loads','offers','trips','messages'].map(t=>[t,db.prepare(`SELECT count(*) AS n FROM ${t}`).get().n]));
-  const original=counts();assert.deepEqual(original,{loads:12,offers:10,trips:6,messages:26});
+  const original=counts();assert.deepEqual(original,{loads:14,offers:10,trips:6,messages:30});
   db.prepare("UPDATE offers SET draft=?,status='cancelled' WHERE id='seed-offer-LD-2042'").run('A user-edited draft that must remain unchanged');
   db.prepare("UPDATE trips SET status='delivered' WHERE id='seed-trip-LD-2046'").run();
   db.prepare("UPDATE messages SET body='Edited seeded message',read_at='2026-10-22T00:00:00Z' WHERE id='seed-message-LD-2041-1'").run();

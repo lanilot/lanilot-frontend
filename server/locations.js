@@ -7,4 +7,5 @@ export const locations={
  'Nashville, TN':[-86.7816,36.1627], 'Phoenix, AZ':[-112.074,33.4484],
  'Charlotte, NC':[-80.8431,35.2271], 'Indianapolis, IN':[-86.1581,39.7684],
  'Milwaukee, WI':[-87.9065,43.0389], 'Detroit, MI':[-83.0458,42.3314],
+ 'St. Louis, MO':[-90.1994,38.627],
 };

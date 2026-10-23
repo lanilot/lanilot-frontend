@@ -1,0 +1,129 @@
+/* Rate source, broker flags, export, lanes, broker check and ELD map. Same palette as styles.css. */
+.rate-source{display:block;margin-top:2px;font-size:8px;font-weight:500;color:#9aa6b8;letter-spacing:.02em}
+.load-card-price .rate-source{display:inline;margin:0 0 0 6px}
+.rate-source-line{display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:-4px 0 10px;padding:8px 10px;border-radius:7px;background:#f4f7fd;font-size:10px;color:#6d7b92}
+.rate-source-line strong{color:#2858ef;font-size:11px}
+.rate-source-line small{grid-column:1/-1;font-size:9px;color:#97a3b6}
+.field-hint{display:block;margin-top:6px;font-size:9px;line-height:1.4;color:#9aa6b8}
+
+.broker-flags{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle}
+.broker-flag{display:inline-flex;align-items:center;gap:3px;height:16px;padding:0 5px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.broker-flag.dnu{background:#fff0f2;color:#dc4a60;border:1px solid #f6c9d1}
+.broker-flag.fg{background:#fff7e8;color:#b7791f;border:1px solid #f1dcb0}
+.broker-warning{display:grid;gap:8px;margin:10px 0;padding:10px 12px;border-radius:8px;background:#fff6f7;border:1px solid #f5d2d9}
+.broker-warning p{display:flex;gap:8px;margin:0;font-size:10px;line-height:1.45;color:#7b4a55}
+.broker-warning p svg{flex:none;color:#dc4a60;margin-top:1px}
+.broker-warning strong{display:block;color:#b8384f;font-size:11px}
+.broker-warning .text-button,.broker-check-link{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#2858ef;font-weight:600}
+.broker-check-link{margin:8px 0 4px}
+.assistant-load-cards .broker-warning{margin:6px 0 8px}
+.assistant-risk-note{color:#b8384f;font-weight:500}
+.source-found{display:grid}
+.source-found strong{color:#2858ef}
+.source-found small{font-size:9px;color:#9aa6b8}
+
+.export-dialog .load-filters-body{display:grid;gap:14px}
+.export-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0;padding:0;border:0}
+.export-choice.compact{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+.export-choice legend{grid-column:1/-1;margin-bottom:7px;font-size:10px;color:#8b9fbb}
+.export-choice label{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;border:1px solid #e3e9f2;border-radius:8px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.export-choice label.active{border-color:#2858ef;background:#f3f6ff}
+.export-choice input{margin-top:2px;accent-color:#2858ef}
+.export-choice strong{display:flex;align-items:center;gap:5px;font-size:11px;color:#242d3d}
+.export-choice small{display:block;margin-top:3px;font-size:9px;line-height:1.4;color:#8691a3}
+.export-summary{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 12px;border-radius:8px;background:#f4f7fd;font-size:10px;color:#6d7b92}
+.export-summary strong{color:#242d3d}
+
+.lanes-page,.brokers-page,.fleet-map-page{display:grid;gap:14px}
+.lane-week{padding:14px 16px}
+.lane-week h2,.broker-history h2{display:flex;align-items:center;gap:7px;margin:0 0 10px;font-size:12px}
+.lane-week>div{display:flex;flex-wrap:wrap;gap:8px}
+.lane-week span{display:grid;gap:2px;min-width:150px;padding:8px 10px;border-radius:8px;border:1px solid #e3e9f2;font-size:10px}
+.lane-week span strong{color:#2858ef}
+.lane-week span small{color:#8691a3;font-size:9px}
+.lane-week span.past{opacity:.5}
+.lane-route{display:inline-flex;align-items:center;gap:5px}
+.lanes-table small{display:flex;align-items:center;gap:4px;color:#8691a3;font-size:9px;margin-top:2px}
+.lanes-table td.numeric small{justify-content:flex-end}
+.lane-paused td{opacity:.55}
+.lane-day-chips{display:inline-flex;gap:2px}
+.lane-day-chips i{display:grid;place-items:center;width:19px;height:19px;border-radius:5px;background:#f2f4f7;color:#b2bccb;font-style:normal;font-size:8px;font-weight:600}
+.lane-day-chips i.on{background:#e9efff;color:#2858ef}
+.lane-days{border:0;padding:0;margin:22px 0}
+.lane-days legend{font-size:10px;color:#8b9fbb;padding:0}
+.lane-days div{display:flex;gap:4px;margin-top:8px}
+.lane-days button{width:34px;height:32px;border-radius:7px;border:1px solid #e3e9f2;background:#fff;font-size:10px;color:#6d7b92;cursor:pointer}
+.lane-days button.active{background:#2858ef;border-color:#2858ef;color:#fff}
+.lane-confirm{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#b8384f}
+.lane-confirm .text-button{font-size:10px;font-weight:600}
+.lane-confirm .text-button.danger{width:auto;margin:0;color:#dc4a60}
+
+.broker-search{padding:16px}
+.broker-search .settings-heading p{margin:2px 0 0;font-size:10px;color:#8691a3}
+.broker-search form{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.broker-search .field-icon{flex:1;min-width:220px}
+.broker-result{padding:16px;border-left:3px solid #c9d2e0}
+.broker-result.verdict-ok{border-left-color:#179965}
+.broker-result.verdict-caution{border-left-color:#e0a23a}
+.broker-result.verdict-stop{border-left-color:#dc4a60}
+.broker-result header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.broker-result header>div{flex:1;min-width:180px}
+.broker-result h2{margin:0;font-size:15px}
+.broker-result header small{font-size:10px;color:#8691a3}
+.broker-result-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#f0f4fd;color:#2858ef}
+.broker-verdict{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;font-size:11px;font-weight:600}
+.broker-verdict.verdict-ok{background:#eaf9f0;color:#179965}
+.broker-verdict.verdict-caution{background:#fff7e8;color:#b7791f}
+.broker-verdict.verdict-stop{background:#fff0f2;color:#dc4a60}
+.broker-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0 0}
+.broker-facts div{padding:10px 12px;border-radius:8px;background:#f8fafd}
+.broker-facts dt{font-size:9px;color:#8691a3;text-transform:uppercase;letter-spacing:.06em}
+.broker-facts dd{margin:5px 0 0;font-size:12px;font-weight:600;color:#242d3d}
+.broker-facts dd.negative{color:#dc4a60}
+.broker-facts dd small{display:block;margin-top:3px;font-size:9px;font-weight:400;line-height:1.4;color:#8691a3}
+.broker-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.broker-dnu-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-top:10px}
+.broker-dnu-form .form-label{flex:1;min-width:200px;margin:0}
+.button.danger-outline{color:#dc4a60;border-color:#f3c4cd}
+.brokers-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(240px,1fr);gap:14px;align-items:start}
+.brokers-table tbody tr{cursor:pointer}
+.brokers-table small{display:block;font-size:9px;color:#8691a3}
+.broker-history{padding:14px 16px;display:grid;gap:6px}
+.broker-history button{display:grid;justify-items:start;gap:2px;text-align:left;padding:8px 10px;border-radius:7px;border:1px solid #edf1f6;background:#fff;cursor:pointer;font-size:11px}
+.broker-history button:hover{border-color:#c9d6f5}
+.broker-history small{font-size:9px;color:#8691a3}
+
+.eld-note{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.eld-note>span:first-of-type{flex:1;min-width:240px}
+.eld-updated{font-size:10px;color:#8691a3}
+.eld-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#b2bccb;flex:none}
+.eld-dot.driving{background:#179965}.eld-dot.on_duty{background:#2858ef}.eld-dot.off_duty{background:#9aa6b8}.eld-dot.maintenance{background:#e0a23a}.eld-dot.inactive{background:#dc4a60}
+.fleet-map-layout{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:14px;min-height:560px}
+.eld-list{padding:8px;display:flex;flex-direction:column;gap:4px;max-height:640px;overflow:auto}
+.eld-unit{display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px;border:1px solid transparent;border-radius:8px;background:none;text-align:left;cursor:pointer}
+.eld-unit:hover{background:#f6f8fc}
+.eld-unit.selected{border-color:#c9d6f5;background:#f3f6ff}
+.eld-unit .eld-dot{margin-top:4px}
+.eld-unit-main{display:grid;gap:3px;min-width:0;font-size:10px;color:#6d7b92}
+.eld-unit-main strong{display:flex;align-items:baseline;gap:6px;font-size:12px;color:#242d3d}
+.eld-unit-main strong small{font-size:10px;font-weight:500;color:#6d7b92}
+.eld-unit-status,.eld-unit-trip,.eld-unit-hos{display:flex;align-items:center;gap:4px}
+.eld-unit-main>small{font-size:9px;color:#a6b1c2}
+.eld-map{position:relative;overflow:hidden;min-height:560px}
+.eld-map-canvas{position:absolute;inset:0}
+.eld-map-card{position:absolute;left:12px;bottom:12px;z-index:500;display:grid;gap:4px;max-width:300px;padding:12px 14px;border-radius:10px;background:#fff;border:1px solid #e4e9f1;box-shadow:0 10px 30px #2237581f;font-size:10px;color:#6d7b92}
+.eld-map-card strong{display:flex;align-items:center;gap:6px;font-size:12px;color:#242d3d}
+.eld-map-card .button{justify-self:start;margin-top:4px}
+.eld-pin-host{background:none;border:0}
+.eld-pin{position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#fff;border:3px solid #9aa6b8;box-shadow:0 4px 12px #2237582e}
+.eld-pin b{font-size:9px;font-weight:700;color:#242d3d}
+.eld-pin.driving{border-color:#179965}.eld-pin.on_duty{border-color:#2858ef}.eld-pin.maintenance{border-color:#e0a23a}.eld-pin.inactive{border-color:#dc4a60;opacity:.75}
+.eld-pin i{position:absolute;inset:-9px;pointer-events:none}
+.eld-pin i::before{content:"";position:absolute;left:50%;top:0;margin-left:-5px;border:5px solid transparent;border-bottom:7px solid #179965;border-top:0}
+
+@media (max-width:900px){
+ .brokers-grid,.fleet-map-layout{grid-template-columns:1fr}
+ .eld-list{max-height:280px}
+ .eld-map{min-height:420px}
+ .export-choice{grid-template-columns:1fr}
+}
