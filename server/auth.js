@@ -66,7 +66,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  };
 
  // New company with its owner; the profile starts from the sign-up answers, with or without the demo workspace.
- const createAccount=({name,company,email,password,demo,phone='',city=''})=>{
+ const createAccount=({name,company,email,password,demo,phone='',city='',profile={},operations})=>{
   const userId='usr-'+randomBytes(8).toString('hex'),companyId='co-'+randomBytes(8).toString('hex'),now=new Date().toISOString();
   raw.exec('BEGIN IMMEDIATE');try{
    raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(companyId,uniqueSlug(db,cleanName(company)),cleanName(company),demo?1:0,now);
@@ -74,7 +74,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
    raw.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(userId,companyId,'owner',now);raw.exec('COMMIT');
   }catch(e){raw.exec('ROLLBACK');throw e}
   seedCompany({id:companyId,demo:demo?1:0});
-  asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim(),...(phone?{phone}:{}),...(city?{city}:{})};db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
+  asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim(),...(phone?{phone}:{}),...(city?{city}:{}),...profile};if(operations)s.operations=operations;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
   return {userId,companyId};
  };
  const register=app=>{

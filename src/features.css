@@ -158,3 +158,12 @@
 .provider-vars{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 0}
 .provider-vars code{font-size:9px;padding:3px 6px;border-radius:5px;background:#f2f4f7;color:#4c5870}
 .provider-badge{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:5px;font-size:8px;font-weight:700;background:#e9efff;color:#2858ef;vertical-align:middle}
+
+/* Company settings */
+.settings-panel.span-2{grid-column:1/-1}
+.settings-fields.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.settings-facts{display:grid;gap:0;margin:0 0 16px;font-size:12px}
+.settings-facts div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf1f7}
+.settings-facts dt{color:#8b9ab0}.settings-facts dd{margin:0;font-weight:600;color:#263c5d;overflow-wrap:anywhere;text-align:right}
+@media(max-width:1000px){.settings-fields.three{grid-template-columns:1fr 1fr}}
+@media(max-width:767px){.settings-panel.span-2{grid-column:auto}.settings-fields.three{grid-template-columns:1fr}}

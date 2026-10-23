@@ -62,7 +62,7 @@ export function installOnboarding(app,db,{enabled,onAppHost,limited,fail,createA
   const {password,demo=true}=req.body??{};if(!validPassword(password)||typeof demo!=='boolean')return res.status(400).json({error:'Пароль: от 8 символов'});
   const key='signup|'+req.ip;if(limited(key,5,3600000))return res.status(429).json({error:'Слишком много регистраций. Попробуйте через час.'});
   const d=JSON.parse(l.data);if(emailTaken(d.contact.email))return res.status(409).json({error:'Аккаунт с таким email уже есть. Войдите в кабинет.'});
-  fail(key);const {userId,companyId}=createAccount({name:d.contact.name,email:d.contact.email,phone:d.contact.phone,company:d.company.company,city:d.company.city,password,demo});
+  fail(key);const {userId,companyId}=createAccount({name:d.contact.name,email:d.contact.email,phone:d.contact.phone,company:d.company.company,city:d.company.city,password,demo,profile:{businessType:d.company.role,mc:d.company.mc},operations:{fleetSize:d.fleet.fleetSize,equipment:d.fleet.equipment,loadBoards:d.work.loadBoards,eld:d.work.eld,goals:d.work.goals}});
   const t=now();raw.prepare("UPDATE signup_leads SET status='completed',step=?,company_id=?,user_id=?,data=?,updated_at=?,completed_at=? WHERE id=?").run(onboardingSteps.length,companyId,userId,JSON.stringify({...d,account:{demo}}),t,t,l.id);
   event(l.id,'account_created');startSession(res,req,userId,companyId);res.status(201).json({ok:true});
  });

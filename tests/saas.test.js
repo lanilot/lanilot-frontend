@@ -187,7 +187,8 @@ test('step-by-step onboarding saves each step, records the funnel and creates th
   assert.equal((await call(p,'POST',`/onboarding/${t}/complete`,{body:{password:'short'}})).status,400);
   const done=await call(p,'POST',`/onboarding/${t}/complete`,{body:{password:'roadrunner1',demo:false}});assert.equal(done.status,201);
   const tenant=(await call(p,'GET','/tenant',{cookie:done.cookie})).data;assert.equal(tenant.company.name,'Road Runner LLC');
-  const settings=(await call(p,'GET','/state',{cookie:done.cookie})).data.settings.company;assert.equal(settings.city,'Dallas, TX');assert.equal(settings.contactName,'Rita Road');
+  const settings=(await call(p,'GET','/state',{cookie:done.cookie})).data.settings.company;assert.equal(settings.city,'Dallas, TX');assert.equal(settings.mc,'123456');assert.equal(settings.businessType,'fleet');
+  const ops=(await call(p,'GET','/state',{cookie:done.cookie})).data.settings.operations;assert.equal(ops.fleetSize,'6-20');assert.deepEqual(ops.equipment,['Reefer','Dry Van']);assert.equal(ops.eld,'samsara');assert.equal(settings.contactName,'Rita Road');
   assert.equal((await call(p,'GET','/onboarding/'+t)).status,404);
   assert.equal((await call(p,'POST','/auth/login',{body:{email:'rita@road.test',password:'roadrunner1'}})).status,200);
   // A second lead that stops after the contact step shows up as unfinished.

@@ -5,7 +5,8 @@ import {installAttachments,seedAttachments,registerAttachmentRoutes,attachmentSt
 import {installDocuments,seedDocuments,registerDocumentRoutes,documentMetadata,documentKinds} from './documents.js';
 import {installRadar,seedRadars,listRadars,registerRadarRoutes} from './radar.js';
 import {installFleet,registerFleetRoutes,assignmentAvailabilityError,equipmentTypes,driverAvailability,truckAvailability} from './fleet.js';
-import {defaultSettings,validateSettings,timezones} from './settings.js';
+import {defaultSettings,validateSettings,normalizeSettings,timezones} from './settings.js';
+import {onboardingOptions} from './onboarding.js';
 import express from 'express';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync,existsSync} from 'node:fs';
@@ -17,7 +18,7 @@ import {installLanes,seedLanes,listLanes,registerLaneRoutes} from './lanes.js';
 import {registerEldRoutes,eldProvider} from './eld.js';
 import {installProviderStatus} from './providers.js';
 import {listProviders,registerProviderRoutes,activeFactoring,factoringPresets} from './factoring.js';
-import {installTenancy,tenantizeTables,asCompany,listCompanies,tenantEnv,DEFAULT_COMPANY} from './tenancy.js';
+import {installTenancy,tenantizeTables,asCompany,listCompanies,tenantEnv,currentTenant,companyById,DEFAULT_COMPANY} from './tenancy.js';
 import {installAuth} from './auth.js';
 
 // One database, many companies: see tenancy.js. Startup (schema, migrations, seeds) runs as the primary company.
@@ -43,7 +44,7 @@ function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANI
  db.exec(`CREATE TABLE IF NOT EXISTS trip_history(id TEXT PRIMARY KEY,trip_id TEXT NOT NULL REFERENCES trips(id),action TEXT NOT NULL,status TEXT NOT NULL,reason TEXT,created_at TEXT NOT NULL);`);
  db.exec(`CREATE TABLE IF NOT EXISTS settings(id TEXT PRIMARY KEY,data TEXT NOT NULL);`);
  db.prepare('INSERT OR IGNORE INTO settings VALUES(?,?)').run('workspace',JSON.stringify(defaultSettings));
- const readSettings=()=>JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);
+ const readSettings=()=>normalizeSettings(JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data));
  {const s=readSettings();if(s.costs?.driverPerMile===0.65){s.costs.driverPerMile=defaultCosts.driverPerMile;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))}}
  const integrationVault=installIntegrations(db,dbPath,integrationOptions);installFinances(db);installDocuments(db);installAttachments(db);
  installRadar(db);installBrokers(db);installProviderStatus(db);installLanes(db);
@@ -64,8 +65,10 @@ function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANI
  const offerById=id=>db.prepare('SELECT * FROM offers WHERE id=?').get(id);
  const enrichedOffer=o=>({...o,costs:JSON.parse(o.costs),load:loadById(o.load_id)});
  const findMessageKey=(key,loadId,res,sender,body)=>{const msg=db.prepare('SELECT * FROM messages WHERE client_key=?').get(key);if(msg){const matches=msg.load_id===loadId&&msg.sender===sender&&(body===undefined||msg.body===body);res.status(matches?200:409).json(matches?msg:{error:'Ключ сообщения уже использован с другими данными'});return true}return false};
- app.put('/api/settings',(req,res,next)=>{try{const settings=validateSettings(req.body);db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(settings));res.json(settings)}catch(e){next(e)}});
- app.get('/api/state' ,(req,res)=>res.json({providers:listProviders(db,integrationVault),brokers:listBrokers(db),brokerChecks:listBrokerChecks(db),factoringProvider:activeFactoring(integrationVault)?factoringPresets[activeFactoring(integrationVault)].name:factoringProvider,lanes:listLanes(db),eldProvider,telegram:telegram.state(),integrations:listIntegrations(db,integrationVault),finances:listFinances(db),paymentStatuses,attachments:attachmentState(db),documents:db.prepare(`SELECT ${documentMetadata} FROM documents ORDER BY created_at DESC,id`).all(),documentKinds,radars:listRadars(db,db.prepare('SELECT data FROM loads').all().map(r=>JSON.parse(r.data))),loads:db.prepare('SELECT data FROM loads').all().map(r=>enrichLoad(JSON.parse(r.data))),offers:db.prepare('SELECT * FROM offers ORDER BY created_at DESC').all().map(enrichedOffer),drivers:db.prepare('SELECT * FROM drivers').all(),trucks:db.prepare('SELECT * FROM trucks').all(),trips:db.prepare('SELECT * FROM trips ORDER BY created_at DESC').all().map(t=>({...t,history:db.prepare('SELECT * FROM trip_history WHERE trip_id=? ORDER BY created_at,id').all(t.id),pickup:t.pickup||loadById(t.load_id).pickup,delivery:t.delivery||loadById(t.load_id).delivery,load:{...loadById(t.load_id),pickup:t.pickup||loadById(t.load_id).pickup,delivery:t.delivery||loadById(t.load_id).delivery},offer:enrichedOffer(offerById(t.offer_id))})),messages:db.prepare('SELECT * FROM messages ORDER BY created_at,id').all(),equipmentTypes,driverAvailability,truckAvailability,defaultCosts:readSettings().costs,settings:readSettings(),timezones,demo:true}));
+ app.put('/api/settings',(req,res,next)=>{try{const settings=validateSettings(req.body);db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(settings));
+  // The company name is also the workspace name in the sidebar, on sign-in and in invitations.
+  db.raw.prepare('UPDATE companies SET name=? WHERE id=?').run(settings.company.name,currentTenant()?.companyId??DEFAULT_COMPANY);res.json(settings)}catch(e){next(e)}});
+ app.get('/api/state' ,(req,res)=>res.json({providers:listProviders(db,integrationVault),brokers:listBrokers(db),brokerChecks:listBrokerChecks(db),factoringProvider:activeFactoring(integrationVault)?factoringPresets[activeFactoring(integrationVault)].name:factoringProvider,lanes:listLanes(db),eldProvider,telegram:telegram.state(),integrations:listIntegrations(db,integrationVault),finances:listFinances(db),paymentStatuses,attachments:attachmentState(db),documents:db.prepare(`SELECT ${documentMetadata} FROM documents ORDER BY created_at DESC,id`).all(),documentKinds,radars:listRadars(db,db.prepare('SELECT data FROM loads').all().map(r=>JSON.parse(r.data))),loads:db.prepare('SELECT data FROM loads').all().map(r=>enrichLoad(JSON.parse(r.data))),offers:db.prepare('SELECT * FROM offers ORDER BY created_at DESC').all().map(enrichedOffer),drivers:db.prepare('SELECT * FROM drivers').all(),trucks:db.prepare('SELECT * FROM trucks').all(),trips:db.prepare('SELECT * FROM trips ORDER BY created_at DESC').all().map(t=>({...t,history:db.prepare('SELECT * FROM trip_history WHERE trip_id=? ORDER BY created_at,id').all(t.id),pickup:t.pickup||loadById(t.load_id).pickup,delivery:t.delivery||loadById(t.load_id).delivery,load:{...loadById(t.load_id),pickup:t.pickup||loadById(t.load_id).pickup,delivery:t.delivery||loadById(t.load_id).delivery},offer:enrichedOffer(offerById(t.offer_id))})),messages:db.prepare('SELECT * FROM messages ORDER BY created_at,id').all(),equipmentTypes,driverAvailability,truckAvailability,defaultCosts:readSettings().costs,settings:readSettings(),timezones,companyOptions:onboardingOptions,workspace:(({slug,plan,status,created_at})=>({slug,plan,status,createdAt:created_at}))(companyById(db,currentTenant()?.companyId??DEFAULT_COMPANY)??{}),demo:true}));
  app.get('/api/loads/:id/route',(req,res)=>{
   const l=loadById(req.params.id);if(!l)return res.status(404).json({error:'Груз не найден'});
   const file=new URL('./routes.json',import.meta.url);const cache=existsSync(file)?JSON.parse(readFileSync(file,'utf8')):{};

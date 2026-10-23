@@ -19,13 +19,13 @@ const labels={
  eld:{samsara:()=>'Samsara',motive:()=>'Motive',other:()=>__('Другой'),none:()=>__('Нет ELD')},
  goals:{find_loads:()=>__('Быстрее находить грузы'),profit:()=>__('Контроль прибыли рейсов'),team:()=>__('Работа команды диспетчеров'),brokers:()=>__('Переписка с брокерами'),documents:()=>__('Документы и оплаты')}
 };
-const label=(group,value)=>labels[group]?.[value]?.()??value;
+export const label=(group,value)=>labels[group]?.[value]?.()??value;
 const empty={contact:{name:'',email:'',phone:''},company:{company:'',role:'',mc:'',city:''},fleet:{fleetSize:'',equipment:[]},work:{loadBoards:[],eld:'',goals:[]}};
 async function request(method,path,body){const r=await fetch('/api/onboarding'+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error?translateDeep(d.error):__('Ошибка сервера')),{status:r.status});return d}
 const storage={get:()=>{try{return localStorage.getItem(STORE)}catch{return null}},set:v=>{try{v?localStorage.setItem(STORE,v):localStorage.removeItem(STORE)}catch{}}};
 function source(){const p=new URLSearchParams(window.location.search);if(p.get('utm_source'))return [p.get('utm_source'),p.get('utm_campaign')].filter(Boolean).join(' / ');try{return document.referrer?new URL(document.referrer).host:''}catch{return ''}}
 
-function Choice({group,options,value,onChange,multi,cards}){
+export function Choice({group,options,value,onChange,multi,cards}){
  const active=v=>multi?value.includes(v):value===v;
  const toggle=v=>onChange(multi?(value.includes(v)?value.filter(x=>x!==v):[...value,v]):v);
  return <div className={cards?'ob-cards':'ob-chips'} role="group">{options.map(v=><button type="button" key={v} aria-pressed={active(v)} className={active(v)?'active':''} onClick={()=>toggle(v)}>{cards&&<i>{active(v)&&<Check size={12}/>}</i>}{label(group,v)}</button>)}</div>;
