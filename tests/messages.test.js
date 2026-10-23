@@ -8,13 +8,13 @@ import {createApp} from '../server/app.js';
 test('default startup seed is populated, additive and preserves edits after reopening',()=>{
  const dir=mkdtempSync(path.join(tmpdir(),'lanilot-seed-')),file=path.join(dir,'test.sqlite');let db;
  try{
-  ({db}=createApp(file));
+  ({db}=createApp(file,{auth:false}));
   const counts=()=>Object.fromEntries(['loads','offers','trips','messages'].map(t=>[t,db.prepare(`SELECT count(*) AS n FROM ${t}`).get().n]));
   const original=counts();assert.deepEqual(original,{loads:14,offers:10,trips:6,messages:30});
   db.prepare("UPDATE offers SET draft=?,status='cancelled' WHERE id='seed-offer-LD-2042'").run('A user-edited draft that must remain unchanged');
   db.prepare("UPDATE trips SET status='delivered' WHERE id='seed-trip-LD-2046'").run();
   db.prepare("UPDATE messages SET body='Edited seeded message',read_at='2026-10-22T00:00:00Z' WHERE id='seed-message-LD-2041-1'").run();
-  db.close();({db}=createApp(file));assert.deepEqual(counts(),original);
+  db.close();({db}=createApp(file,{auth:false}));assert.deepEqual(counts(),original);
   assert.equal(db.prepare("SELECT draft FROM offers WHERE id='seed-offer-LD-2042'").get().draft,'A user-edited draft that must remain unchanged');
   assert.equal(db.prepare("SELECT status FROM offers WHERE id='seed-offer-LD-2042'").get().status,'cancelled');
   assert.equal(db.prepare("SELECT status FROM trips WHERE id='seed-trip-LD-2046'").get().status,'delivered');
@@ -23,7 +23,7 @@ test('default startup seed is populated, additive and preserves edits after reop
 });
 
 test('chat validates messages, deduplicates retries and keeps simulated replies separate from booking',async()=>{
- const {app,db}=createApp();const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ const {app,db}=createApp(':memory:',{auth:false});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const base=`http://127.0.0.1:${server.address().port}/api`;
  const call=async(p,m='GET',body)=>{const r=await fetch(base+p,{method:m,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json()}};
  try{
@@ -45,7 +45,7 @@ test('chat validates messages, deduplicates retries and keeps simulated replies 
 });
 
 test('every demo load has coordinates and a cached road route, unknown IDs return 404',async()=>{
- const {app,db}=createApp();const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ const {app,db}=createApp(':memory:',{auth:false});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const base=`http://127.0.0.1:${server.address().port}/api`;
  try{
   const state=await(await fetch(base+'/state')).json();

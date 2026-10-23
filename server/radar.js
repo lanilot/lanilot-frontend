@@ -27,6 +27,6 @@ export function registerRadarRoutes(app,db){
   res.status(old?200:201).json({id});
  }catch(e){next(e)}};
  app.post('/api/radars',save);app.put('/api/radars/:id',save);
- app.patch('/api/radars/:id',(req,res)=>{if(typeof req.body?.enabled!=='boolean')return res.status(400).json({error:'Укажите состояние радара'});const r=db.prepare('UPDATE radars SET enabled=?,updated_at=? WHERE id=?').run(Number(req.body.enabled),new Date().toISOString(),req.params.id);if(!r.changes)return res.status(404).json({error:'Радар не найден'});res.json({ok:true})});
+ app.patch('/api/radars/:id',(req,res)=>{if(typeof req.body?.enabled!=='boolean')return res.status(400).json({error:'Укажите состояние радара'});if(!db.prepare('SELECT id FROM radars WHERE id=?').get(req.params.id))return res.status(404).json({error:'Радар не найден'});db.prepare('UPDATE radars SET enabled=?,updated_at=? WHERE id=?').run(Number(req.body.enabled),new Date().toISOString(),req.params.id);res.json({ok:true})});
  app.get('/api/radars/:id/results',(req,res)=>{const r=db.prepare('SELECT * FROM radars WHERE id=?').get(req.params.id);if(!r)return res.status(404).json({error:'Радар не найден'});const loads=db.prepare('SELECT data FROM loads').all().map(row=>JSON.parse(row.data));res.json({id:r.id,enabled:!!r.enabled,loads:matchingLoads(r,loads),checkedAt:new Date().toISOString(),demo:true})});
 }

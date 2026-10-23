@@ -1,3 +1,4 @@
+import {currentTenant} from './tenancy.js';
 // ELD fleet positions. Until an ELD provider (Samsara, Motive…) is connected, positions are simulated:
 // trucks on in-transit trips move along the cached road route by the trip's schedule, others stay parked.
 import {readFileSync,existsSync} from 'node:fs';
@@ -64,12 +65,12 @@ async function liveSnapshot(db,context,ids){
   providers:ids.map((id,i)=>({id,name:eldProviders[id].name,ok:results[i].status==='fulfilled',count:results[i].status==='fulfilled'?results[i].value.length:0,error:results[i].status==='rejected'?errorText(results[i].reason):null}))};
 }
 export function registerEldRoutes(app,db,context={env:process.env}){
- let cache=null;
+ const caches=new Map();
  app.get('/api/eld/positions',async(req,res)=>{
   const ids=configuredEld(context);
   if(!ids.length)return res.json({...eldSnapshot(db),providers:[]});
-  const key=ids.join(',');
-  if(!cache||cache.key!==key||Date.now()-cache.at>CACHE_MS)cache={key,at:Date.now(),data:await liveSnapshot(db,context,ids)};
+  const key=ids.join(','),company=currentTenant()?.companyId??'';let cache=caches.get(company);
+  if(!cache||cache.key!==key||Date.now()-cache.at>CACHE_MS){cache={key,at:Date.now(),data:await liveSnapshot(db,context,ids)};caches.set(company,cache)}
   res.json(cache.data);
  });
 }

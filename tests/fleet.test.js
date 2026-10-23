@@ -7,7 +7,7 @@ import {createApp} from '../server/app.js';
 test('fleet CRUD validates data, preserves assignments on rename and blocks unavailable resources across trip actions',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'lanilot-fleet-'));let db,server;
  try{
- let app;({app,db}=createApp(join(dir,'test.sqlite')));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ let app;({app,db}=createApp(join(dir,'test.sqlite'),{auth:false}));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,m='GET',b)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return {status:r.status,data:await r.json()}};
  const initial=(await call('/state')).data;assert.equal(initial.drivers.length,8);assert.equal(initial.trucks.length,8);assert.equal(initial.drivers.find(d=>d.id==='DRV-501').availability,'vacation');assert.equal(initial.trucks.find(t=>t.id==='TRK-501').availability,'maintenance');
  const d={name:'Test Driver',phone:'555-0100',location:'Austin, TX',equipment:'Dry Van',availability:'available',notes:'Test'},t={id:'TEST-901',plate:'ABC-901',location:'Austin, TX',equipment:'Dry Van',availability:'available',notes:'Test'};
@@ -26,6 +26,6 @@ test('fleet CRUD validates data, preserves assignments on rename and blocks unav
  await call('/trips/'+trip.data.id+'/cancel','POST',{reason:'Test cancellation',confirmed:true});
  assert.equal((await call('/drivers/'+driver.data.id,'PUT',{...d,name:'Renamed Driver',availability:'off_duty'})).status,200);assert.equal((await call('/trips/'+trip.data.id+'/restore','POST',{status:'planned',confirmed:true})).status,409);
  const vacation=initial.drivers.find(d=>d.id==='DRV-501');assert.equal((await call('/drivers/'+vacation.id,'PUT',{...vacation,name:'Taylor Updated',availability:'available'})).status,200);
- await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite')));assert.equal(db.prepare('SELECT name FROM drivers WHERE id=?').get(vacation.id).name,'Taylor Updated');assert.equal(db.prepare('SELECT availability FROM drivers WHERE id=?').get(driver.data.id).availability,'off_duty');assert.equal(db.prepare('SELECT count(*) n FROM drivers').get().n,9);assert.equal(db.prepare('SELECT count(*) n FROM trucks').get().n,9);
+ await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite'),{auth:false}));assert.equal(db.prepare('SELECT name FROM drivers WHERE id=?').get(vacation.id).name,'Taylor Updated');assert.equal(db.prepare('SELECT availability FROM drivers WHERE id=?').get(driver.data.id).availability,'off_duty');assert.equal(db.prepare('SELECT count(*) n FROM drivers').get().n,9);assert.equal(db.prepare('SELECT count(*) n FROM trucks').get().n,9);
  }finally{if(server)await new Promise(r=>server.close(r));db?.close();rmSync(dir,{recursive:true,force:true})}
 });

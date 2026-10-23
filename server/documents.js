@@ -33,6 +33,6 @@ export function registerDocumentRoutes(app,db){
  });
  app.patch('/api/documents/:id',(req,res)=>{
   if(typeof req.body?.reviewed!=='boolean')return res.status(400).json({error:'Укажите статус проверки документа'});
-  const result=db.prepare('UPDATE documents SET reviewed=? WHERE id=?').run(Number(req.body.reviewed),req.params.id);if(!result.changes)return res.status(404).json({error:'Документ не найден'});res.json({ok:true});
+  if(!db.prepare('SELECT id FROM documents WHERE id=?').get(req.params.id))return res.status(404).json({error:'Документ не найден'});db.prepare('UPDATE documents SET reviewed=? WHERE id=?').run(Number(req.body.reviewed),req.params.id);res.json({ok:true});
  });
 }

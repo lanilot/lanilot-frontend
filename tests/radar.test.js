@@ -12,7 +12,7 @@ test('radar matches exact route, equipment and inclusive minimum rate with deadh
 });
 test('radar API creates, edits, toggles, checks results and preserves startup seed changes',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'lanilot-radar-'));let db,server;
- try{let app;({app,db}=createApp(join(dir,'test.sqlite')));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ try{let app;({app,db}=createApp(join(dir,'test.sqlite'),{auth:false}));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,m='GET',b)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return {status:r.status,data:await r.json()}};
  const state=(await call('/state')).data;assert.equal(state.radars.length,4);assert.equal(state.radars.find(r=>r.id==='seed-radar-chicago-van').matchIds.length,2);assert.equal(state.radars.find(r=>r.id==='seed-radar-cargo-van').matchIds.length,0);
  const body={name:'My Chicago → Dallas',origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Dry Van',minRate:2400,rateType:'total',enabled:true};
@@ -24,6 +24,6 @@ test('radar API creates, edits, toggles, checks results and preserves startup se
  assert.equal((await call('/radars/'+id,'PATCH',{enabled:false})).status,200);assert.equal((await call('/radars/'+id+'/results')).data.enabled,false);assert.equal((await call('/radars/'+id+'/results')).data.loads.length,0);
  assert.equal((await call('/radars/'+id,'PATCH',{enabled:'true'})).status,400);assert.equal((await call('/radars/missing','PATCH',{enabled:true})).status,404);assert.equal((await call('/radars/missing/results')).status,404);assert.equal((await call('/radars/missing','PUT',body)).status,404);
  await call('/radars/seed-radar-chicago-van','PUT',{...body,name:'Edited seed',enabled:false,minRate:2100});
- await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite')));assert.equal(db.prepare('SELECT count(*) n FROM radars').get().n,5);const seeded=db.prepare("SELECT * FROM radars WHERE id='seed-radar-chicago-van'").get();assert.equal(seeded.name,'Edited seed');assert.equal(seeded.enabled,0);assert.equal(seeded.min_rate,2100);assert.equal(db.prepare('SELECT enabled FROM radars WHERE id=?').get(id).enabled,0);
+ await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite'),{auth:false}));assert.equal(db.prepare('SELECT count(*) n FROM radars').get().n,5);const seeded=db.prepare("SELECT * FROM radars WHERE id='seed-radar-chicago-van'").get();assert.equal(seeded.name,'Edited seed');assert.equal(seeded.enabled,0);assert.equal(seeded.min_rate,2100);assert.equal(db.prepare('SELECT enabled FROM radars WHERE id=?').get(id).enabled,0);
  }finally{if(server)await new Promise(r=>server.close(r));db?.close();rmSync(dir,{recursive:true,force:true})}
 });

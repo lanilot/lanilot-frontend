@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createApp} from '../server/app.js';
 test('direct load planning uses custom dates, checks both resources and preserves broker status',async()=>{
- const {app,db}=createApp();const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ const {app,db}=createApp(':memory:',{auth:false});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,body)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json()}};
  try{
  const initial=(await call('/state')).data;assert.equal(initial.drivers.length,8);assert.equal(initial.trucks.length,8);assert.ok(initial.offers.some(o=>o.load_id==='LD-2049'&&o.status==='accepted'));
@@ -25,7 +25,7 @@ test('editing a seeded trip is atomic, checks resources excluding itself and sur
  const {mkdtempSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path');
  const dir=mkdtempSync(join(tmpdir(),'lanilot-trip-edit-'));let server,db;
  try{
- let app;({app,db}=createApp(join(dir,'test.sqlite')));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ let app;({app,db}=createApp(join(dir,'test.sqlite'),{auth:false}));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,method='GET',body)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json()}};
  const initial=(await call('/state')).data,t=initial.trips.find(t=>t.load_id==='LD-2044'),other=initial.trips.find(t=>t.load_id==='LD-2046');
  const path='/trips/'+t.id,original={driver:t.driver,truck:t.truck,pickup:t.pickup,delivery:t.delivery,status:t.status};
@@ -44,7 +44,7 @@ test('editing a seeded trip is atomic, checks resources excluding itself and sur
  assert.equal(plan.status,201);assert.equal((await call('/trips/'+plan.data.id,'PUT',{...updated,status:'in_transit'})).status,409);
  assert.equal((await call('/trips/'+plan.data.id,'PUT',{...updated,status:'planned',pickup:'2026-12-01',delivery:'2026-12-02'})).status,200);
  assert.equal((await call('/trips/missing','PUT',updated)).status,404);
- await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite')));
+ await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite'),{auth:false}));
  const saved=db.prepare('SELECT driver,truck,pickup,delivery,status FROM trips WHERE id=?').get(t.id);assert.deepEqual({...saved},updated);
  }finally{if(server)await new Promise(r=>server.close(r));db?.close();rmSync(dir,{recursive:true,force:true})}
 });
@@ -52,7 +52,7 @@ test('editing a seeded trip is atomic, checks resources excluding itself and sur
 test('cancellation requires confirmation and reason, frees resources and survives default seed',async()=>{
  const {mkdtempSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path');const dir=mkdtempSync(join(tmpdir(),'lanilot-cancel-'));let db,server;
  try{
- let app;({app,db}=createApp(join(dir,'test.sqlite')));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ let app;({app,db}=createApp(join(dir,'test.sqlite'),{auth:false}));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,m='GET',b)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return {status:r.status,data:await r.json()}};
  const initial=(await call('/state')).data,t=initial.trips.find(t=>t.load_id==='LD-2044'),url='/trips/'+t.id+'/cancel';
  const seeded=initial.trips.find(t=>t.load_id==='LD-2050');assert.equal(seeded.status,'cancelled');assert.ok(seeded.cancellation_reason&&seeded.cancelled_at);
@@ -69,14 +69,14 @@ test('cancellation requires confirmation and reason, frees resources and survive
  const completed=initial.trips.find(t=>t.status==='completed');assert.equal((await call('/trips/'+completed.id+'/cancel','POST',{reason:'Нельзя отменять',confirmed:true})).status,409);
  assert.equal((await call('/trips/missing/cancel','POST',{reason:'Нет рейса',confirmed:true})).status,404);
  assert.equal(db.prepare('SELECT status FROM offers WHERE id=?').get(t.offer_id).status,'accepted');
- await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite')));const reopened=db.prepare('SELECT * FROM trips WHERE id=?').get(t.id);assert.equal(reopened.status,'cancelled');assert.equal(reopened.cancellation_reason,saved.cancellation_reason);assert.equal(reopened.cancelled_at,saved.cancelled_at);
+ await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite'),{auth:false}));const reopened=db.prepare('SELECT * FROM trips WHERE id=?').get(t.id);assert.equal(reopened.status,'cancelled');assert.equal(reopened.cancellation_reason,saved.cancellation_reason);assert.equal(reopened.cancelled_at,saved.cancelled_at);
  }finally{if(server)await new Promise(r=>server.close(r));db?.close();rmSync(dir,{recursive:true,force:true})}
 });
 
 test('restore confirms status, checks each resource, preserves history and survives startup seed',async()=>{
  const {mkdtempSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path');const dir=mkdtempSync(join(tmpdir(),'lanilot-restore-'));let db,server;
  try{
- let app;({app,db}=createApp(join(dir,'test.sqlite')));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ let app;({app,db}=createApp(join(dir,'test.sqlite'),{auth:false}));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,m='GET',b)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return {status:r.status,data:await r.json()}};
  const state=(await call('/state')).data,trip=state.trips.find(t=>t.load_id==='LD-2051'),blocker=state.trips.find(t=>t.load_id==='LD-2046'),url='/trips/'+trip.id+'/restore';
  assert.equal(trip.status,'cancelled');assert.ok(trip.history.some(h=>h.action==='cancelled'));
@@ -96,6 +96,6 @@ test('restore confirms status, checks each resource, preserves history and survi
  await call('/trips/'+p.data.id+'/cancel','POST',{reason:'Тестовая отмена',confirmed:true});
  assert.equal((await call('/trips/'+p.data.id+'/restore','POST',{status:'in_transit',confirmed:true})).status,409);
  assert.equal((await call('/trips/'+p.data.id+'/restore','POST',{status:'planned',confirmed:true})).status,200);
- await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite')));const saved=db.prepare('SELECT * FROM trips WHERE id=?').get(trip.id);assert.equal(saved.status,'in_transit');assert.equal(saved.restored_at,restored.restored_at);assert.equal(db.prepare('SELECT count(*) n FROM trip_history WHERE trip_id=?').get(trip.id).n,2);
+ await new Promise(r=>server.close(r));server=null;db.close();({db}=createApp(join(dir,'test.sqlite'),{auth:false}));const saved=db.prepare('SELECT * FROM trips WHERE id=?').get(trip.id);assert.equal(saved.status,'in_transit');assert.equal(saved.restored_at,restored.restored_at);assert.equal(db.prepare('SELECT count(*) n FROM trip_history WHERE trip_id=?').get(trip.id).n,2);
  }finally{if(server)await new Promise(r=>server.close(r));db?.close();rmSync(dir,{recursive:true,force:true})}
 });

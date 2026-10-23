@@ -6,8 +6,8 @@ import {loadLocale,lang,__} from './i18n.js';
 loadLocale().catch(()=>{}).then(async()=>{
  document.documentElement.lang=lang;
  document.title=__('Lanilot — рабочее место диспетчера');
- const [{default:LoadingBoundary,Skeleton},{default:App}]=await Promise.all([import('./Loading.jsx'),import('./App.jsx')]);
+ const [{default:LoadingBoundary,Skeleton},{default:App},{default:AuthGate}]=await Promise.all([import('./Loading.jsx'),import('./App.jsx'),import('./AuthGate.jsx')]);
  const Pitch=lazy(()=>import('./Pitch.jsx'));
  const isPitch=window.location.pathname.replace(/\/+$/,'')==='/pitch';
- createRoot(document.getElementById('root')).render(isPitch?<Suspense fallback={<Skeleton/>}><LoadingBoundary className="pitch-loading"><Pitch/></LoadingBoundary></Suspense>:<App/>);
+ createRoot(document.getElementById('root')).render(isPitch?<Suspense fallback={<Skeleton/>}><LoadingBoundary className="pitch-loading"><Pitch/></LoadingBoundary></Suspense>:<AuthGate render={session=><App session={session}/>}/>);
 });

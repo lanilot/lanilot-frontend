@@ -42,5 +42,5 @@ export function registerLaneRoutes(app,db){
   res.status(old?200:201).json({id});
  }catch(e){next(e)}};
  app.post('/api/lanes',save);app.put('/api/lanes/:id',save);
- app.delete('/api/lanes/:id',(req,res)=>{const r=db.prepare('DELETE FROM lanes WHERE id=?').run(req.params.id);if(!r.changes)return res.status(404).json({error:'Линия не найдена'});res.json({ok:true})});
+ app.delete('/api/lanes/:id',(req,res)=>{if(!db.prepare('SELECT id FROM lanes WHERE id=?').get(req.params.id))return res.status(404).json({error:'Линия не найдена'});db.prepare('DELETE FROM lanes WHERE id=?').run(req.params.id);res.json({ok:true})});
 }

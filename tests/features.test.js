@@ -7,7 +7,7 @@ import {createApp} from '../server/app.js';
 import {estimateMiles} from '../server/lanes.js';
 import {costsForDriver,defaultCosts,calculateProfit} from '../server/domain.js';
 
-async function start(path){const {app,db}=createApp(path);const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+async function start(path){const {app,db}=createApp(path,{auth:false});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const call=async(p,m='GET',b)=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api${p}`,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return {status:r.status,data:await r.json()}};
  return {db,call,close:()=>new Promise(r=>server.close(r))}}
 

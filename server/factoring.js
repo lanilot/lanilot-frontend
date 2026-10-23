@@ -1,3 +1,5 @@
+import {currentTenant} from './tenancy.js';
+const companyKey=id=>(currentTenant()?.companyId??'')+':'+id;
 // Broker/carrier checks: the company's factoring provider (credit decision) + FMCSA QCMobile (authority, legal name).
 // Factoring companies (RTS, OTR, Triumph, Apex, eCapital…) do not publish a public credit-check API — access comes
 // with a partner agreement. So each preset is a configurable HTTPS connector: URL template, auth and JSON field
@@ -68,15 +70,15 @@ export function registerProviderRoutes(app,db,context){
   const id=req.params.id,item=listProviders(db,context).find(p=>p.id===id);
   if(!item)return res.status(404).json({error:'Провайдер не найден'});
   if(!item.configured)return res.status(400).json({error:'Не настроено на сервере: задайте переменные окружения',vars:item.vars});
-  if(running.has(id))return res.status(409).json({error:'Проверка уже выполняется'});
-  running.add(id);let status;
+  if(running.has(companyKey(id)))return res.status(409).json({error:'Проверка уже выполняется'});
+  running.add(companyKey(id));let status;
   try{
    if(item.group==='eld')await eldProviders[id.slice(4)].probe(context);
    else if(item.group==='fmcsa')await safeJson(context,`${FMCSA}/carriers/docket-number/1515?webKey=${encodeURIComponent(env(context,'LANILOT_FMCSA_WEBKEY'))}`);
    else{const fid=id.slice(10),mc=env(context,prefix(fid)+'TEST_MC');if(!mc)throw new ProviderError('Задайте MC брокера для тестового запроса в переменной LANILOT_FACTORING_<ID>_TEST_MC');await checkFactoring(context,fid,{mc,dot:'',name:''})}
    status={status:'connected',result:'API ответил успешно',checkedAt:new Date().toISOString()};
   }catch(e){status={status:'error',result:errorText(e),checkedAt:new Date().toISOString()}}
-  finally{running.delete(id)}
+  finally{running.delete(companyKey(id))}
   writeStatus(db,id,status);res.json({ok:status.status==='connected',...status});
  });
 }

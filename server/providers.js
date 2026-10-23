@@ -20,5 +20,5 @@ export async function safeJson(context,url,{method='GET',headers={},body}={}){
 
 export function installProviderStatus(db){db.exec('CREATE TABLE IF NOT EXISTS provider_checks(id TEXT PRIMARY KEY,data TEXT NOT NULL)')}
 export function readStatus(db,id){const r=db.prepare('SELECT data FROM provider_checks WHERE id=?').get(id);return r?JSON.parse(r.data):null}
-export function writeStatus(db,id,data){db.prepare('INSERT INTO provider_checks VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(id,JSON.stringify(data))}
+export function writeStatus(db,id,data){if(db.prepare('SELECT id FROM provider_checks WHERE id=?').get(id))db.prepare('UPDATE provider_checks SET data=? WHERE id=?').run(JSON.stringify(data),id);else db.prepare('INSERT INTO provider_checks VALUES(?,?)').run(id,JSON.stringify(data))}
 export const errorText=e=>e instanceof ProviderError?e.message:e?.name==='TimeoutError'?'API не ответил за 10 секунд':'Не удалось связаться с API: проверьте адрес, сеть и ключ';

@@ -18,7 +18,7 @@ function fakeApis(calls,overrides={}){return async(url,options)=>{calls.push({ur
  if(u.pathname.startsWith('/qc/services/carriers/docket-number/'))return json({content:[{carrier:{legalName:'ACME LOGISTICS LLC',dotNumber:1234567,allowedToOperate:'Y',brokerAuthorityStatus:'A',commonAuthorityStatus:'N',contractAuthorityStatus:'N'}}]});
  if(u.hostname==='api.factor.example')return json({result:{decision:'NO BUY'},creditLimit:0,daysToPay:null});
  return json({},404)}}
-async function start(env,request){const {app,db}=createApp(':memory:',{integrationOptions:{env,request,resolve:publicDns}});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+async function start(env,request){const {app,db}=createApp(':memory:',{auth:false,integrationOptions:{env,request,resolve:publicDns}});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const base=`http://127.0.0.1:${server.address().port}/api`;const call=async(p,m='GET',b)=>{const r=await fetch(base+p,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return {status:r.status,data:await r.json()}};
  return {db,call,close:()=>new Promise(r=>server.close(r))}}
 

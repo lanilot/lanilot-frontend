@@ -17,9 +17,19 @@ import {installLanes,seedLanes,listLanes,registerLaneRoutes} from './lanes.js';
 import {registerEldRoutes,eldProvider} from './eld.js';
 import {installProviderStatus} from './providers.js';
 import {listProviders,registerProviderRoutes,activeFactoring,factoringPresets} from './factoring.js';
+import {installTenancy,tenantizeTables,asCompany,listCompanies,tenantEnv,DEFAULT_COMPANY} from './tenancy.js';
+import {installAuth} from './auth.js';
 
-export function createApp(dbPath=':memory:',{seedDemo=true,integrationOptions={},telegramOptions={}}={}){
- const db=new DatabaseSync(dbPath);
+// One database, many companies: see tenancy.js. Startup (schema, migrations, seeds) runs as the primary company.
+export function createApp(dbPath=':memory:',options={}){
+ const db=installTenancy(new DatabaseSync(dbPath));
+ return asCompany(DEFAULT_COMPANY,()=>buildApp(db,dbPath,options));
+}
+function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANILOT_BASE_DOMAIN||'lanilot.com',setupToken,integrationOptions={},telegramOptions={}}={}){
+ // Provider keys in the server environment belong to the primary company only.
+ if(!auth)db.setFallbackCompany(DEFAULT_COMPANY);
+ integrationOptions={...integrationOptions,env:tenantEnv(integrationOptions.env||process.env)};
+ telegramOptions={...telegramOptions,env:tenantEnv(telegramOptions.env||process.env)};
  db.exec(`PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;
  CREATE TABLE IF NOT EXISTS loads(id TEXT PRIMARY KEY,data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS offers(id TEXT PRIMARY KEY,load_id TEXT NOT NULL REFERENCES loads(id),rate REAL NOT NULL,status TEXT NOT NULL,draft TEXT NOT NULL,costs TEXT NOT NULL,created_at TEXT NOT NULL);
@@ -38,9 +48,17 @@ export function createApp(dbPath=':memory:',{seedDemo=true,integrationOptions={}
  const integrationVault=installIntegrations(db,dbPath,integrationOptions);installFinances(db);installDocuments(db);installAttachments(db);
  installRadar(db);installBrokers(db);installProviderStatus(db);installLanes(db);
  const telegram=installTelegram(db,dbPath,telegramOptions);
- seedMissingLoads(db);
- if(seedDemo){seedDemoData(db);seedRadars(db);seedBrokers(db);seedLanes(db);seedDocuments(db);seedAttachments(db);seedFinances(db);seedIntegrations(db,integrationVault);telegram.seed()}
- const app=express();app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);
+ db.exec('CREATE TABLE IF NOT EXISTS seed_markers(key TEXT PRIMARY KEY)');
+ tenantizeTables(db);
+ // Every company gets its settings row; demo companies (and the primary one) get the demo workspace.
+ const seedCompany=company=>asCompany(company.id,()=>{
+  db.prepare('INSERT OR IGNORE INTO settings VALUES(?,?)').run('workspace',JSON.stringify(defaultSettings));
+  if(company.id!==DEFAULT_COMPANY&&!company.demo)return;
+  seedMissingLoads(db);
+  if(seedDemo){seedDemoData(db);seedRadars(db);seedBrokers(db);seedLanes(db);seedDocuments(db);seedAttachments(db);seedFinances(db);seedIntegrations(db,integrationVault);telegram.seed()}
+ });
+ for(const company of listCompanies(db))seedCompany(company);
+ const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken});app.use(access.resolveTenant);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));access.register(app);telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);
  const enrichLoad=l=>({...l,originCoordinates:locations[l.origin]??null,destinationCoordinates:locations[l.destination]??null});
  const loadById=id=>{const r=db.prepare('SELECT data FROM loads WHERE id=?').get(id);return r?enrichLoad(JSON.parse(r.data)):null};
  const offerById=id=>db.prepare('SELECT * FROM offers WHERE id=?').get(id);
@@ -161,5 +179,5 @@ export function createApp(dbPath=':memory:',{seedDemo=true,integrationOptions={}
  app.patch('/api/trips/:id',updateTrip);
  app.put('/api/trips/:id',updateTrip);
  app.use((err,req,res,next)=>res.status(err.type==='entity.too.large'?413:400).json({error:err.type==='entity.too.large'?(req.path.endsWith('/attachments')?'Файл превышает 25 МБ':'Превышен допустимый размер запроса'):err.message||'Не удалось выполнить действие'}));
- return {app,db,telegram};
+ return {app,db,telegram,seedCompany,access};
 }
