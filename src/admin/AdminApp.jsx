@@ -61,7 +61,7 @@ function Overview({days}){
    </Panel>
    <div className="ad-side">
     <Panel><div className="ad-hero"><span>MRR</span><strong>{usd(t.mrr)}</strong><small>{__('Ежемесячная выручка по тарифам · ARR {0}',[usd(t.mrr*12)])}</small></div></Panel>
-    <Panel><dl className="ad-facts"><div><dt>{__('Компании')}</dt><dd>{num(t.companies)}</dd></div><div><dt>{__('Активные')}</dt><dd>{num(t.active)}</dd></div><div><dt>{__('Приостановлены')}</dt><dd>{num(t.suspended)}</dd></div><div><dt>{__('На пробном периоде')}</dt><dd>{num(t.trials)}</dd></div><div><dt>{__('Пользователи')}</dt><dd>{num(t.users)}</dd></div></dl></Panel>
+    <Panel><dl className="ad-facts"><div><dt>{__('Компании')}</dt><dd>{num(t.companies)}</dd></div><div><dt>{__('Активные')}</dt><dd>{num(t.active)}</dd></div><div><dt>{__('Приостановлены')}</dt><dd>{num(t.suspended)}</dd></div><div><dt>{__('На пробном периоде')}</dt><dd>{num(t.trials)}</dd></div><div><dt>{__('Демо-кабинеты')}</dt><dd>{num(t.sandboxes)}</dd></div><div><dt>{__('Пользователи')}</dt><dd>{num(t.users)}</dd></div></dl></Panel>
    </div>
   </div>
   <div className="ad-grid-3">
@@ -112,7 +112,7 @@ function Companies({plans,onOpen,version}){
    <label className="auth-check"><input type="checkbox" checked={internal} onChange={e=>setInternal(e.target.checked)}/><span>{__('Показать внутренние')}</span></label></div>
   <Panel>{!list?<div className="ad-loading"/>:list.length===0?<p className="ad-empty">{__('Компаний не найдено')}</p>:<div className="ad-table-wrap"><table className="ad-table"><thead><tr><th>{__('Компания')}</th><th>{__('Владелец')}</th><th>{__('Тариф')}</th><th>{__('Статус')}</th><th className="num">{__('Польз.')}</th><th className="num">{__('Грузовики')}</th><th>{__('Активность 30д')}</th><th>{__('Последний визит')}</th><th>{__('Создана')}</th></tr></thead><tbody>
    {list.map(c=><tr key={c.id} className="clickable" tabIndex={0} onClick={()=>onOpen(c.id)} onKeyDown={e=>{if(e.key==='Enter')onOpen(c.id)}}>
-    <td><strong>{c.name}</strong><small>{c.slug}{c.internal&&' · '+__('внутренняя')}</small></td><td>{c.owner?<><span>{c.owner.name}</span><small>{c.owner.email}</small></>:'—'}</td>
+    <td><strong>{c.name}{c.sandbox&&<span className="ad-badge sandbox">{__('Демо-доступ')}</span>}</strong><small>{c.slug}{c.internal&&' · '+__('внутренняя')}</small></td><td>{c.owner?<><span>{c.owner.name}</span><small>{c.owner.email}</small></>:'—'}</td>
     <td><span className={'ad-badge plan-'+c.plan}>{plans[c.plan]?.name||c.plan}</span>{c.trialEndsAt&&<small>{__('до {0}',[day(c.trialEndsAt)])}</small>}</td>
     <td><span className={'ad-status '+c.status}>{statusLabel(c.status)}</span></td><td className="num">{c.users}</td><td className="num">{c.trucks}</td>
     <td><span className="ad-meter" title={__('{0} из 30 дней',[c.activeDays30])}><i style={{width:`${c.activeDays30/30*100}%`}}/></span><small>{__('{0} дн.',[c.activeDays30])}</small></td><td className="muted">{day(c.lastActive)}</td><td className="muted">{day(c.createdAt)}</td></tr>)}
@@ -142,7 +142,7 @@ function Subscriptions({onOpen,version}){
  </div>;
 }
 
-function RequestCard({r,onSaved}){
+function RequestCard({r,onSaved,onOpen}){
  const [notes,setNotes]=useState(r.notes),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const save=async patch=>{setBusy(true);setError('');try{await api('/requests/'+r.id,'PATCH',patch);onSaved()}catch(e){setError(e.message)}setBusy(false)};
  return <article className="ad-request">
@@ -150,12 +150,13 @@ function RequestCard({r,onSaved}){
   <div className="ad-request-contacts"><a href={'mailto:'+r.email}><Mail size={13}/>{r.email}</a>{r.phone&&<a href={'tel:'+r.phone.replace(/[^\d+]/g,'')}><Phone size={13}/>{r.phone}</a>}</div>
   <dl className="ad-request-meta"><div><dt>{__('Автопарк')}</dt><dd>{r.fleet_size?answerLabel('fleetSize',r.fleet_size):'—'}</dd></div><div><dt>{__('Источник')}</dt><dd>{r.source||'(direct)'}</dd></div><div><dt>{__('Язык')}</dt><dd>{r.lang||'—'}</dd></div><div><dt>{__('Получена')}</dt><dd>{day(r.created_at)}</dd></div></dl>
   {r.message&&<p className="ad-request-message">{r.message}</p>}
+  {r.company_id&&<button type="button" className="ad-request-open" onClick={()=>onOpen(r.company_id)}><Building2 size={13}/>{__('Демо-кабинет посетителя')}</button>}
   <textarea aria-label={__('Заметка по заявке')} placeholder={__('Заметка: о чём договорились, дата демо…')} maxLength={2000} value={notes} disabled={busy} onChange={e=>setNotes(e.target.value)} onBlur={()=>notes!==r.notes&&save({notes})}/>
   {error&&<p className="chat-error" role="alert">{error}</p>}
   <div className="ad-request-actions">{['new','contacted','scheduled','won','lost'].map(st=><button key={st} disabled={busy||st===r.status} className={st===r.status?'active':''} onClick={()=>save({status:st})}>{requestStatus(st)}</button>)}</div>
  </article>;
 }
-function Requests({onCount,version}){
+function Requests({onCount,onOpen,version}){
  const [d,setD]=useState(null),[status,setStatus]=useState('');
  const load=useCallback(()=>api('/requests'+(status?'?status='+status:'')).then(x=>{setD(x);onCount(x.counts.new||0)}),[status,onCount]);
  useEffect(()=>{load()},[load,version]);
@@ -163,7 +164,7 @@ function Requests({onCount,version}){
  const total=Object.values(d.counts).reduce((a,b)=>a+b,0);
  return <div className="ad-page">
   <div className="ad-periods ad-request-tabs" role="group" aria-label={__('Статус заявок')}>{[['',__('Все'),total],...['new','contacted','scheduled','won','lost'].map(st=>[st,requestStatus(st),d.counts[st]||0])].map(([k,t,n])=><button key={k||'all'} aria-pressed={status===k} className={status===k?'active':''} onClick={()=>setStatus(k)}>{t} <b>{n}</b></button>)}</div>
-  {d.requests.length===0?<Panel><p className="ad-empty">{__('Заявок пока нет. Они приходят с кнопки «Book a demo» на lanilot.com.')}</p></Panel>:<div className="ad-requests">{d.requests.map(r=><RequestCard key={r.id+r.updated_at} r={r} onSaved={load}/>)}</div>}
+  {d.requests.length===0?<Panel><p className="ad-empty">{__('Заявок пока нет. Они приходят с формы демо-доступа на lanilot.com.')}</p></Panel>:<div className="ad-requests">{d.requests.map(r=><RequestCard key={r.id+r.updated_at} r={r} onSaved={load} onOpen={onOpen}/>)}</div>}
  </div>;
 }
 
@@ -205,7 +206,7 @@ export default function AdminApp(){
     <button className="icon-button" aria-label={__('Обновить')} title={__('Обновить')} onClick={()=>setVersion(v=>v+1)}><RefreshCw size={16}/></button><LangSwitch/></div></header>
    <div key={version+page}>
     {page==='overview'&&<Overview days={days}/>}
-    {page==='requests'&&<Requests onCount={setNewRequests} version={version}/>}
+    {page==='requests'&&<Requests onCount={setNewRequests} onOpen={setOpen} version={version}/>}
     {page==='companies'&&<Companies plans={me.plans} onOpen={setOpen} version={version}/>}
     {page==='users'&&<UsersPage/>}
     {page==='subscriptions'&&<Subscriptions onOpen={setOpen} version={version}/>}

@@ -125,3 +125,12 @@
 .cl-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:1120px;margin:40px auto 0;padding:24px;border-top:1px solid #edf1f7;font-size:12px;color:#8b9ab0}
 .cl-footer span{display:inline-flex;align-items:center;gap:6px}.cl-footer a{color:var(--brand);font-weight:600;text-decoration:none}
 @media(max-width:600px){.cl-top{padding:16px}.cl-hero{padding:40px 16px 28px}.cl-section{padding:20px 16px}.cl-top-actions .button span{display:none}}
+.auth-choice{display:grid;gap:10px;margin-top:20px}.auth-choice .button{height:40px;justify-content:center;text-decoration:none}
+/* Sign in with Google / Apple */
+.auth-social{display:grid;gap:10px;margin-top:20px}
+.auth-social-btn{display:flex;align-items:center;justify-content:center;gap:10px;height:42px;border-radius:9px;border:1px solid #dce3ef;background:#fff;color:#1f2f4d;font-size:13px;font-weight:600;text-decoration:none}
+.auth-social-btn:hover{border-color:#b8c5da;background:#fafbfe}
+.auth-social-btn.apple{background:#000;border-color:#000;color:#fff}.auth-social-btn.apple:hover{background:#1d1d1f}
+.auth-social-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:6px 0 -6px;color:#9aa7bb;font-size:11px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#e6ebf3}

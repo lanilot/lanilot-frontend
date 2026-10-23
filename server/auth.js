@@ -2,6 +2,8 @@
 // access is a membership in a company with a role: owner > dispatcher > viewer.
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 import {installOnboarding} from './onboarding.js';
+import {installDemoAccess} from './demo-access.js';
+import {installOAuth,configuredProviders} from './oauth.js';
 import {tenantContext,slugFromHost,companyBySlug,companyById,uniqueSlug,asCompany,DEFAULT_COMPANY} from './tenancy.js';
 
 export const roles=['owner','dispatcher','viewer'];
@@ -21,7 +23,7 @@ const cleanName=v=>typeof v==='string'&&v.trim().length>=1&&v.trim().length<=100
 const ownerOnly=(method,path)=>method!=='GET'&&/^\/api\/(settings|integrations|providers|telegram|users)(\/|$)/.test(path);
 
 // Self sign-up creates a new company with its owner; LANILOT_SIGNUP=off disables it.
-export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN,signup=process.env.LANILOT_SIGNUP!=='off',seedCompany=()=>{},brandOf=()=>null}={}){
+export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN,signup=process.env.LANILOT_SIGNUP!=='off',seedCompany=()=>{},brandOf=()=>null,oauthOptions={}}={}){
  const raw=db.raw;
  raw.exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE COLLATE NOCASE,name TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
@@ -46,7 +48,9 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   const s=raw.prepare('SELECT s.*,u.name,u.email,m.role FROM sessions s JOIN users u ON u.id=s.user_id JOIN memberships m ON m.user_id=s.user_id AND m.company_id=s.company_id WHERE s.id=? AND s.company_id=?').get(sha(value),req.company.id);
   if(!s||s.expires_at<new Date().toISOString())return null;return s;
  };
- const publicCompany=c=>c&&{id:c.id,slug:c.slug,name:c.name,status:c.status,brand:brandOf(c.id)};
+ // A personal demo sandbox (from the landing) works for a limited time.
+ const sandboxExpired=c=>!!c?.sandbox&&!!c.trial_ends_at&&c.trial_ends_at<new Date().toISOString();
+ const publicCompany=c=>c&&{id:c.id,slug:c.slug,name:c.name,status:sandboxExpired(c)?'expired':c.status,sandbox:!!c.sandbox,sandboxEndsAt:c.sandbox?c.trial_ends_at:null,brand:brandOf(c.id)};
  const inviteOf=value=>{const i=typeof value==='string'&&raw.prepare('SELECT * FROM invites WHERE id=?').get(sha(value));return i&&!i.accepted_at&&i.expires_at>new Date().toISOString()?i:null};
  const onAppHost=req=>slugFromHost(req.get('host'),baseDomain)==='app';
  const ownerCount=companyId=>raw.prepare("SELECT count(*) n FROM memberships WHERE company_id=? AND role='owner'").get(companyId).n;
@@ -66,14 +70,15 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   }
   if(!company)return res.status(404).json({error:'Компания не найдена',code:'company_not_found'});
   if(company.status!=='active'&&req.path!=='/api/tenant')return res.status(403).json({error:'Доступ к кабинету компании приостановлен',code:'company_suspended'});
+  if(sandboxExpired(company)&&req.path!=='/api/tenant'&&!req.path.startsWith('/api/auth/')&&!req.path.startsWith('/api/onboarding')&&!req.path.startsWith('/api/public/'))return res.status(403).json({error:'Демо-доступ закончился',code:'sandbox_expired'});
   req.company=company;next();
  };
 
  // New company with its owner; the profile starts from the sign-up answers, with or without the demo workspace.
- const createAccount=({name,company,email,password,demo,phone='',city='',profile={},operations})=>{
+ const createAccount=({name,company,email,password,demo,phone='',city='',profile={},operations,slug})=>{
   const userId='usr-'+randomBytes(8).toString('hex'),companyId='co-'+randomBytes(8).toString('hex'),now=new Date().toISOString();
   raw.exec('BEGIN IMMEDIATE');try{
-   raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(companyId,uniqueSlug(db,cleanName(company)),cleanName(company),demo?1:0,now);
+   raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(companyId,slug??uniqueSlug(db,cleanName(company)),cleanName(company),demo?1:0,now);
    raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(userId,email.trim(),cleanName(name),hashPassword(password),now);
    raw.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(userId,companyId,'owner',now);raw.exec('COMMIT');
   }catch(e){raw.exec('ROLLBACK');throw e}
@@ -83,12 +88,13 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  };
  const register=app=>{
   // Cross-site writes are refused: browsers send Origin on POST/PUT/PATCH/DELETE.
-  app.use((req,res,next)=>{if(req.method==='GET'||req.method==='HEAD'||!req.path.startsWith('/api/'))return next();const origin=req.get('origin');if(origin){let host;try{host=new URL(origin).host}catch{host=null}if(host!==req.get('host'))return res.status(403).json({error:'Запрос с другого сайта отклонён'})}next()});
+  // (Apple returns from sign-in with a cross-site form POST; that callback is protected by its one-time state instead.)
+  app.use((req,res,next)=>{if(req.method==='GET'||req.method==='HEAD'||!req.path.startsWith('/api/')||/^\/api\/auth\/oauth\/[a-z]+\/callback$/.test(req.path))return next();const origin=req.get('origin');if(origin){let host;try{host=new URL(origin).host}catch{host=null}if(host!==req.get('host'))return res.status(403).json({error:'Запрос с другого сайта отклонён'})}next()});
   // Daily activity (one row per user, company and day) feeds the platform analytics.
   const seen=new Map(),touch=s=>{const day=new Date().toISOString().slice(0,10),key=s.user_id+'|'+s.company_id;if(seen.get(key)===day)return;seen.set(key,day);raw.prepare('INSERT OR IGNORE INTO activity VALUES(?,?,?)').run(day,s.company_id,s.user_id)};
   app.use((req,res,next)=>{req.session=enabled?sessionOf(req):null;if(req.session)touch(req.session);next()});
 
-  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),auth:{enabled,signup:enabled&&signup&&onAppHost(req),setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
+  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),auth:{enabled,signup:enabled&&signup&&onAppHost(req),providers:enabled&&onAppHost(req)?configuredProviders(oauthOptions.env??process.env):[],setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
   app.get('/api/auth/me',(req,res)=>{
    if(!enabled)return res.json({user:null,role:'owner',company:publicCompany(req.company),authEnabled:false});
    if(!req.session)return res.status(401).json({error:'Войдите в кабинет',code:'unauthenticated'});
@@ -114,7 +120,9 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
    if(!user||!verifyPassword(password,user.password_hash)||!member){fail(key);return res.status(401).json({error:'Неверный email или пароль'})}
    attempts.delete(key);startSession(res,req,user.id,member.company_id);res.json({ok:true});
   });
-  installOnboarding(app,db,{enabled:enabled&&signup,onAppHost,limited,fail,createAccount,startSession,cleanName,validEmail,validPassword});
+  installDemoAccess(app,db,{enabled:enabled&&signup,limited,fail,createAccount,startSession,onAppHost});
+  const onboarding=installOnboarding(app,db,{enabled:enabled&&signup,onAppHost,limited,fail,createAccount,startSession,cleanName,validEmail,validPassword});
+  installOAuth(app,db,{enabled,env:oauthOptions.env??process.env,fetch:oauthOptions.fetch,onAppHost,startSession,createSignupLead:onboarding.createSignupLead});
   app.post('/api/auth/register',(req,res)=>{
    if(!enabled||!signup||!onAppHost(req))return res.status(404).json({error:'Регистрация недоступна'});
    const key='signup|'+req.ip;if(limited(key,5,3600000))return res.status(429).json({error:'Слишком много регистраций. Попробуйте через час.'});

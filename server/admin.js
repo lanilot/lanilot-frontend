@@ -16,7 +16,7 @@ export function installAdminTables(raw){
  CREATE TABLE IF NOT EXISTS platform_admins(user_id TEXT PRIMARY KEY REFERENCES users(id),created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS admin_sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),created_at TEXT NOT NULL,expires_at TEXT NOT NULL);`);
  const cols=raw.prepare('PRAGMA table_info(companies)').all().map(c=>c.name);
- for(const [col,def] of [['internal','INTEGER NOT NULL DEFAULT 0'],['trial_ends_at','TEXT'],['notes',"TEXT NOT NULL DEFAULT ''"],['plan_changed_at','TEXT']])if(!cols.includes(col))raw.exec(`ALTER TABLE companies ADD COLUMN ${col} ${def}`);
+ for(const [col,def] of [['sandbox','INTEGER NOT NULL DEFAULT 0'],['internal','INTEGER NOT NULL DEFAULT 0'],['trial_ends_at','TEXT'],['notes',"TEXT NOT NULL DEFAULT ''"],['plan_changed_at','TEXT']])if(!cols.includes(col))raw.exec(`ALTER TABLE companies ADD COLUMN ${col} ${def}`);
  // The primary workspace and the demo company are ours, not customers: kept out of the metrics.
  raw.prepare("UPDATE companies SET internal=1 WHERE id IN (?, 'co-demo') AND internal=0").run(DEFAULT_COMPANY);
 }
@@ -74,7 +74,7 @@ export function registerAdmin(app,db){
   const range=(sql,a,b)=>raw.prepare(sql).get(a,b).n;
   const kpi=(sql)=>({value:range(sql,from,'9999'),previous:range(sql,prevFrom,from)});
   const metric={
-   signups:kpi("SELECT count(*) n FROM companies WHERE internal=0 AND substr(created_at,1,10)>=? AND substr(created_at,1,10)<?"),
+   signups:kpi("SELECT count(*) n FROM companies WHERE internal=0 AND sandbox=0 AND substr(created_at,1,10)>=? AND substr(created_at,1,10)<?"),
    leads:kpi("SELECT count(*) n FROM signup_leads WHERE substr(created_at,1,10)>=? AND substr(created_at,1,10)<?"),
    activeUsers:kpi("SELECT count(DISTINCT a.user_id) n FROM activity a JOIN companies c ON c.id=a.company_id WHERE c.internal=0 AND a.day>=? AND a.day<?"),
    activeCompanies:kpi("SELECT count(DISTINCT a.company_id) n FROM activity a JOIN companies c ON c.id=a.company_id WHERE c.internal=0 AND a.day>=? AND a.day<?"),
@@ -84,21 +84,21 @@ export function registerAdmin(app,db){
   metric.conversion={value:metric.leads.value?completed.value/metric.leads.value:null,previous:metric.leads.previous?completed.previous/metric.leads.previous:null};
   const series=(sql,shift=0)=>{const rows=Object.fromEntries(raw.prepare(sql).all(dayOf(end-(n-1+shift)*DAY),dayOf(end-shift*DAY+DAY)).map(r=>[r.day,r.n]));return list.map((d,i)=>rows[dayOf(Date.parse(d)-shift*DAY)]??0)};
   const sql={
-   signups:"SELECT substr(created_at,1,10) day,count(*) n FROM companies WHERE internal=0 AND substr(created_at,1,10)>=? AND substr(created_at,1,10)<? GROUP BY day",
+   signups:"SELECT substr(created_at,1,10) day,count(*) n FROM companies WHERE internal=0 AND sandbox=0 AND substr(created_at,1,10)>=? AND substr(created_at,1,10)<? GROUP BY day",
    leads:"SELECT substr(created_at,1,10) day,count(*) n FROM signup_leads WHERE substr(created_at,1,10)>=? AND substr(created_at,1,10)<? GROUP BY day",
    activeUsers:"SELECT a.day,count(DISTINCT a.user_id) n FROM activity a JOIN companies c ON c.id=a.company_id WHERE c.internal=0 AND a.day>=? AND a.day<? GROUP BY a.day",
    activeCompanies:"SELECT a.day,count(DISTINCT a.company_id) n FROM activity a JOIN companies c ON c.id=a.company_id WHERE c.internal=0 AND a.day>=? AND a.day<? GROUP BY a.day",
    demoRequests:"SELECT substr(created_at,1,10) day,count(*) n FROM demo_requests WHERE substr(created_at,1,10)>=? AND substr(created_at,1,10)<? GROUP BY day"
   };
-  const companies=raw.prepare('SELECT * FROM companies WHERE internal=0').all();
+  const companies=raw.prepare('SELECT * FROM companies WHERE internal=0 AND sandbox=0').all();
   const plans=Object.entries(PLANS).map(([id,p])=>{const list=companies.filter(c=>c.plan===id&&c.status==='active');return {id,name:p.name,price:p.price,companies:list.length,mrr:list.reduce((s,c)=>s+companyMrr(c),0)}});
   const sources=raw.prepare("SELECT CASE WHEN source='' THEN '(direct)' ELSE source END source,count(*) started,sum(status='completed') completed FROM signup_leads WHERE substr(created_at,1,10)>=? GROUP BY 1 ORDER BY started DESC LIMIT 8").all(from);
   res.json({days:n,dates:list,metrics:metric,series:Object.fromEntries(Object.entries(sql).map(([k,q])=>[k,{current:series(q),previous:series(q,n)}])),
-   totals:{companies:companies.length,active:companies.filter(c=>c.status==='active').length,suspended:companies.filter(c=>c.status==='suspended').length,users:raw.prepare('SELECT count(DISTINCT m.user_id) n FROM memberships m JOIN companies c ON c.id=m.company_id WHERE c.internal=0').get().n,mrr:companies.reduce((s,c)=>s+companyMrr(c),0),trials:companies.filter(c=>c.plan==='trial'&&c.status==='active').length},
+   totals:{companies:companies.length,active:companies.filter(c=>c.status==='active').length,suspended:companies.filter(c=>c.status==='suspended').length,users:raw.prepare('SELECT count(DISTINCT m.user_id) n FROM memberships m JOIN companies c ON c.id=m.company_id WHERE c.internal=0 AND c.sandbox=0').get().n,sandboxes:raw.prepare('SELECT count(*) n FROM companies WHERE sandbox=1').get().n,mrr:companies.reduce((s,c)=>s+companyMrr(c),0),trials:companies.filter(c=>c.plan==='trial'&&c.status==='active').length},
    funnel:onboardingFunnel(raw,{days:n}),plans,sources});
  });
 
- const companyRow=c=>({id:c.id,slug:c.slug,name:c.name,status:c.status,plan:c.plan,internal:!!c.internal,createdAt:c.created_at,trialEndsAt:c.plan==='trial'?trialEnd(c):null,mrr:companyMrr(c),notes:c.notes,
+ const companyRow=c=>({id:c.id,slug:c.slug,name:c.name,status:c.status,plan:c.plan,internal:!!c.internal,sandbox:!!c.sandbox,createdAt:c.created_at,trialEndsAt:c.plan==='trial'?trialEnd(c):null,mrr:companyMrr(c),notes:c.notes,
   users:raw.prepare('SELECT count(*) n FROM memberships WHERE company_id=?').get(c.id).n,
   owner:raw.prepare("SELECT u.name,u.email FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.company_id=? AND m.role='owner' ORDER BY m.created_at LIMIT 1").get(c.id)??null,
   lastActive:raw.prepare('SELECT max(day) d FROM activity WHERE company_id=?').get(c.id).d,
@@ -111,6 +111,7 @@ export function registerAdmin(app,db){
   if(req.query.status)list=list.filter(c=>c.status===req.query.status);
   if(req.query.plan)list=list.filter(c=>c.plan===req.query.plan);
   if(req.query.internal!=='1')list=list.filter(c=>!c.internal);
+  if(req.query.sandbox==='0')list=list.filter(c=>!c.sandbox);
   res.json(list);
  });
  app.get('/api/admin/companies/:id',(req,res)=>{
@@ -144,7 +145,7 @@ export function registerAdmin(app,db){
   res.json(list);
  });
  app.get('/api/admin/subscriptions',(req,res)=>{
-  const companies=raw.prepare('SELECT * FROM companies WHERE internal=0').all(),soon=Date.now()+7*DAY;
+  const companies=raw.prepare('SELECT * FROM companies WHERE internal=0 AND sandbox=0').all(),soon=Date.now()+7*DAY;
   res.json({plans:Object.entries(PLANS).map(([id,p])=>({id,...p,companies:companies.filter(c=>c.plan===id&&c.status==='active').length,mrr:companies.filter(c=>c.plan===id).reduce((s,c)=>s+companyMrr(c),0)})),
    mrr:companies.reduce((s,c)=>s+companyMrr(c),0),
    trials:companies.filter(c=>c.plan==='trial'&&c.status==='active').map(companyRow).sort((a,b)=>a.trialEndsAt.localeCompare(b.trialEndsAt)).map(c=>({...c,expired:Date.parse(c.trialEndsAt)<Date.now(),endingSoon:Date.parse(c.trialEndsAt)<soon})),

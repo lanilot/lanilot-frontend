@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {Rocket,ArrowLeft,ArrowRight,Check} from 'lucide-react';
 import {__,lang,translateDeep} from './i18n.js';
-import {Shell,Field} from './AuthShell.jsx';
+import {Shell,Field,SocialButtons} from './AuthShell.jsx';
 
 // Step-by-step sign-up: every step is saved on the server, so the funnel shows where people stop.
 const STORE='lanilot_onboarding';
@@ -32,12 +32,14 @@ export function Choice({group,options,value,onChange,multi,cards}){
 }
 function Group({title,hint,children}){return <div className="ob-group"><span className="ob-group-title">{title}{hint&&<small>{hint}</small>}</span>{children}</div>}
 
-export default function Onboarding(){
- const [token,setToken]=useState(null),[options,setOptions]=useState(null),[index,setIndex]=useState(0),[done,setDone]=useState(0),[form,setForm]=useState(empty);
+export default function Onboarding({providers=[]}){
+ const [oauth,setOauth]=useState(null),[token,setToken]=useState(null),[options,setOptions]=useState(null),[index,setIndex]=useState(0),[done,setDone]=useState(0),[form,setForm]=useState(empty);
  const [account,setAccount]=useState({password:'',demo:true}),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const start=async()=>{const d=await request('POST','',{source:source(),lang});storage.set(d.token);return d};
- const apply=(d,t)=>{setToken(t);setOptions(d.options);setDone(d.step);setIndex(Math.min(d.step,steps.length-1));setForm(f=>Object.fromEntries(Object.entries(empty).map(([k,v])=>[k,{...v,...f[k],...d.data[k]}])))};
+ const apply=(d,t)=>{setOauth(d.oauth||null);setToken(t);setOptions(d.options);setDone(d.step);setIndex(Math.min(d.step,steps.length-1));setForm(f=>Object.fromEntries(Object.entries(empty).map(([k,v])=>[k,{...v,...f[k],...d.data[k]}])))};
  useEffect(()=>{(async()=>{
+  // Google/Apple sign-in for a new person hands over a started sign-up.
+  const handed=new URLSearchParams(window.location.search).get('onboarding');if(handed){storage.set(handed);window.history.replaceState(null,'','/signup')}
   const saved=storage.get();
   if(saved){try{return apply(await request('GET','/'+saved),saved)}catch(e){if(e.status!==404)throw e;storage.set(null)}}
   const d=await start();apply(d,d.token);
@@ -47,7 +49,7 @@ export default function Onboarding(){
  const submit=async e=>{
   e.preventDefault();setBusy(true);setError('');
   try{
-   if(step.key==='account'){await request('POST',`/${token}/complete`,account);storage.set(null);window.location.replace('/');return}
+   if(step.key==='account'){await request('POST',`/${token}/complete`,oauth?{demo:account.demo}:account);storage.set(null);window.location.replace('/');return}
    const d=await request('PUT',`/${token}/${step.key}`,form[step.key]);setDone(d.step);setIndex(index+1);
   }catch(err){setError(err.message)}
   setBusy(false);
@@ -56,9 +58,10 @@ export default function Onboarding(){
  return <Shell icon={Rocket} title={step.title()} subtitle={step.subtitle()} wide>
   <ol className="ob-progress" aria-label={__('Шаг {0} из {1}',[index+1,steps.length])}>{steps.map((s,i)=><li key={s.key} className={i===index?'current':i<done?'done':''}><button type="button" disabled={i>done||busy} onClick={()=>{setError('');setIndex(i)}}><span>{i<done&&i!==index?<Check size={11}/>:i+1}</span>{s.label()}</button></li>)}</ol>
   <form onSubmit={submit} noValidate={false}>
+   {step.key==='contact'&&!oauth&&index===0&&<SocialButtons providers={providers}/>}
    {step.key==='contact'&&<>
     <Field label={__('Имя и фамилия')} required autoFocus autoComplete="name" maxLength={100} {...input('contact','name')}/>
-    <Field label={__('Рабочий email')} type="email" required autoComplete="email" maxLength={160} {...input('contact','email')}/>
+    <Field label={__('Рабочий email')} type="email" required autoComplete="email" maxLength={160} readOnly={!!oauth} {...input('contact','email')}/>
     <Field label={__('Телефон (необязательно)')} type="tel" autoComplete="tel" maxLength={40} {...input('contact','phone')}/>
    </>}
    {step.key==='company'&&<>
@@ -77,7 +80,7 @@ export default function Onboarding(){
    </>}
    {step.key==='account'&&<>
     <dl className="ob-summary"><div><dt>{__('Компания')}</dt><dd>{form.company.company}</dd></div><div><dt>Email</dt><dd>{form.contact.email}</dd></div></dl>
-    <Field label={__('Пароль (от 8 символов)')} type="password" required minLength={8} autoFocus autoComplete="new-password" value={account.password} onChange={e=>setAccount({...account,password:e.target.value})}/>
+    {oauth?<p className="auth-hint">{oauth.provider==='apple'?__('Вы вошли через Apple — пароль не нужен.'):__('Вы вошли через Google — пароль не нужен.')}</p>:<Field label={__('Пароль (от 8 символов)')} type="password" required minLength={8} autoFocus autoComplete="new-password" value={account.password} onChange={e=>setAccount({...account,password:e.target.value})}/>}
     <label className="auth-check"><input type="checkbox" checked={account.demo} onChange={e=>setAccount({...account,demo:e.target.checked})}/><span>{__('Заполнить кабинет примерами (грузы, водители, рейсы)')}</span></label>
    </>}
    {error&&<p className="chat-error" role="alert">{error}</p>}

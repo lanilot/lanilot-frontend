@@ -108,3 +108,6 @@
 .ad-request-actions{display:flex;flex-wrap:wrap;gap:6px}.ad-request-actions button{height:28px;padding:0 10px;border:1px solid #dce3ef;border-radius:999px;background:#fff;color:#3b4b66;font-size:11px;cursor:pointer}
 .ad-request-actions button.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:600;cursor:default}
 @media(max-width:1500px){.ad-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.ad-badge.sandbox{margin-left:6px;background:#fff6e5;color:#b45309;font-size:10px}
+.ad-request-open{display:inline-flex;align-items:center;gap:6px;width:fit-content;height:30px;padding:0 12px;border:1px solid var(--brand-tint);border-radius:8px;background:var(--brand-soft);color:var(--brand);font-size:12px;font-weight:600;cursor:pointer}

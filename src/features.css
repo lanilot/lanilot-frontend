@@ -191,3 +191,7 @@
 .brand-landing textarea{min-height:76px;padding:8px 10px;border:1px solid #dce3ef;border-radius:7px;font-size:12px;resize:vertical}
 @media(max-width:900px){.brand-editor{grid-template-columns:1fr}}
 .brand-preview{--brand-soft:color-mix(in srgb,var(--brand) 8%,#fff)}
+/* Personal demo access (sandbox) */
+.sandbox-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 0;padding:10px 14px;border:1px solid var(--brand-tint);border-radius:10px;background:var(--brand-soft);color:#22324d;font-size:12px}
+.sandbox-bar .button{height:32px;flex-shrink:0}
+@media(max-width:600px){.sandbox-bar{flex-direction:column;align-items:stretch}}
