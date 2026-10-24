@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseVoiceCommand,normalize} from '../src/voice-commands.js';
+import {parseVoiceCommand,normalize,spokenLang} from '../src/voice-commands.js';
 const loads=[{id:'LD-2046',origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Reefer'},{id:'LD-3110',origin:'Dallas, TX',destination:'Phoenix, AZ',equipment:'Dry Van'}];
 const page=t=>{const c=parseVoiceCommand(t,loads);return c.type==='navigate'?c.page:c.type};
 
@@ -8,7 +8,7 @@ test('voice: sections in Russian, English and Spanish',()=>{
  for(const [text,expected] of [
   ['Открой рейсы','trips'],['покажи грузы','loads'],['Карта автопарка','eld'],['перейди в автопарк','fleet'],['грузовики','fleet'],['открой настройки','settings'],['Финансы','finances'],['выделенные линии','lanes'],['проверка брокеров','brokers'],['переписка','chat'],['Load Radar','radar'],['главная','overview'],
   ['Open trips','trips'],['go to the fleet map','eld'],['show me the loads','loads'],['open settings','settings'],['dashboard','overview'],['open inbox','chat'],['integrations','integrations'],
-  ['Abre los viajes','trips'],['ir a la configuración','settings'],['mostrar las cargas','loads'],['abre el mapa','eld'],['finanzas','finances'],['ofertas','offers'],['ir al inicio','overview'],['usuarios','users'],['открой ИИ помощник','assistant'],['open the AI assistant','assistant'],['abre el asistente','assistant'],['справка','help'],
+  ['Abre los viajes','trips'],['ir a la configuración','settings'],['mostrar las cargas','loads'],['abre el mapa','eld'],['finanzas','finances'],['ofertas','offers'],['ir al inicio','overview'],['usuarios','users'],['открой ИИ помощник','assistant'],['open the AI assistant','assistant'],['abre el asistente','assistant'],['справка','help'],['посмотри оферы','offers'],['покажи офферы','offers'],['открой лоуды','loads'],['трипы','trips'],['открой сеттинги','settings'],['настроики','settings'],['open setings','settings'],['open the ofers','offers'],['finanses','finances'],
  ])assert.equal(page(text),expected,text);
 });
 
@@ -27,4 +27,8 @@ test('voice: control words, load numbers and searches',()=>{
 
 test('voice: scrolling inside the page',()=>{
  for(const [text,dir] of [['вниз','down'],['прокрути вниз','down'],['scroll down','down'],['baja','down'],['вверх','up'],['scroll up','up'],['arriba','up'],['наверх','top'],['scroll to top','top'],['al principio','top']]){const c=parseVoiceCommand(text,[]);assert.equal(c.type,'scroll',text);assert.equal(c.dir,dir,text)}
+});
+
+test('voice: reply language follows the phrase',()=>{
+ for(const [text,sel,exp] of [['посмотри оферы','en','ru'],['open finances','ru','en'],['abre los viajes','ru','es'],['¿qué puedes hacer?','en','es'],['configuración','en','es'],['show trips','es','en'],['2046','es','es']])assert.equal(spokenLang(text,sel),exp,text);
 });

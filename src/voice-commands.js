@@ -7,23 +7,26 @@ export const normalize=text=>String(text).toLowerCase().replace(/ё/g,'е').norm
 const pages=[
  ['assistant',['помощник','ассистент','ии','assistant','ai','asistente','ia']],
  ['eld',['карт','eld','map','mapa','gps']],
- ['fleet',['автопарк','водител','грузовик','тягач','техник','fleet','driver','truck','flota','conductor','camion','vehiculo']],
+ ['fleet',['автопарк','флит','трак','фур','водител','грузовик','тягач','техник','fleet','driver','truck','flota','conductor','camion','vehiculo']],
  ['radar',['радар','radar']],
- ['chat',['переписк','сообщени','входящ','inbox','message','conversation','mensaje','bandeja','conversacion']],
- ['offers',['предложени','оффер','offer','oferta','propuesta']],
- ['finances',['финанс','деньг','доход','расход','finance','money','revenue','finanza','dinero','ingreso']],
- ['lanes',['выделен','лини','контракт','lane','dedicated','ruta','carril','linea','contrato']],
+ ['chat',['переписк','чаты','месседж','мессендж','инбокс','сообщени','входящ','inbox','message','conversation','mensaje','bandeja','conversacion']],
+ ['offers',['предложени','оффер','офер','офир','offer','oferta','propuesta']],
+ ['finances',['финанс','файнэнс','бухгалтер','деньг','доход','расход','finance','money','revenue','finanza','dinero','ingreso']],
+ ['lanes',['выделен','лейн','лэйн','лини','контракт','lane','dedicated','ruta','carril','linea','contrato']],
  ['brokers',['брокер','broker','corredor']],
  ['telegram',['телеграм','telegram']],
  ['integrations',['интеграц','integration','integracion']],
- ['settings',['настройк','параметр','setting','preference','ajuste','configuracion']],
+ ['settings',['настройк','сеттинг','опци','параметр','setting','preference','ajuste','configuracion']],
  ['users',['пользовател','сотрудник','команд','user','team','staff','employee','usuario','equipo','empleado']],
  ['help',['справк','помощ','help','support','ayuda','soporte']],
- ['overview',['обзор','главн','дашборд','сводк','overview','dashboard','home','summary','resumen','inicio','principal','tablero']],
- ['trips',['рейс','поездк','маршрут','trip','route','viaje','recorrido']],
- ['loads',['груз','load','freight','carga','flete']],
+ ['overview',['обзор','овервью','оверви','домой','старт','главн','дашборд','сводк','overview','dashboard','home','summary','resumen','inicio','principal','tablero']],
+ ['trips',['рейс','трип','диспетч','поездк','маршрут','trip','route','viaje','recorrido']],
+ ['loads',['груз','лоуд','лоад','лод','load','freight','carga','flete']],
 ].map(([page,words])=>[page,words.map(normalize)]);
 const has=(q,words)=>words.some(w=>q.split(' ').some(t=>t.startsWith(w))||w.includes(' ')&&q.includes(w));
+// One wrong, missing or extra letter is tolerated for longer words ("оферы", "настройкы", "setings").
+function close(a,b){if(Math.abs(a.length-b.length)>1)return false;let i=0,j=0,edits=0;while(i<a.length&&j<b.length){if(a[i]===b[j]){i++;j++;continue}if(++edits>1)return false;if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++}}return edits+(a.length-i)+(b.length-j)<=1}
+const fuzzy=(q,words)=>words.some(w=>w.length>=5&&!w.includes(' ')&&q.split(' ').some(t=>t.length>=w.length-1&&[w.length-1,w.length,w.length+1].some(n=>close(t.slice(0,n),w))))
 const exact=(q,list)=>list.map(normalize).includes(q);
 const stop=['стоп','хватит','отмена','замолчи','stop','cancel','enough','quiet','para','basta','cancelar','detente','alto'];
 const back=['назад','вернись','вернуться','вернись назад','выйти','выход','закрой','закрыть','закрой помощник','back','go back','exit','close','close assistant','volver','atras','regresar','salir','cerrar'];
@@ -44,6 +47,8 @@ export function parseVoiceCommand(text,loads=[]){
  if(number){const load=loads.find(l=>String(l.id).replace(/\D/g,'').endsWith(number[1]));return {type:'openLoad',id:number[1],load:load||null}}
  // Cities, equipment or limits make it a load search for the chat; a bare section name is navigation.
  const criteria=parseDemoRequest(text,loads),filtered=Object.keys(emptyCriteria).some(k=>criteria[k]!==emptyCriteria[k]);
- if(!filtered)for(const [page,words] of pages)if(has(q,words))return {type:'navigate',page};
+ if(!filtered){for(const [page,words] of pages)if(has(q,words))return {type:'navigate',page};for(const [page,words] of pages)if(fuzzy(q,words))return {type:'navigate',page}}
  return filtered?{type:'search',text:String(text).trim(),criteria}:{type:'unknown'};
 }
+// Language of the phrase itself, so the reply matches what the user actually said whatever the selected recognition language.
+export function spokenLang(text,selected='en'){const t=String(text).toLowerCase();if(/[а-яё]/.test(t))return 'ru';if(/[ñ¿¡áéíóú]/.test(t)||/(^|\s)(abre|abrir|ir|ve|vamos|mostrar|muestra|ver|los|las|el|la|del|de|desde|hacia|para|cargas?|viajes?|ajustes|configuracion|finanzas|ofertas|flota|mapa|volver|basta|ayuda|nuevo)(\s|$)/.test(t))return 'es';return selected==='es'&&!/[a-z]/.test(t)?'es':'en'}
