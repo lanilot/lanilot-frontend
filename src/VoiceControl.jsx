@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {Mic,X} from 'lucide-react';
 import {__,lang,appLocale} from './i18n.js';
-import {voiceLangs,parseVoiceCommand,spokenLang,isEcho} from './voice-commands.js';
+import {voiceLangs,parseVoiceCommand,spokenLang,isEcho,speechText} from './voice-commands.js';
 import {demoMatches} from './assistant-demo.js';
 const Recognition=typeof window==='undefined'?null:window.SpeechRecognition||window.webkitSpeechRecognition||null;
 export const voiceSupported=!!Recognition;
@@ -17,7 +17,7 @@ const plural=(code,n,one,few,many)=>`${n} ${tr(code,code==='ru'?(n%100>=11&&n%10
 // The pause is capped by the reply length in case the browser never reports the end of speech; onDone runs once either way.
 let quietUntil=0;const speaking=()=>Date.now()<quietUntil;
 export function speak(text,code=lang,onDone){let done=false;const finish=()=>{if(done)return;done=true;quietUntil=Date.now()+600;onDone?.()};const max=Math.min(9000,1200+text.length*80);
- try{const synth=window.speechSynthesis;if(!synth||!text)return finish();synth.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=voiceLangs.find(v=>v[0]===code)?.[1]||appLocale;const voice=synth.getVoices().find(v=>v.lang?.toLowerCase().startsWith(code));if(voice)u.voice=voice;quietUntil=Date.now()+max;u.onend=u.onerror=finish;setTimeout(finish,max);synth.speak(u)}catch{finish()}}
+ try{const synth=window.speechSynthesis;if(!synth||!text)return finish();synth.cancel();const u=new SpeechSynthesisUtterance(speechText(text));u.lang=voiceLangs.find(v=>v[0]===code)?.[1]||appLocale;const voice=synth.getVoices().find(v=>v.lang?.toLowerCase().startsWith(code));if(voice)u.voice=voice;quietUntil=Date.now()+max;u.onend=u.onerror=finish;setTimeout(finish,max);synth.speak(u)}catch{finish()}}
 const IDLE_MS=8000;
 const fatal=['not-allowed','service-not-allowed','audio-capture'];
 // Continuous listening: once started it keeps hearing phrases until stop() or 8 s of silence ({idle:true}); each final phrase goes to onResult({text}).

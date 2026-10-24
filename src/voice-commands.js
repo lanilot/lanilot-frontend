@@ -54,3 +54,6 @@ export function parseVoiceCommand(text,loads=[]){
 export function spokenLang(text,selected='en'){const t=String(text).toLowerCase();if(/[а-яё]/.test(t))return 'ru';if(/[ñ¿¡áéíóú]/.test(t)||/(^|\s)(abre|abrir|ir|ve|vamos|mostrar|muestra|ver|los|las|el|la|del|de|desde|hacia|para|cargas?|viajes?|ajustes|configuracion|finanzas|ofertas|flota|mapa|volver|basta|ayuda|nuevo)(\s|$)/.test(t))return 'es';return selected==='es'&&!/[a-z]/.test(t)?'es':'en'}
 // True when the heard phrase is mostly words of our last spoken reply (the speakers leaking into the microphone).
 export function isEcho(heard,reply){const h=normalize(heard).split(' ').filter(w=>w.length>2),r=new Set(normalize(reply).split(' '));if(!h.length)return false;const hits=h.filter(w=>r.has(w)||[...r].some(x=>x.length>3&&(x.startsWith(w)||w.startsWith(x)))).length;return hits/h.length>=.6}
+// Text for speech synthesis: quotes, slashes, brackets, arrows and other symbols are dropped (some voices read them aloud
+// as "backslash" or "quote"); dashes and dots inside words become spaces, sentence punctuation stays for natural pauses.
+export function speechText(text){return String(text).normalize('NFC').replace(/(\p{L}|\p{N})[-–—_/.·](?=\p{L}|\p{N})/gu,'$1 ').replace(/[^\p{L}\p{N}\s.,!?;:]/gu,' ').replace(/\s+([.,!?;:])/g,'$1').replace(/([.,!?;:])\1+/g,'$1').replace(/\s+/g,' ').trim()}

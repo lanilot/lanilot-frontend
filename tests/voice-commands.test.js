@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseVoiceCommand,normalize,spokenLang,isEcho} from '../src/voice-commands.js';
+import {parseVoiceCommand,normalize,spokenLang,isEcho,speechText} from '../src/voice-commands.js';
 const loads=[{id:'LD-2046',origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Reefer'},{id:'LD-3110',origin:'Dallas, TX',destination:'Phoenix, AZ',equipment:'Dry Van'}];
 const page=t=>{const c=parseVoiceCommand(t,loads);return c.type==='navigate'?c.page:c.type};
 
@@ -40,4 +40,12 @@ test('voice: own replies heard by the microphone are recognised as echo',()=>{
  assert.ok(isEcho('найдено 2 подходящих груза','Найдено 2 подходящих груза'));
  assert.ok(!isEcho('открой настройки','Открываю «Предложения»'));
  assert.ok(!isEcho('open settings','Opening “Offers”'));
+});
+
+test('voice: symbols are never spoken',()=>{
+ assert.equal(speechText('Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры.'),'Не понял команду. Скажите что ты умеешь, чтобы услышать примеры.');
+ assert.equal(speechText('Opening “Offers”'),'Opening Offers');
+ assert.equal(speechText('Открываю груз LD-2046'),'Открываю груз LD 2046');
+ assert.equal(speechText('Path \\ a/b → c * "x" (y) [z] {w} #1 @ $ % ^ & | ~ `'),'Path a b c x y z w 1');
+ assert.equal(speechText('¿Qué puedes hacer?'),'Qué puedes hacer?');
 });
