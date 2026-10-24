@@ -1646,5 +1646,9 @@
  "Не нашёл «{0}» ни в одном разделе": "Couldn't find “{0}” in any section",
  "Искать": "Search",
  "Не нашёл «{0}» на этой странице. Искать во всех разделах?": "“{0}” isn't on this page. Search all sections?",
- "Хорошо, не ищу": "OK, not searching"
+ "Хорошо, не ищу": "OK, not searching",
+ "Управлять голосом": "Voice control",
+ "Скажите «Привет, Лани»": "Say “Hey Lani”",
+ "Пауза": "Pause",
+ "Слушать": "Listen"
 }

@@ -1646,5 +1646,9 @@
  "Не нашёл «{0}» ни в одном разделе": "«{0}» hech bir boʻlimda topilmadi",
  "Искать": "Qidirish",
  "Не нашёл «{0}» на этой странице. Искать во всех разделах?": "«{0}» bu sahifada yoʻq. Barcha boʻlimlardan qidiraymi?",
- "Хорошо, не ищу": "Mayli, qidirmayman"
+ "Хорошо, не ищу": "Mayli, qidirmayman",
+ "Управлять голосом": "Ovoz bilan boshqarish",
+ "Скажите «Привет, Лани»": "“Hey Lani” deng",
+ "Пауза": "Pauza",
+ "Слушать": "Tinglash"
 }

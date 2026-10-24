@@ -32,10 +32,10 @@ function scope(){const dialogs=[...document.querySelectorAll('[role=dialog][aria
 // Table rows, list items and cards that open something on click (pointer cursor) count too; real controls win ties.
 const ROWS='tr,li,article,[class*=card],[class*=row],[class*=item],[class*=thread]';
 function clickableRows(root){const out=[];for(const el of root.querySelectorAll(ROWS)){if(el.matches(SELECTOR)||el.parentElement?.closest(SELECTOR)||!visible(el))continue;if(getComputedStyle(el).cursor!=='pointer'||(el.innerText||'').length>600)continue;out.push(el)}return out}
-export function findControl(variants){const {kind}=splitTarget(variants[0]),targets=[...new Set(variants.map(v=>splitTarget(v).text).filter(Boolean))];let best=null;const root=scope();
+export function findControl(variants,min=45){const {kind}=splitTarget(variants[0]),targets=[...new Set(variants.map(v=>splitTarget(v).text).filter(Boolean))];let best=null;const root=scope();
  for(const el of [...root.querySelectorAll(SELECTOR),...clickableRows(root)]){if(!visible(el))continue;const labels=labelOf(el);if(!labels.length)continue;let score=0;for(const l of labels)for(const t of targets)score=Math.max(score,scoreLabel(l,t));if(!score)continue;
   if(kind==='field'&&isField(el)||kind==='button'&&!isField(el))score+=10;if(!el.matches(SELECTOR))score-=5;if(!best||score>best.score)best={el,score}}
- return best&&best.score>=45?best.el:null}
+ return best&&best.score>=min?best.el:null}
 const leaves=el=>{const a=el.closest('a[href]');if(!a)return false;try{const url=new URL(a.href,location.href);return a.target==='_blank'||url.origin!==location.origin}catch{return true}};
 function flash(el){el.classList.add('voice-flash');setTimeout(()=>el.classList.remove('voice-flash'),1200)}
 // Returns 'focused' | 'clicked' | 'external' | null (nothing matched).

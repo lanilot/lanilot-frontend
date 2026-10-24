@@ -116,7 +116,7 @@
 .pitch-logo-mark{display:block;width:34px;height:34px;flex:none}
 /* Voice control: a Siri-like orb that floats over every dashboard screen, above modals and drawers; --level (0..1) is the live mic loudness */
 .ai-voice-hint{margin:10px 0 0;color:#6b7891;font-size:14px;text-align:center}
-.voice-float-anchor{position:fixed;z-index:2147483000;width:60px;height:60px}
+
 .voice-orb-button{position:relative;display:grid;place-items:center;width:60px;height:60px;padding:0;border:0;border-radius:50%;background:#0b1024;color:#fff;cursor:grab;touch-action:none;user-select:none;box-shadow:0 10px 28px #0b102440,0 2px 6px #0b102429;transition:transform .2s ease,box-shadow .3s ease}
 .voice-orb-button:hover{transform:scale(1.05)}.voice-orb-button:active{cursor:grabbing}.voice-orb-button:focus-visible{outline:3px solid #7aa2ff;outline-offset:3px}
 .voice-orb{--level:0;position:absolute;inset:0;border-radius:50%;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 50% 55%,#151c44 0%,#05070f 75%)}
@@ -131,9 +131,6 @@
 .voice-float-anchor.is-listening .voice-orb i{animation-duration:3.2s}.voice-float-anchor.is-listening .voice-orb i:nth-child(2){animation-duration:4.4s}.voice-float-anchor.is-listening .voice-orb i:nth-child(3){animation-duration:5.6s}
 @keyframes voice-orb-spin{0%{transform:rotate(0deg) translate(4%,-3%)}50%{transform:rotate(180deg) translate(-4%,3%)}100%{transform:rotate(360deg) translate(4%,-3%)}}
 .voice-float-lang{position:absolute;top:-6px;left:-8px;height:20px;min-width:28px;padding:0 5px;border:1px solid #dfe6f2;border-radius:10px;background:#fff;color:#4a5872;font:700 10px/1 inherit;cursor:pointer;box-shadow:0 2px 6px #1b28401a}.voice-float-lang:hover{color:#3d7bff;border-color:#3d7bff}
-.voice-float-bubble{position:fixed;z-index:2147483000;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border:1px solid #ffffff1f;border-radius:16px;background:#0b1024e6;color:#fff;font-size:13.5px;box-shadow:0 14px 36px #0b102440;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-sizing:border-box}.voice-float-bubble.is-error{background:#3a0f19e6}
-.voice-float-bubble p{flex:1;min-width:0;margin:0;display:flex;flex-direction:column;gap:2px}.voice-float-bubble q{color:#aab6d3;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.voice-float-live{font-size:15px;font-weight:500}
-.voice-float-bubble button{display:grid;place-items:center;width:26px;height:26px;border:0;border-radius:50%;background:transparent;color:#aab6d3;cursor:pointer}.voice-float-bubble button:hover{background:#ffffff1a}
 @media(prefers-reduced-motion:reduce){.voice-orb i{animation:none}}
 @media print{.voice-float{display:none}}
 .voice-float-wake{position:absolute;bottom:-6px;left:-8px;display:grid;place-items:center;width:22px;height:22px;padding:0;border:1px solid #dfe6f2;border-radius:50%;background:#fff;color:#8a96ad;cursor:pointer;box-shadow:0 2px 6px #1b28401a}.voice-float-wake.is-on{color:#fff;background:#3d7bff;border-color:#3d7bff}.voice-float-wake:hover{border-color:#3d7bff}
@@ -147,4 +144,19 @@
 @keyframes voice-orb-sweep{to{transform:rotate(360deg)}}
 @keyframes voice-orb-breathe{50%{transform:scale(1.08);box-shadow:0 0 0 6px #7aa2ff33,0 12px 34px #3d7bff66}}
 @media(prefers-reduced-motion:reduce){.voice-float-anchor.is-searching .voice-orb::after,.voice-float-anchor.is-searching .voice-orb-button{animation:none}}
-.voice-float-bubble .voice-float-actions{display:flex;gap:8px;margin-top:8px}.voice-float-bubble .voice-float-actions button{width:auto;height:30px;padding:0 14px;border-radius:15px;background:#ffffff1f;color:#fff;font:600 13px/1 inherit}.voice-float-bubble .voice-float-actions button.is-primary{background:#3d7bff}.voice-float-bubble .voice-float-actions button:hover{background:#ffffff33}.voice-float-bubble .voice-float-actions button.is-primary:hover{background:#2f6bff}
+
+/* Voice pill (seventech.uz style): orb + status + pause + close, translucent with a glow from the orb side */
+.voice-float-anchor{position:fixed;z-index:2147483000;display:flex;align-items:center;gap:6px;padding:4px;border-radius:999px;background:radial-gradient(120% 160% at var(--glow-x,100%) 50%,#3d7bff59 0%,#7c3aed26 35%,#0b102400 70%),#0b1024c7;backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);box-shadow:0 14px 36px #0b102440;color:#fff;max-width:calc(100vw - 24px);box-sizing:border-box}
+.voice-float-anchor.is-right{flex-direction:row-reverse;--glow-x:100%}.voice-float-anchor.is-left{--glow-x:0%}
+.voice-float-anchor.is-error{background:radial-gradient(120% 160% at var(--glow-x,100%) 50%,#e5484d4d 0%,#0b102400 70%),#2a0f19d9}
+.voice-orb-wrap{position:relative;flex-shrink:0;width:60px;height:60px}
+.voice-float-panel{min-width:0;padding:0 6px;cursor:default}.voice-float-anchor:not(.is-listening):not(.is-waiting) .voice-float-panel{cursor:pointer}
+.voice-float-panel p{margin:0;max-width:min(320px,calc(100vw - 190px));font:500 13.5px/1.35 inherit;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.voice-float-panel p.is-live{color:#dbe5ff}
+.voice-float-anchor:not(.is-listening):not(.is-waiting) .voice-float-panel p{font-size:12.5px;white-space:nowrap}
+.voice-float-icon{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer}.voice-float-icon:hover{background:#ffffff1f}
+.voice-float-actions{display:flex;gap:8px;margin-top:6px}.voice-float-actions button{height:28px;padding:0 13px;border:0;border-radius:14px;background:#ffffff1f;color:#fff;font:600 12.5px/1 inherit;cursor:pointer}.voice-float-actions button.is-primary{background:#3d7bff}.voice-float-actions button:hover{background:#ffffff33}.voice-float-actions button.is-primary:hover{background:#2f6bff}
+/* Progress ring around the orb while it looks for something */
+.voice-orb-ring{position:absolute;inset:-4px;width:68px;height:68px;pointer-events:none;opacity:0;transition:opacity .2s}.voice-orb-ring circle{fill:none;stroke:#ffffffd9;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:60 201}
+.voice-float-anchor.is-searching .voice-orb-ring{opacity:1;animation:voice-orb-sweep 1s linear infinite}
+.voice-float-anchor.is-right .voice-float-lang,.voice-float-anchor.is-right .voice-float-wake{left:auto;right:-8px}

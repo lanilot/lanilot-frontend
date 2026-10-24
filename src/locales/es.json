@@ -1646,5 +1646,9 @@
  "Не нашёл «{0}» ни в одном разделе": "No encontré «{0}» en ninguna sección",
  "Искать": "Buscar",
  "Не нашёл «{0}» на этой странице. Искать во всех разделах?": "«{0}» no está en esta página. ¿Buscar en todas las secciones?",
- "Хорошо, не ищу": "De acuerdo, no busco"
+ "Хорошо, не ищу": "De acuerdo, no busco",
+ "Управлять голосом": "Control por voz",
+ "Скажите «Привет, Лани»": "Di «Hola Lani»",
+ "Пауза": "Pausa",
+ "Слушать": "Escuchar"
 }

@@ -39,6 +39,8 @@ const newChat=['новый чат','новый запрос','начни зан�
 // "clear the field", "очисти поле", "borra el campo" → {type:'clear'}.
 const clickVerbs=/^(?:please\s+)?(?:click(?:\s+on)?|press|tap(?:\s+on)?|select|choose|check|uncheck|toggle|нажми(?:те)?(?:\s+на)?|кликни(?:те)?(?:\s+на|\s+по)?|клик(?:\s+на|\s+по)?|жми(?:\s+на)?|ткни(?:\s+на|\s+в)?|выбери(?:те)?|отметь|haz\s+(?:clic|click)\s+en|(?:clic|click)\s+en|pulsa(?:\s+en)?|presiona|toca|selecciona|elige|marca)\s+(?:the\s+|on\s+the\s+|el\s+|la\s+|los\s+|las\s+)?(.+)$/iu;
 const typeVerbs=/^(?:please\s+)?(?:type|write|enter|input|введи(?:те)?|напиши(?:те)?|впиши(?:те)?|набери(?:те)?|вбей|escribe|introduce|teclea|ingresa)\s+(.+)$/iu;
+const openVerbs=/^(?:please\s+)?(?:open|show(?:\s+me)?|go\s+to|find|открой(?:те)?|покажи(?:те)?|перейди(?:те)?(?:\s+(?:в|на|к))?|найди(?:те)?|abre|abrir|muestra(?:me)?|ve\s+a|ir\s+a|busca)\s+(?:the\s+|el\s+|la\s+|los\s+|las\s+)?(.+)$/iu;
+const fillers=new Set(['the','a','my','page','section','tab','me','мне','раздел','страницу','страница','вкладку','мои','la','el','los','las','mi','mis','pagina','seccion']);
 const clearWords=['clear','clear field','clear the field','erase','очисти','очисти поле','сотри','удали текст','borra','borra el campo','limpia','limpia el campo'];
 export function parseVoiceCommand(text,loads=[]){
  const q=normalize(text);if(!q)return {type:'empty'};
@@ -57,7 +59,11 @@ export function parseVoiceCommand(text,loads=[]){
  if(number){const load=loads.find(l=>String(l.id).replace(/\D/g,'').endsWith(number[1]));return {type:'openLoad',id:number[1],load:load||null}}
  // Cities, equipment or limits make it a load search for the chat; a bare section name is navigation.
  const criteria=parseDemoRequest(text,loads),filtered=Object.keys(emptyCriteria).some(k=>criteria[k]!==emptyCriteria[k]);
+ // "Open Uber Freight": words beyond a section name mean a named item, not the Loads section.
+ const opening=!filtered&&raw.match(openVerbs);if(opening){const rest=normalize(opening[1]).split(' ').filter(w=>w&&!fillers.has(w));if(rest.some(w=>!pages.some(([,stems])=>stems.some(x=>w.startsWith(x))||fuzzy(w,stems))))return {type:'click',target:normalize(opening[1]),said:opening[1].trim()}}
  if(!filtered){for(const [page,words] of pages)if(has(q,words))return {type:'navigate',page};for(const [page,words] of pages)if(fuzzy(q,words))return {type:'navigate',page}}
+ // "Open Arrive Logistics" / «открой TQL» / "abre Schneider": not a section, so it means that item on the page.
+ const opened=!filtered&&raw.match(openVerbs);if(opened&&normalize(opened[1]))return {type:'click',target:normalize(opened[1]),said:opened[1].trim()};
  return filtered?{type:'search',text:String(text).trim(),criteria}:{type:'unknown'};
 }
 // Language of the phrase itself, so the reply matches what the user actually said whatever the selected recognition language.

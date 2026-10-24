@@ -98,3 +98,14 @@ test('voice: names across alphabets and yes/no answers',async()=>{
  for(const t of ['нет','не надо','no','Nope','cancelar'])assert.equal(parseYesNo(t),'no',t);
  assert.equal(parseYesNo('открой рейсы'),null);
 });
+
+test('voice: open + a name that is not a section means that item',()=>{
+ for(const [t,target] of [['открой arrive logistics','arrive logistics'],['Open Arrive Logistics','arrive logistics'],['abre Schneider','schneider'],['покажи TQL','tql'],['find Alex Morgan','alex morgan'],['открой Uber Freight','uber freight'],['open Echo Global','echo global']]){const c=parseVoiceCommand(t,[]);assert.equal(c.type,'click',t);assert.equal(c.target,target,t)}
+ assert.equal(parseVoiceCommand('открой рейсы',[]).page,'trips');
+ assert.equal(parseVoiceCommand('open the fleet map',[]).page,'eld');
+ assert.equal(parseVoiceCommand('открой раздел грузы',[]).page,'loads');
+ assert.equal(parseVoiceCommand('open the settings page',[]).page,'settings');
+ assert.equal(parseVoiceCommand('abre mis viajes',[]).page,'trips');
+ assert.equal(parseVoiceCommand('найди грузы из Чикаго',[{id:'a',origin:'Chicago, IL',destination:'Dallas, TX'}]).type,'search');
+ assert.equal(parseVoiceCommand('At Croy arrive Logistics',[]).type,'unknown');
+});
