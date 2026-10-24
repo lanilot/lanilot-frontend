@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {LayoutDashboard,Boxes,Handshake,Fuel,ShieldCheck,Smartphone,Lock,Check,ArrowRight,ArrowLeft,LogOut,Clock,Sparkles} from 'lucide-react';
 import {__,translateDeep} from './i18n.js';
 import LogoMark from './LogoMark.jsx';
-import BrandLogo from './BrandLogo.jsx';
+import BrandLogo,{hasBrandLogo} from './BrandLogo.jsx';
 import LangSwitch from './LangSwitch.jsx';
 import './products.css';
 
@@ -20,7 +20,7 @@ const signOut=async()=>{await fetch('/api/auth/logout',{method:'POST'});window.l
 const money=n=>'$'+n.toLocaleString('en-US');
 
 function Top({company,user}){
- return <header className="pp-top"><div className="pp-brand">{company?.brand?.logo?<BrandLogo src={company.brand.logo} alt={company.brand.name}/>:<><span className="sidebar-logo"><LogoMark/></span><strong>{company?.brand?.name||company?.name||'Lanilot'}</strong></>}</div>
+ return <header className="pp-top"><div className="pp-brand">{hasBrandLogo(company?.brand)?<BrandLogo src={company.brand.logo} text={company.brand.logoText} alt={company.brand.name}/>:<><span className="sidebar-logo"><LogoMark/></span><strong>{company?.brand?.name||company?.name||'Lanilot'}</strong></>}</div>
   <div className="pp-top-right"><LangSwitch/>{user&&<span className="pp-user">{user.name}</span>}<button type="button" className="pp-link" onClick={signOut}><LogOut size={15}/>{__('Выйти')}</button></div></header>;
 }
 

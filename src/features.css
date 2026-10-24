@@ -214,3 +214,6 @@
 .subdomain-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.subdomain-actions .button{height:32px}
 .subdomain-actions a{display:inline-flex;align-items:center;gap:4px;color:var(--brand);font-size:12px;text-decoration:none}
 .subdomain-done{margin:0;font-size:12px;color:#15803d}
+.brand-logo-mode{display:inline-flex;gap:2px;margin:6px 0 10px;padding:3px;border:1px solid #e1e8f4;border-radius:10px;background:#f6f8fc}.brand-logo-mode button{height:30px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:#4a5872;font:500 13px/1 inherit;cursor:pointer}.brand-logo-mode button.active{background:#fff;color:#18243a;box-shadow:0 1px 3px #1b28401f}
+.brand-logo-text-field{display:grid;gap:6px;font-size:13px;color:#5b6882}.brand-logo-text-field input{width:min(320px,100%)}
+.brand-logo-preview{overflow:visible;width:auto;min-width:150px;padding:0 74px 0 16px}

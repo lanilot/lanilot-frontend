@@ -33,3 +33,12 @@ test('company settings validate requisites and the fleet profile',async()=>{
   assert.deepEqual((await call('/state')).data.settings,saved);
  }finally{await new Promise(r=>server.close(r));db.close()}
 });
+
+test('branding: text logo instead of a picture',async()=>{
+ const {validateBranding}=await import('../server/branding.js');
+ assert.equal(validateBranding({}).logoMode,'image');
+ assert.deepEqual((({logoMode,logoText})=>({logoMode,logoText}))(validateBranding({logoMode:'text',logoText:'  TURGUNOV   TECH '})),{logoMode:'text',logoText:'TURGUNOV TECH'});
+ assert.throws(()=>validateBranding({logoMode:'text',logoText:''}));
+ assert.throws(()=>validateBranding({logoMode:'banner'}));
+ assert.throws(()=>validateBranding({logoText:'x'.repeat(41)}));
+});

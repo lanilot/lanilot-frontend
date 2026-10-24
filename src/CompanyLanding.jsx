@@ -1,6 +1,6 @@
 import React,{useEffect,useRef} from 'react';
 import LogoMark from './LogoMark.jsx';
-import BrandLogo from './BrandLogo.jsx';
+import BrandLogo,{hasBrandLogo} from './BrandLogo.jsx';
 import {LogIn,Phone,Mail,Globe,MapPin,Truck,ShieldCheck,Snowflake,Package,Zap,Repeat,Radar,Search,Handshake,FileCheck,Headphones,Navigation,ArrowRight,CheckCircle2,UserRound,CalendarClock} from 'lucide-react';
 import {__} from './i18n.js';
 import LangSwitch from './LangSwitch.jsx';
@@ -93,7 +93,7 @@ export default function CompanyLanding({company,urls}){
  const svc=services(l.businessType,eq),eqText=equipmentText();
  const nav=[['services',__('Услуги')],eq.length&&['equipment',__('Техника')],lanes.length&&['lanes',__('Линии')],['contact',__('Контакты')]].filter(Boolean);
  return <div className="clx" ref={root}>
-  <header className="clx-top"><a className="clx-brand" href="#top">{b.logo?<BrandLogo src={b.logo} alt={b.name}/>:<><span className="clx-mark"><LogoMark/></span><strong>{b.name}</strong></>}</a>
+  <header className="clx-top"><a className="clx-brand" href="#top">{hasBrandLogo(b)?<BrandLogo src={b.logo} text={b.logoText} alt={b.name}/>:<><span className="clx-mark"><LogoMark/></span><strong>{b.name}</strong></>}</a>
    <nav className="clx-nav">{nav.map(([id,t])=><a key={id} href={'#'+id}>{t}</a>)}</nav>
    <div className="clx-top-actions"><LangSwitch/><a className="clx-btn ghost sm" href={signIn}><LogIn size={14}/>{__('Войти')}</a></div></header>
 

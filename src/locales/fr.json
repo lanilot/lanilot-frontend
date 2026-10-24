@@ -1700,5 +1700,14 @@
  "Выберите продукт и тариф": "Choisissez un produit et une offre",
  "Продукт уже подключён": "Produit déjà connecté",
  "Укажите enabled: true или false": "Indiquez enabled : true ou false",
- "Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».": "Une petite mention « powered by Lanilot » s’affiche toujours sur le logo."
+ "Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».": "Une petite mention « powered by Lanilot » s’affiche toujours sur le logo.",
+ "Выберите вид логотипа": "Choisissez le type de logo",
+ "Логотип текстом: до 40 символов": "Logo texte : 40 caractères maximum",
+ "Напишите текст логотипа": "Saisissez le texte du logo",
+ "Вид логотипа": "Type de logo",
+ "Изображение": "Image",
+ "Текстом": "Texte",
+ "Текст логотипа": "Texte du logo",
+ "Например, TURGUNOV TECH": "Par exemple, TURGUNOV TECH",
+ "Пишется цветом бренда. До 40 символов; сохраните настройки, чтобы применить.": "Affiché dans la couleur de la marque. 40 caractères max ; enregistrez pour appliquer."
 }

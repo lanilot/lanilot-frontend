@@ -1700,5 +1700,14 @@
  "Выберите продукт и тариф": "Mahsulot va tarifni tanlang",
  "Продукт уже подключён": "Mahsulot allaqachon ulangan",
  "Укажите enabled: true или false": "enabled: true yoki false koʻrsating",
- "Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».": "Logotip ustida doim kichik “powered by Lanilot” belgisi koʻrsatiladi."
+ "Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».": "Logotip ustida doim kichik “powered by Lanilot” belgisi koʻrsatiladi.",
+ "Выберите вид логотипа": "Logotip turini tanlang",
+ "Логотип текстом: до 40 символов": "Matnli logotip: 40 belgigacha",
+ "Напишите текст логотипа": "Logotip matnini yozing",
+ "Вид логотипа": "Logotip turi",
+ "Изображение": "Rasm",
+ "Текстом": "Matn",
+ "Текст логотипа": "Logotip matni",
+ "Например, TURGUNOV TECH": "Masalan, TURGUNOV TECH",
+ "Пишется цветом бренда. До 40 символов; сохраните настройки, чтобы применить.": "Brend rangida koʻrsatiladi. 40 belgigacha; qoʻllash uchun sozlamalarni saqlang."
 }
