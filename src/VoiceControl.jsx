@@ -13,11 +13,18 @@ const dicts={ru:{}};
 export async function loadVoiceDict(code){if(dicts[code])return;try{dicts[code]=(await import(`./locales/${code}.json`)).default}catch{dicts[code]={}}}
 const tr=(code,key,vars)=>{let s=dicts[code]?.[key]??key;if(vars)s=s.replace(/\{(\w+)\}/g,(m,k)=>vars[k]??m);return s};
 const plural=(code,n,one,few,many)=>`${n} ${tr(code,code==='ru'?(n%100>=11&&n%100<=14?many:n%10===1?one:n%10>=2&&n%10<=4?few:many):n===1?one:many)}`;
+// Spoken replies are switched off for now (actions answer with chime()); speak() and say() stay for when they return.
 // While a reply is spoken (and briefly after) the microphone would hear our own voice, so phrases are dropped.
 // The pause is capped by the reply length in case the browser never reports the end of speech; onDone runs once either way.
 let quietUntil=0;const speaking=()=>Date.now()<quietUntil;
 export function speak(text,code=lang,onDone){let done=false;const finish=()=>{if(done)return;done=true;quietUntil=Date.now()+600;onDone?.()};const max=Math.min(9000,1200+text.length*80);
  try{const synth=window.speechSynthesis;if(!synth||!text)return finish();synth.cancel();const u=new SpeechSynthesisUtterance(speechText(text));u.lang=voiceLangs.find(v=>v[0]===code)?.[1]||appLocale;const voice=synth.getVoices().find(v=>v.lang?.toLowerCase().startsWith(code));if(voice)u.voice=voice;quietUntil=Date.now()+max;u.onend=u.onerror=finish;setTimeout(finish,max);synth.speak(u)}catch{finish()}}
+// Feedback sounds instead of spoken replies: a bright two-note bell ("ting") on success, a soft low tone on errors.
+let audio=null;
+export function unlockAudio(){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();audio.resume?.().catch(()=>{})}catch{}}
+export function chime(kind='ok'){try{unlockAudio();if(!audio)return;const t=audio.currentTime+.01,out=audio.createGain();out.gain.value=kind==='error'?.14:.16;out.connect(audio.destination);
+ const notes=kind==='error'?[[440,0,.22],[330,.13,.35]]:[[1318.5,0,1.1],[1975.5,.075,1.4]],partials=kind==='error'?[[1,1]]:[[1,1],[2.76,.16],[5.4,.05]];
+ for(const [freq,at,len] of notes)for(const [mult,vol] of partials){const o=audio.createOscillator(),g=audio.createGain();o.type=kind==='error'?'triangle':'sine';o.frequency.value=freq*mult;g.gain.setValueAtTime(0,t+at);g.gain.linearRampToValueAtTime(vol,t+at+.006);g.gain.exponentialRampToValueAtTime(.0001,t+at+len/mult**.3);o.connect(g).connect(out);o.start(t+at);o.stop(t+at+len+.05)}}catch{}}
 const IDLE_MS=8000;
 const fatal=['not-allowed','service-not-allowed','audio-capture'];
 // Continuous listening: once started it keeps hearing phrases until stop() or 8 s of silence ({idle:true}); each final phrase goes to onResult({text}).
@@ -53,9 +60,9 @@ function initialPosition(){try{const p=JSON.parse(localStorage.getItem(posKey));
 // Floating voice orb on every dashboard screen, the AI assistant included. Every command calls the app's own handlers,
 // so voice control never leaves the page; the listening session survives switching sections.
 export function FloatingVoice({state,isOwner,labels,assistantOpen,assistant,onNavigate,onOpenLoad,onSearch,onBack}){
- const [code,setCode]=useState(initialVoiceLang),[pos,setPos]=useState(initialPosition),[note,setNote]=useState(null),drag=useRef(null),moved=useRef(false),lastLang=useRef(null),lastReply=useRef(null),lastCommand=useRef(null),voiceRef=useRef(null);
- // Replies are given in the language of the phrase just heard (errors: in the selected recognition language).
- let sp=code;const t=(key,vars)=>tr(sp,key,vars),reply=(text,heard,tone='ok')=>{setNote({text,heard,tone,id:Math.random()});lastReply.current={text,at:Date.now()};voiceRef.current?.say(text,sp)};
+ const [code,setCode]=useState(initialVoiceLang),[pos,setPos]=useState(initialPosition),[note,setNote]=useState(null),drag=useRef(null),moved=useRef(false),lastLang=useRef(null),lastReply=useRef(null),lastCommand=useRef(null);
+ // Reply texts are shown in the language of the phrase just heard; actions are confirmed with a chime, not speech (errors: in the selected recognition language).
+ let sp=code;const t=(key,vars)=>tr(sp,key,vars),reply=(text,heard,tone='ok')=>{setNote({text,heard,tone,id:Math.random()});lastReply.current={text,at:Date.now()};chime(tone==='error'?'error':'ok')};
  useEffect(()=>{for(const [c] of voiceLangs)loadVoiceDict(c)},[]);
  const voice=useVoice(({text,error,idle})=>{
   if(idle)return setNote({text:tr(lastLang.current||code,"Голосовое управление выключено"),heard:'',tone:'ok',id:Math.random()});
@@ -75,13 +82,12 @@ export function FloatingVoice({state,isOwner,labels,assistantOpen,assistant,onNa
   if(c.type==='search'){const found=demoMatches(c.criteria,state.loads,state.defaultCosts).length;if(assistantOpen&&assistant.current)assistant.current.submit(c.text,c.criteria);else onSearch(c.criteria);return reply(found?t("Найдено")+' '+plural(sp,found,"подходящий груз","подходящих груза","подходящих грузов"):t("Ничего не найдено. Измените условия."),text)}
   reply(t("Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры."),text,'error');
  });
- voiceRef.current=voice;
  useEffect(()=>{if(!note)return;const t=setTimeout(()=>setNote(null),note.tone==='error'?9000:5000);return()=>clearTimeout(t)},[note]);
  useEffect(()=>{const resize=()=>setPos(p=>fit(p));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize)},[]);
  const down=e=>{if(e.button!==0)return;drag.current={x:e.clientX,y:e.clientY,start:pos};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)};
  const move=e=>{const d=drag.current;if(!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(!moved.current&&Math.hypot(dx,dy)<5)return;moved.current=true;setPos(fit({right:d.start.right-dx,bottom:d.start.bottom-dy}))};
  const up=()=>{if(!drag.current)return;drag.current=null;if(moved.current)setPos(p=>{try{localStorage.setItem(posKey,JSON.stringify(p))}catch{}return p})};
- const toggle=()=>{if(moved.current){moved.current=false;return}lastLang.current=null;if(voice.listening){voice.stop();setNote(null)}else{setNote(null);voice.start(code)}};
+ const toggle=()=>{if(moved.current){moved.current=false;return}unlockAudio();lastLang.current=null;if(voice.listening){voice.stop();setNote(null)}else{setNote(null);voice.start(code)}};
  const nextLang=()=>{const i=voiceLangs.findIndex(v=>v[0]===code),n=voiceLangs[(i+1)%voiceLangs.length][0];setCode(n);saveVoiceLang(n);if(voice.listening)voice.start(n)};
  if(!voice.supported)return null;
  // The bubble opens toward the middle of the screen so it is never cut off.
