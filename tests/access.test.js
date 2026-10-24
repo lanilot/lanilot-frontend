@@ -79,3 +79,13 @@ test('Google sign-in: verified identity signs in, new people continue the sign-u
   const bob=await flow({sub:'g-77',email:'bob@haul.test',name:'Bob'});assert.equal(bob.location,'/');assert.equal((await call(p,'GET','/auth/me',{cookie:bob.cookie})).data.user.email,'bob@haul.test');
  }finally{await s.close();s.db.close()}
 });
+
+test('platform tables created late are not converted to company tables on restart',async()=>{
+ const {mkdtempSync,rmSync}=await import('node:fs');const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const dir=mkdtempSync(join(tmpdir(),'lanilot-restart-')),file=join(dir,'t.sqlite'),env={LANILOT_GOOGLE_CLIENT_ID:'a',LANILOT_GOOGLE_CLIENT_SECRET:'b'};
+ try{
+  for(let i=0;i<2;i++){const s=await start({oauthOptions:{env}}).catch(e=>{throw e});s.db.close();await s.close()}
+  const run=async()=>{const out=createApp(file,{baseDomain:'lanilot.com',oauthOptions:{env}});const server=out.app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const res=await call(server.address().port,'GET','/auth/oauth/google/start');await new Promise(r=>server.close(r));const tables=out.db.raw.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('t_oauth_states','t_user_identities','t_demo_access_tokens')").all();out.db.close();return {status:res.status,tables}};
+  assert.equal((await run()).status,302);const second=await run();assert.equal(second.status,302);assert.deepEqual(second.tables,[]);
+ }finally{rmSync(dir,{recursive:true,force:true})}
+});

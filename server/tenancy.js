@@ -9,7 +9,7 @@ export const tenantContext=new AsyncLocalStorage();
 export const currentTenant=()=>tenantContext.getStore()??null;
 export const DEFAULT_COMPANY='workspace';
 // Platform-level tables, never filtered by company (telegram tables carry their own company_id).
-export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens']);
+export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities']);
 // Server keys any company may use (public registries); all other provider keys belong to the primary company.
 const SHARED_ENV=new Set(['LANILOT_FMCSA_WEBKEY']);
 
@@ -40,6 +40,10 @@ export function installTenancy(raw){
 
 // Convert plain business tables (fresh database or tables added in a release) into company-scoped storage.
 export function tenantizeTables(db,companyId=DEFAULT_COMPANY){
+ // A platform table created after this step in one release gets converted on the next start; undo that while it is empty.
+ for(const name of GLOBAL_TABLES){if(!db.raw.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get('t_'+name))continue;
+  if(db.raw.prepare(`SELECT count(*) n FROM ${q('t_'+name)}`).get().n)throw Error(`Platform table ${name} was converted to t_${name} and has rows; move them back manually`);
+  db.raw.exec(`DROP VIEW IF EXISTS ${q(name)}; DROP TABLE ${q('t_'+name)};`)}
  const raw=db.raw,tables=raw.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r=>r.name).filter(isTenantTable);
  if(tables.length){
   raw.exec('PRAGMA foreign_keys=OFF');raw.exec('BEGIN IMMEDIATE');
