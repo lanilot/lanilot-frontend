@@ -1640,5 +1640,8 @@
  "Зелёный": "Vert",
  "Голубой": "Bleu ciel",
  "Цвет: {0}": "Couleur : {0}",
- "Страница {0}": "Page {0}"
+ "Страница {0}": "Page {0}",
+ "Нашёл в разделе «{0}» и открываю «{1}»": "Trouvé dans « {0} » : ouverture de « {1} »",
+ "Ищу «{0}» в других разделах…": "Recherche de « {0} » dans les autres sections…",
+ "Не нашёл «{0}» ни в одном разделе": "« {0} » introuvable dans les sections"
 }

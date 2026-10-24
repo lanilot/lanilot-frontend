@@ -1640,5 +1640,8 @@
  "Зелёный": "Yashil",
  "Голубой": "Havorang",
  "Цвет: {0}": "Rang: {0}",
- "Страница {0}": "{0}-sahifa"
+ "Страница {0}": "{0}-sahifa",
+ "Нашёл в разделе «{0}» и открываю «{1}»": "«{0}» boʻlimida topildi — «{1}» ochilmoqda",
+ "Ищу «{0}» в других разделах…": "«{0}» boshqa boʻlimlarda qidirilmoqda…",
+ "Не нашёл «{0}» ни в одном разделе": "«{0}» hech bir boʻlimda topilmadi"
 }

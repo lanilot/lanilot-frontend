@@ -140,3 +140,10 @@
 .voice-float-anchor.is-waiting .voice-orb-button::after{content:"";position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px #0b1024;animation:voice-wait 2.4s ease-in-out infinite}
 @keyframes voice-wait{50%{opacity:.35}}
 .voice-flash{outline:3px solid #3d7bff!important;outline-offset:2px;box-shadow:0 0 0 6px #3d7bff26!important;transition:outline-color .3s}
+/* Searching other sections: membranes swirl fast and a light sweep circles the orb */
+.voice-float-anchor.is-searching .voice-orb i{animation-duration:1.1s;scale:calc(.78 + var(--level)*.4)}.voice-float-anchor.is-searching .voice-orb i:nth-child(2){animation-duration:1.5s}.voice-float-anchor.is-searching .voice-orb i:nth-child(3){animation-duration:1.9s}
+.voice-float-anchor.is-searching .voice-orb::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#ffffff00 0 70%,#ffffffb3 88%,#ffffff00 100%);mix-blend-mode:screen;animation:voice-orb-sweep .9s linear infinite}
+.voice-float-anchor.is-searching .voice-orb-button{animation:voice-orb-breathe 1.2s ease-in-out infinite}
+@keyframes voice-orb-sweep{to{transform:rotate(360deg)}}
+@keyframes voice-orb-breathe{50%{transform:scale(1.08);box-shadow:0 0 0 6px #7aa2ff33,0 12px 34px #3d7bff66}}
+@media(prefers-reduced-motion:reduce){.voice-float-anchor.is-searching .voice-orb::after,.voice-float-anchor.is-searching .voice-orb-button{animation:none}}

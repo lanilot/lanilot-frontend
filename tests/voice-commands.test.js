@@ -68,8 +68,12 @@ test('voice: page actions — click, type, clear',()=>{
 
 test('voice: control labels match spoken names',async()=>{
  const {scoreLabel,splitTarget}=await import('../src/voice-page.js');
- assert.deepEqual(splitTarget('company name field'),{text:'company name',kind:'field'});
- assert.deepEqual(splitTarget('кнопку сохранить'),{text:'сохранить',kind:'button'});
+ assert.deepEqual(splitTarget('company name field'),{text:'company name',kind:'field',section:null});
+ assert.deepEqual(splitTarget('кнопку сохранить'),{text:'сохранить',kind:'button',section:null});
+ assert.deepEqual(splitTarget('tql broker'),{text:'tql',kind:null,section:'brokers'});
+ assert.deepEqual(splitTarget('водителя Алекса'),{text:'алекса',kind:null,section:'fleet'});
+ assert.deepEqual(splitTarget('Messages'),{text:'messages',kind:null,section:'chat'});
+ assert.equal(splitTarget('Load & route').text,'route');
  assert.ok(scoreLabel('Company name','company name')===100);
  assert.ok(scoreLabel('Название компании','названию компании')>=45);
  assert.ok(scoreLabel('Save changes','save')>=45);
@@ -80,5 +84,5 @@ test('voice: control labels match spoken names',async()=>{
  assert.equal(splitTarget('t q l').text,'tql');
  assert.equal(splitTarget('TQL').text,'tql');
  assert.equal(splitTarget('c h robinson').text,'ch robinson');
- assert.equal(splitTarget('plan a trip').text,'plan a trip');
+ assert.equal(splitTarget('plan a trip').section,'trips');assert.ok(scoreLabel('Plan a trip',splitTarget('plan a trip').text)>=45);
 });
