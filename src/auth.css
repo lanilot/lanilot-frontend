@@ -110,16 +110,20 @@
 .auth-social-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .auth-divider{display:flex;align-items:center;gap:10px;margin:6px 0 -6px;color:#9aa7bb;font-size:11px}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#e6ebf3}
-/* "powered by Lanilot" over every company logo (BrandLogo.jsx); sizes are pinned so surrounding styles cannot change them */
-.brand-logo-powered{position:relative;display:inline-flex;align-items:center;max-width:100%;padding-bottom:7px}
+/* "powered by Lanilot" (BrandLogo.jsx): under every company logo and in every page footer; sizes are pinned so
+   surrounding styles cannot change them */
+.powered-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 8px;border:1px solid #1b28401f;border-radius:999px;background:#fff;color:#6b7891;font:500 12px/1 Inter,system-ui,sans-serif!important;letter-spacing:0;white-space:nowrap;text-decoration:none}
+a.powered-badge:hover{border-color:#2563eb66;color:#4a5872}
+.powered-badge svg{width:16px!important;height:16px!important;flex-shrink:0}
+.powered-badge span,.powered-badge strong{font:inherit!important;color:inherit}.powered-badge strong{color:#1b2840;font-weight:700!important;font-size:13px!important}
+.brand-logo-powered{display:inline-flex;flex-direction:column;align-items:flex-start;gap:5px;max-width:100%}
 .brand-logo-powered img{display:block}
-.brand-logo-powered .powered-by{position:absolute;left:calc(100% - 12px);bottom:0;display:inline-flex;align-items:center;gap:3px;width:auto;height:auto;margin:0;padding:2px 5px 2px 4px;border-radius:5px;background:#ffffffeb;box-shadow:0 0 0 1px #1b28401a,0 1px 3px #1b28401a;color:#6b7891;font:500 7.5px/1 Inter,system-ui,sans-serif!important;letter-spacing:.1px;white-space:nowrap;pointer-events:none;user-select:none}
-.brand-logo-powered .powered-by svg{width:9px!important;height:9px!important;flex-shrink:0}
-.brand-logo-powered .powered-by strong,.brand-logo-powered .powered-by span{font:inherit!important;color:inherit;letter-spacing:inherit}
-.brand-logo-powered .powered-by strong{color:#1b2840;font-weight:700!important;font-size:8px!important}
-.app-sidebar.is-collapsed .powered-by-text{display:none}
-.brand-logo-powered{padding-right:4px}
+.brand-logo-powered .powered-by{gap:4px;padding:2px 7px 2px 6px;font-size:10px!important;pointer-events:none;user-select:none}
+.brand-logo-powered .powered-by svg{width:12px!important;height:12px!important}.brand-logo-powered .powered-by strong{font-size:10px!important}
+.app-sidebar.is-collapsed .brand-logo-powered .powered-by>span{display:none}
+.footer-powered{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
 /* Text logo: the company name as a wordmark in the brand color */
 .brand-logo-text{display:block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--brand,#2563eb);font:800 var(--logo-text-size,20px)/1.15 Inter,system-ui,sans-serif;letter-spacing:-.3px}
 .app-sidebar .brand-logo-text{--logo-text-size:19px;max-width:150px}.app-sidebar.is-collapsed .brand-logo-text{max-width:34px;text-overflow:clip}
 .auth-brand .brand-logo-text,.pp-brand .brand-logo-text{--logo-text-size:22px}.cs-page .brand-logo-text{color:#fff}
+.footer.footer-powered{justify-content:flex-start}

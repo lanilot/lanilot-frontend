@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {LayoutDashboard,Boxes,Handshake,Fuel,ShieldCheck,Smartphone,Lock,Check,ArrowRight,ArrowLeft,LogOut,Clock,Sparkles} from 'lucide-react';
 import {__,translateDeep} from './i18n.js';
 import LogoMark from './LogoMark.jsx';
-import BrandLogo,{hasBrandLogo} from './BrandLogo.jsx';
+import BrandLogo,{hasBrandLogo,PoweredBy} from './BrandLogo.jsx';
 import LangSwitch from './LangSwitch.jsx';
 import './products.css';
 
@@ -74,7 +74,7 @@ export function ProductPicker({session,locked,autoEnter,onEnter}){
       <button type="button" className="pp-pay" disabled={busy} onClick={()=>buy(selected.id,plan)}>{__('Оплатить')}</button></article>})}</div>
      <p className="pp-note">{__('После оплаты продукт откроется для вас и всех сотрудников компании.')}</p></>}
    </section>}
-  </main></div>;
+  </main><footer className="pp-footer footer-powered"><PoweredBy/></footer></div>;
 }
 
 // Products that are not built yet: an animated "coming soon" page on their own address.
@@ -89,5 +89,5 @@ export function ComingSoon({session,product}){
    <p className="cs-text">{__('Мы готовим «{0}» для компании {1}. Как только продукт будет готов, он откроется по этому адресу.',[m.name,session?.company?.name??''])}</p>
    <div className="cs-progress" aria-hidden="true"><span/></div>
    <button type="button" className="cs-button" onClick={other}><ArrowLeft size={16}/>{__('Выбрать другой продукт')}</button>
-  </main></div>;
+  </main><footer className="cs-footer footer-powered"><PoweredBy/></footer></div>;
 }

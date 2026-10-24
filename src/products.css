@@ -62,3 +62,4 @@
 .cs-button{display:inline-flex;align-items:center;gap:8px;margin-top:32px;height:44px;padding:0 18px;border:1px solid #ffffff38;border-radius:12px;background:#ffffff14;color:#fff;font:600 15px/1 inherit;cursor:pointer;backdrop-filter:blur(8px)}.cs-button:hover{background:#ffffff26}
 @media(prefers-reduced-motion:reduce){.cs-sky i,.cs-ring,.cs-sky b,.cs-icon,.cs-title,.cs-progress span,.pp-skeleton{animation:none}}
 .cs-page .pp-brand strong{color:#fff}
+.pp-footer{padding:0 24px 32px}.cs-footer{position:relative;z-index:1;padding:0 24px 28px}
