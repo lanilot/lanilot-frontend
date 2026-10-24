@@ -135,3 +135,34 @@ test('company site and dashboard hosts: <slug> is the public site, dash.<slug> a
   assert.equal((await call(p,'GET','/state',{cookie:reg.cookie})).data.workspace.urls.dash,'http://dash.abc-kkc.lanilot.com');
  }finally{await s.close();s.db.close()}
 });
+
+test('Google sign-in from a company dashboard host comes back with a one-time handoff for members only',async()=>{
+ const {privateKey,publicKey}=generateKeyPairSync('rsa',{modulusLength:2048});
+ const jwk={...publicKey.export({format:'jwk'}),kid:'k1',alg:'RS256',use:'sig'},env={LANILOT_GOOGLE_CLIENT_ID:'client-123',LANILOT_GOOGLE_CLIENT_SECRET:'secret'};
+ let claims=null;
+ const idToken=c=>{const enc=o=>Buffer.from(JSON.stringify(o)).toString('base64url'),data=`${enc({alg:'RS256',kid:'k1'})}.${enc(c)}`;return data+'.'+sign('RSA-SHA256',Buffer.from(data),privateKey).toString('base64url')};
+ const fetch=async url=>url.includes('certs')?new Response(JSON.stringify({keys:[jwk]})):new Response(JSON.stringify({id_token:idToken(claims)}));
+ const s=await start({oauthOptions:{env,fetch}});
+ try{
+  const p=s.port;
+  await call(p,'POST','/auth/register',{body:{name:'Ola',company:'ABC LLC',email:'ola@abc.test',password:'olapassword1'}});
+  await call(p,'POST','/auth/register',{body:{name:'Zed',company:'Zed Haul',email:'zed@zed.test',password:'zedpassword1'}});
+  const t=(await call(p,'GET','/tenant',{host:'dash.abc-llc.lanilot.com'})).data.auth;
+  assert.deepEqual(t.providers,['google']);assert.equal(t.oauthStart,'http://app.lanilot.com/api/auth/oauth/{p}/start?to=abc-llc');
+  const flow=async(email,sub)=>{const st=await call(p,'GET','/auth/oauth/google/start?to=abc-llc');const u=new URL(st.location);
+   claims={iss:'https://accounts.google.com',aud:'client-123',sub,email,email_verified:true,name:'X',exp:Math.floor(Date.now()/1000)+600,nonce:u.searchParams.get('nonce')};
+   return call(p,'GET',`/auth/oauth/google/callback?code=c&state=${u.searchParams.get('state')}`,{cookie:st.cookie})};
+  // A member is sent back to the company dashboard with a handoff that works once, on that host only.
+  const ok=await flow('ola@abc.test','g-1');assert.match(ok.location,/^http:\/\/dash\.abc-llc\.lanilot\.com\/\?handoff=/);
+  const token=decodeURIComponent(ok.location.split('handoff=')[1]);
+  assert.equal((await call(p,'POST','/auth/handoff',{host:'dash.zed-haul.lanilot.com',body:{token}})).status,404);
+  const signed=await call(p,'POST','/auth/handoff',{host:'dash.abc-llc.lanilot.com',body:{token}});assert.equal(signed.status,200);
+  assert.equal((await call(p,'GET','/auth/me',{host:'dash.abc-llc.lanilot.com',cookie:signed.cookie})).data.user.email,'ola@abc.test');
+  assert.equal((await call(p,'POST','/auth/handoff',{host:'dash.abc-llc.lanilot.com',body:{token}})).status,404);
+  // Someone from another company, or without an account, is told so on the company host.
+  assert.equal((await flow('zed@zed.test','g-2')).location,'http://dash.abc-llc.lanilot.com/login?oauth_error=no_access');
+  assert.equal((await flow('new@x.test','g-3')).location,'http://dash.abc-llc.lanilot.com/login?oauth_error=no_account');
+  // An unknown company in ?to falls back to the normal app-host sign-in.
+  const st=await call(p,'GET','/auth/oauth/google/start?to=nobody');assert.equal(st.status,302);
+ }finally{await s.close();s.db.close()}
+});

@@ -9,7 +9,7 @@ export const tenantContext=new AsyncLocalStorage();
 export const currentTenant=()=>tenantContext.getStore()??null;
 export const DEFAULT_COMPANY='workspace';
 // Platform-level tables, never filtered by company (telegram tables carry their own company_id).
-export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities','company_slug_history']);
+export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities','company_slug_history','session_handoffs']);
 // Server keys any company may use (public registries); all other provider keys belong to the primary company.
 const SHARED_ENV=new Set(['LANILOT_FMCSA_WEBKEY']);
 

@@ -1579,5 +1579,8 @@
  "Напишите или позвоните — ответим и предложим ставку.": "Escríbanos o llámenos: le responderemos con una tarifa.",
  "Вход для сотрудников и партнёров": "Acceso para empleados y socios",
  "Работает на Lanilot": "Con tecnología de Lanilot",
- "Кабинет": "Panel"
+ "Кабинет": "Panel",
+ "Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.": "Esta cuenta no pertenece a esta empresa. Pida al propietario que le envíe una invitación.",
+ "Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.": "No se encontró ninguna cuenta con este email. Pida al propietario de la empresa una invitación.",
+ "Ссылка входа недействительна. Войдите ещё раз.": "Este enlace de acceso ya no es válido. Inicie sesión de nuevo."
 }

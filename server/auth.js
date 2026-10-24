@@ -53,6 +53,8 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  const publicCompany=c=>c&&{id:c.id,slug:c.slug,name:c.name,status:sandboxExpired(c)?'expired':c.status,sandbox:!!c.sandbox,sandboxEndsAt:c.sandbox?c.trial_ends_at:null,brand:brandOf(c.id)};
  const inviteOf=value=>{const i=typeof value==='string'&&raw.prepare('SELECT * FROM invites WHERE id=?').get(sha(value));return i&&!i.accepted_at&&i.expires_at>new Date().toISOString()?i:null};
  const onAppHost=req=>slugFromHost(req.get('host'),baseDomain)==='app';
+ // Google/Apple sign-in always runs on the app host; company hosts pass their slug and get a handoff back.
+ const oauthStartUrl=req=>{const h=hostInfo(req.get('host'),baseDomain);if(h.kind==='app')return '/api/auth/oauth/{p}/start';return `${req.protocol}://app.${h.base??baseDomain}${h.port}/api/auth/oauth/{p}/start?to=${encodeURIComponent(h.slug)}`};
  const ownerCount=companyId=>raw.prepare("SELECT count(*) n FROM memberships WHERE company_id=? AND role='owner'").get(companyId).n;
 
  // Company from the host name; unknown subdomains get 404, suspended companies 403.
@@ -97,7 +99,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   const seen=new Map(),touch=s=>{const day=new Date().toISOString().slice(0,10),key=s.user_id+'|'+s.company_id;if(seen.get(key)===day)return;seen.set(key,day);raw.prepare('INSERT OR IGNORE INTO activity VALUES(?,?,?)').run(day,s.company_id,s.user_id)};
   app.use((req,res,next)=>{req.session=enabled?sessionOf(req):null;if(req.session)touch(req.session);next()});
 
-  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),host:{kind:hostInfo(req.get('host'),baseDomain).kind,...companyUrls(req,req.company.slug,baseDomain)},auth:{enabled,signup:enabled&&signup&&onAppHost(req),providers:enabled&&onAppHost(req)?configuredProviders(oauthOptions.env??process.env):[],setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
+  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),host:{kind:hostInfo(req.get('host'),baseDomain).kind,...companyUrls(req,req.company.slug,baseDomain)},auth:{enabled,signup:enabled&&signup&&onAppHost(req),providers:enabled?configuredProviders(oauthOptions.env??process.env):[],oauthStart:oauthStartUrl(req),setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
   app.get('/api/auth/me',(req,res)=>{
    if(!enabled)return res.json({user:null,role:'owner',company:publicCompany(req.company),authEnabled:false});
    if(!req.session)return res.status(401).json({error:'Войдите в кабинет',code:'unauthenticated'});
@@ -125,7 +127,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   });
   installDemoAccess(app,db,{enabled:enabled&&signup,limited,fail,createAccount,startSession,onAppHost});
   const onboarding=installOnboarding(app,db,{enabled:enabled&&signup,onAppHost,limited,fail,createAccount,startSession,cleanName,validEmail,validPassword});
-  installOAuth(app,db,{enabled,env:oauthOptions.env??process.env,fetch:oauthOptions.fetch,onAppHost,startSession,createSignupLead:onboarding.createSignupLead});
+  installOAuth(app,db,{enabled,env:oauthOptions.env??process.env,fetch:oauthOptions.fetch,onAppHost,startSession,createSignupLead:onboarding.createSignupLead,baseDomain});
   app.post('/api/auth/register',(req,res)=>{
    if(!enabled||!signup||!onAppHost(req))return res.status(404).json({error:'Регистрация недоступна'});
    const key='signup|'+req.ip;if(limited(key,5,3600000))return res.status(429).json({error:'Слишком много регистраций. Попробуйте через час.'});

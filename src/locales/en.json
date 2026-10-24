@@ -1579,5 +1579,8 @@
  "Напишите или позвоните — ответим и предложим ставку.": "Message or call us — we'll get back to you with a rate.",
  "Вход для сотрудников и партнёров": "Staff and partner login",
  "Работает на Lanilot": "Powered by Lanilot",
- "Кабинет": "Dashboard"
+ "Кабинет": "Dashboard",
+ "Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.": "This account isn't a member of this company. Ask the owner to send you an invitation.",
+ "Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.": "No account found for this email. Ask the company owner to send you an invitation.",
+ "Ссылка входа недействительна. Войдите ещё раз.": "This sign-in link is no longer valid. Please sign in again."
 }

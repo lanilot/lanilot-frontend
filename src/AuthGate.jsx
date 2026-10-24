@@ -11,11 +11,11 @@ const roleLabel=role=>({owner:__('Владелец'),dispatcher:__('Диспет
 const screenPath=()=>window.location.pathname.replace(/\/+$/,'');
 const inviteToken=()=>window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]{20,})\/?$/)?.[1]??null;
 
-const oauthErrors=()=>({unavailable:__('Вход через этот сервис сейчас недоступен.'),cancelled:__('Вход отменён.'),expired:__('Время входа истекло. Попробуйте ещё раз.'),failed:__('Не удалось подтвердить вход. Попробуйте ещё раз.'),no_company:__('У этого аккаунта нет доступа ни к одной компании.')});
-function Login({company,signup,providers}){
+const oauthErrors=()=>({unavailable:__('Вход через этот сервис сейчас недоступен.'),cancelled:__('Вход отменён.'),expired:__('Время входа истекло. Попробуйте ещё раз.'),failed:__('Не удалось подтвердить вход. Попробуйте ещё раз.'),no_company:__('У этого аккаунта нет доступа ни к одной компании.'),no_access:__('Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.'),no_account:__('Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.')});
+function Login({company,signup,providers,oauthStart}){
  const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState(()=>oauthErrors()[new URLSearchParams(window.location.search).get('oauth_error')]||''),[busy,setBusy]=useState(false);
  return <Shell company={company} icon={LogIn} title={__('Вход в кабинет')} subtitle={__('Войдите, чтобы продолжить работу.')}>
-  <SocialButtons providers={providers}/>
+  <SocialButtons providers={providers} start={oauthStart}/>
   <form onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');try{await post('/auth/login',{email,password});window.location.replace('/')}catch(err){setError(err.message);setBusy(false)}}}>
    <Field label="Email" type="email" autoComplete="email" required autoFocus value={email} onChange={e=>setEmail(e.target.value)}/>
    <Field label={__('Пароль')} type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)}/>
@@ -56,6 +56,9 @@ export default function AuthGate({render}){
   // Demo access link from the landing: exchange the one-time token for a session, then continue as usual.
   const demoToken=new URLSearchParams(window.location.search).get('access_demo_token');
   if(demoToken){window.history.replaceState(null,'',window.location.pathname);try{await post('/auth/demo-access',{token:demoToken})}catch{return setView({kind:'demoInvalid'})}}
+  // Back from Google/Apple sign-in on the app host: a one-time handoff signs in on this company host.
+  const handoffToken=new URLSearchParams(window.location.search).get('handoff');
+  if(handoffToken){window.history.replaceState(null,'','/');try{await post('/auth/handoff',{token:handoffToken})}catch{window.history.replaceState(null,'','/login?oauth_error=expired')}}
   const t=await fetch('/api/tenant');if(t.status===404)return setView({kind:'missing'});const tenant=await t.json();applyBrand(tenant.company?.brand);
   if(tenant.company?.status==='suspended')return setView({kind:'suspended',company:tenant.company});
   // <company>.<domain> is the public site; the dashboard lives on dash.<company>.<domain> (and app.<domain>).
@@ -69,14 +72,14 @@ export default function AuthGate({render}){
   if(tenant.company?.status==='expired')return setView({kind:'expired',company:null,signup});
   if(tenant.auth.setupRequired&&path!=='/login')return setView({kind:'setup',company:tenant.company,signup});
   const me=await fetch('/api/auth/me');
-  if(me.status===401)return setView({kind:'login',company:signup?null:tenant.company,signup,providers:tenant.auth.providers});
+  if(me.status===401)return setView({kind:'login',company:signup?null:tenant.company,signup,providers:tenant.auth.providers,oauthStart:tenant.auth.oauthStart});
   if(['/login','/signup'].includes(path)||window.location.search.includes('oauth_error'))window.history.replaceState(null,'','/');
   setView({kind:'ready',session:await me.json()});
  })().catch(()=>setView({kind:'error'}))},[]);
  if(view.kind==='ready')return render(view.session);
  if(view.kind==='expired'||view.kind==='demoInvalid')return <Shell company={null} icon={Clock} title={view.kind==='expired'?__('Демо-доступ закончился'):__('Ссылка демо-доступа недействительна')} subtitle={view.kind==='expired'?__('Зарегистрируйтесь, чтобы продолжить работу со своими данными.'):__('Ссылка одноразовая и действует 30 минут. Войдите или зарегистрируйтесь.')}>
   <div className="auth-choice"><a className="button primary full" href="/signup" onClick={async e=>{e.preventDefault();await fetch('/api/auth/logout',{method:'POST'});window.location.assign('/signup')}}>{__('Регистрация')}</a><a className="button secondary full" href="/login" onClick={async e=>{e.preventDefault();await fetch('/api/auth/logout',{method:'POST'});window.location.assign('/login')}}>{__('Войти')}</a></div></Shell>;
- if(view.kind==='login')return <Login company={view.company} signup={view.signup} providers={view.providers}/>;
+ if(view.kind==='login')return <Login company={view.company} signup={view.signup} providers={view.providers} oauthStart={view.oauthStart}/>;
  if(view.kind==='register')return <Onboarding providers={view.providers}/>;
  if(view.kind==='landing')return <CompanyLanding company={view.company} urls={view.urls}/>;
  if(view.kind==='setup')return <Setup company={view.company} signup={view.signup}/>;
