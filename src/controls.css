@@ -147,3 +147,4 @@
 @keyframes voice-orb-sweep{to{transform:rotate(360deg)}}
 @keyframes voice-orb-breathe{50%{transform:scale(1.08);box-shadow:0 0 0 6px #7aa2ff33,0 12px 34px #3d7bff66}}
 @media(prefers-reduced-motion:reduce){.voice-float-anchor.is-searching .voice-orb::after,.voice-float-anchor.is-searching .voice-orb-button{animation:none}}
+.voice-float-bubble .voice-float-actions{display:flex;gap:8px;margin-top:8px}.voice-float-bubble .voice-float-actions button{width:auto;height:30px;padding:0 14px;border-radius:15px;background:#ffffff1f;color:#fff;font:600 13px/1 inherit}.voice-float-bubble .voice-float-actions button.is-primary{background:#3d7bff}.voice-float-bubble .voice-float-actions button:hover{background:#ffffff33}.voice-float-bubble .voice-float-actions button.is-primary:hover{background:#2f6bff}

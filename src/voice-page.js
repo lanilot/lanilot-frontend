@@ -11,10 +11,15 @@ const sectionWords=[['fleet',['driver','водител','conductor','truck','г�
 const sectionOf=w=>sectionWords.find(([,stems])=>stems.some(x=>w.startsWith(x)))?.[0];
 export function splitTarget(target){const words=joinLetters(normalize(target).split(' ').filter(Boolean)),kind=words.some(w=>fieldWords.has(w))?'field':words.some(w=>buttonWords.has(w))?'button':null;const rest=words.filter(w=>!fieldWords.has(w)&&!buttonWords.has(w)&&!otherWords.has(w));
  const section=rest.map(sectionOf).find(Boolean)||null,named=rest.filter(w=>!sectionOf(w));return {text:(named.length?named:rest.length?rest:words).join(' '),kind,section}}
+// Names said in one alphabet and written in another («арайв логистикс» ≈ "Arrive Logistics"): words are transliterated
+// to Latin and compared by their sound skeleton — first letter plus consonants, with look-alike sounds merged.
+const lat={а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'i',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sh',ъ:'',ы:'i',ь:'',э:'e',ю:'u',я:'a'};
+export function skeleton(word){const w=[...normalize(word)].map(ch=>lat[ch]??ch).join('').replace(/sch/g,'sh').replace(/gh/g,'').replace(/ph/g,'f').replace(/ck|c|q/g,'k').replace(/x/g,'ks').replace(/w/g,'v').replace(/[yj]/g,'i').replace(/(.)\1+/g,'$1');return w[0]+w.slice(1).replace(/[aeiouh]/g,'')}
+const soundsAlike=(a,b)=>{if(a.length<4||b.length<4)return false;const x=skeleton(a),y=skeleton(b);return x.length>=3&&(x===y||x.length>=4&&(x.startsWith(y)||y.startsWith(x)))};
 // Word stems so Russian and Spanish endings still match ("названию компании" ≈ "Название компании").
 const stem=w=>w.length>5?w.slice(0,w.length-2):w;
 export function scoreLabel(label,target){const a=normalize(label),b=normalize(target);if(!a||!b)return 0;if(a===b)return 100;if(a.startsWith(b+' ')||a.startsWith(b)&&b.length>=4)return 85;const words=b.split(' ').filter(w=>w.length>1),have=a.split(' ');if(!words.length)return 0;
- const hits=words.filter(w=>have.some(x=>stem(x).startsWith(stem(w))||stem(w).startsWith(stem(x))&&x.length>=3)).length;if(!hits)return 0;
+ const hits=words.filter(w=>have.some(x=>stem(x).startsWith(stem(w))||stem(w).startsWith(stem(x))&&x.length>=3||soundsAlike(x,w))).length;if(!hits)return 0;
  // All spoken words found, and the label is not much longer than what was said.
  return Math.round(70*hits/words.length*Math.min(1,(words.length+1)/have.length))}
 const isField=el=>el.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,select,[contenteditable=true]');

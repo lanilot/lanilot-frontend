@@ -1643,5 +1643,8 @@
  "Страница {0}": "Página {0}",
  "Нашёл в разделе «{0}» и открываю «{1}»": "Lo encontré en «{0}»: abriendo «{1}»",
  "Ищу «{0}» в других разделах…": "Buscando «{0}» en otras secciones…",
- "Не нашёл «{0}» ни в одном разделе": "No encontré «{0}» en ninguna sección"
+ "Не нашёл «{0}» ни в одном разделе": "No encontré «{0}» en ninguna sección",
+ "Искать": "Buscar",
+ "Не нашёл «{0}» на этой странице. Искать во всех разделах?": "«{0}» no está en esta página. ¿Buscar en todas las secciones?",
+ "Хорошо, не ищу": "De acuerdo, no busco"
 }

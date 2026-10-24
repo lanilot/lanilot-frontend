@@ -1643,5 +1643,8 @@
  "Страница {0}": "Page {0}",
  "Нашёл в разделе «{0}» и открываю «{1}»": "Found in “{0}” — opening “{1}”",
  "Ищу «{0}» в других разделах…": "Looking for “{0}” in other sections…",
- "Не нашёл «{0}» ни в одном разделе": "Couldn't find “{0}” in any section"
+ "Не нашёл «{0}» ни в одном разделе": "Couldn't find “{0}” in any section",
+ "Искать": "Search",
+ "Не нашёл «{0}» на этой странице. Искать во всех разделах?": "“{0}” isn't on this page. Search all sections?",
+ "Хорошо, не ищу": "OK, not searching"
 }

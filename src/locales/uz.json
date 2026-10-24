@@ -1643,5 +1643,8 @@
  "Страница {0}": "{0}-sahifa",
  "Нашёл в разделе «{0}» и открываю «{1}»": "«{0}» boʻlimida topildi — «{1}» ochilmoqda",
  "Ищу «{0}» в других разделах…": "«{0}» boshqa boʻlimlarda qidirilmoqda…",
- "Не нашёл «{0}» ни в одном разделе": "«{0}» hech bir boʻlimda topilmadi"
+ "Не нашёл «{0}» ни в одном разделе": "«{0}» hech bir boʻlimda topilmadi",
+ "Искать": "Qidirish",
+ "Не нашёл «{0}» на этой странице. Искать во всех разделах?": "«{0}» bu sahifada yoʻq. Barcha boʻlimlardan qidiraymi?",
+ "Хорошо, не ищу": "Mayli, qidirmayman"
 }

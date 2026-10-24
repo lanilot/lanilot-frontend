@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseVoiceCommand,normalize,spokenLang,isEcho,speechText,parseWake} from '../src/voice-commands.js';
+import {parseVoiceCommand,normalize,spokenLang,isEcho,speechText,parseWake,parseYesNo} from '../src/voice-commands.js';
 const loads=[{id:'LD-2046',origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Reefer'},{id:'LD-3110',origin:'Dallas, TX',destination:'Phoenix, AZ',equipment:'Dry Van'}];
 const page=t=>{const c=parseVoiceCommand(t,loads);return c.type==='navigate'?c.page:c.type};
 
@@ -85,4 +85,16 @@ test('voice: control labels match spoken names',async()=>{
  assert.equal(splitTarget('TQL').text,'tql');
  assert.equal(splitTarget('c h robinson').text,'ch robinson');
  assert.equal(splitTarget('plan a trip').section,'trips');assert.ok(scoreLabel('Plan a trip',splitTarget('plan a trip').text)>=45);
+});
+
+test('voice: names across alphabets and yes/no answers',async()=>{
+ const {scoreLabel,skeleton}=await import('../src/voice-page.js');
+ assert.equal(skeleton('логистикс'),skeleton('logistics'));
+ for(const said of ['арайв логистикс','арив логистикс','arrive logistics','Arrive Logistic'])assert.ok(scoreLabel('Arrive Logistics',said)>=45,said);
+ assert.ok(scoreLabel('Uber Freight','убер фрейт')>=45);
+ assert.ok(scoreLabel('Schneider','шнайдер')>=45);
+ assert.equal(scoreLabel('Arrive Logistics','шнайдер'),0);
+ for(const t of ['да','Да, ищи','yes','Yeah','sí','claro','ok'])assert.equal(parseYesNo(t),'yes',t);
+ for(const t of ['нет','не надо','no','Nope','cancelar'])assert.equal(parseYesNo(t),'no',t);
+ assert.equal(parseYesNo('открой рейсы'),null);
 });

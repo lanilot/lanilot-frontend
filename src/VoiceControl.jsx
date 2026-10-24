@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {Mic,X,Ear} from 'lucide-react';
 import {__,lang,appLocale} from './i18n.js';
-import {voiceLangs,parseVoiceCommand,spokenLang,isEcho,speechText,parseWake,normalize} from './voice-commands.js';
+import {voiceLangs,parseVoiceCommand,spokenLang,isEcho,speechText,parseWake,normalize,parseYesNo} from './voice-commands.js';
 import {demoMatches} from './assistant-demo.js';
 import {waitForControl,actOn,typeInto,editable,splitTarget} from './voice-page.js';
 const Recognition=typeof window==='undefined'?null:window.SpeechRecognition||window.webkitSpeechRecognition||null;
@@ -83,26 +83,37 @@ export function FloatingVoice({state,page,isOwner,labels,assistantOpen,assistant
  useEffect(()=>{for(const c of new Set([...voiceLangs.map(v=>v[0]),lang]))loadVoiceDict(c)},[]);
  // The field the user last worked in, so "type …" still reaches it after a click on the orb took the focus.
  const lastField=useRef(null);useEffect(()=>{const track=e=>{if(editable(e.target))lastField.current=e.target};document.addEventListener('focusin',track);return()=>document.removeEventListener('focusin',track)},[]);
+ const pending=useRef(null);
+ const finishClick=(el,where,target,text)=>{const done=actOn(el);if(done==='external')return reply(t("Эта ссылка ведёт за пределы Lanilot"),text,'error');if(done==='focused')lastField.current=el;
+  reply(done==='focused'?t("Поле выбрано. Скажите «введи» и текст."):where?t("Нашёл в разделе «{0}» и открываю «{1}»",[t(labels[where]),target]):t("Нажимаю «{0}»",[target]),text)};
+ // The other sections are opened one by one (the one the words hint at first) until the target turns up; the orb shows its searching animation meanwhile.
+ const runSearch=({variants,target,text,from})=>{const run=++searchRun.current;(async()=>{
+  const order=[...new Set([splitTarget(target).section,...SEARCH_ORDER])].filter(p=>p&&p!==from&&labels[p]&&(p!=='users'||isOwner));
+  setSearching(true);setNote({text:t("Ищу «{0}» в других разделах…",[target]),heard:text,tone:'ok',id:Math.random()});
+  for(const p of order){if(searchRun.current!==run)return;voice.touch();onNavigate(p);const el=await waitForControl(variants,1300);if(searchRun.current!==run)return;if(el){setSearching(false);return finishClick(el,p,target,text)}}
+  setSearching(false);if(from&&from!==currentPage.current)onNavigate(from);reply(t("Не нашёл «{0}» ни в одном разделе",[target]),text,'error')})()};
+ const answer=yes=>{const p=pending.current;pending.current=null;if(!p)return;if(yes)return runSearch(p);setNote({text:t("Хорошо, не ищу"),heard:'',tone:'ok',id:Math.random()})};
  const voice=useVoice(({text,error,idle,wake:woke})=>{
   if(woke){chime('start');lastLang.current=null;return setNote(null)}
+  if(idle){pending.current=null}
   if(idle)return setNote({text:tr(lastLang.current||code,wakeRef.current?"Скажите «Привет, Лани», чтобы продолжить":"Голосовое управление выключено"),heard:'',tone:'ok',id:Math.random()});
   if(error)return reply(fatal.includes(error)?t("Нет доступа к микрофону. Разрешите его в настройках браузера."):t("Распознавание речи недоступно. Проверьте интернет и включите микрофон снова."),'','error');
   // Our own reply caught by the microphone, or the same command repeated within 4 s, is ignored.
   if(SPOKEN_REPLIES&&lastReply.current&&Date.now()-lastReply.current.at<15000&&isEcho(text,lastReply.current.text))return;
-  sp=lastLang.current=spokenLang(text,code);const c=parseVoiceCommand(text,state.loads);
+  sp=lastLang.current=spokenLang(text,code);
+  // A pending "search all sections?" question takes a yes or no; anything else drops it and is handled as a new command.
+  if(pending.current){const yn=parseYesNo(text);if(yn)return answer(yn==='yes');pending.current=null}
+  const c=parseVoiceCommand(text,state.loads);
   const key=JSON.stringify([c.type,c.page,c.id,c.dir,c.text]);if(!['scroll','click','type','clear'].includes(c.type)&&lastCommand.current?.key===key&&Date.now()-lastCommand.current.at<4000)return;lastCommand.current={key,at:Date.now()};
   if(c.type==='empty')return;
   searchRun.current++;setSearching(false);
   // Not on this screen: the other sections are opened one by one (the one the words hint at first) until it turns up;
   // the orb shows its searching animation meanwhile. A list that is still loading gets a moment to appear.
-  if(c.type==='click'){const variants=labelVariants(c.target),run=searchRun.current,from=currentPage.current;
-   const finish=(el,where)=>{const done=actOn(el);if(done==='external')return reply(t("Эта ссылка ведёт за пределы Lanilot"),text,'error');if(done==='focused')lastField.current=el;
-    reply(done==='focused'?t("Поле выбрано. Скажите «введи» и текст."):where?t("Нашёл в разделе «{0}» и открываю «{1}»",[where==='chat'?t("Переписка"):t(labels[where]),c.target]):t("Нажимаю «{0}»",[c.target]),text)};
-   (async()=>{let el=await waitForControl(variants,900);if(searchRun.current!==run)return;if(el)return finish(el);
-    const order=[...new Set([splitTarget(c.target).section,...SEARCH_ORDER])].filter(p=>p&&p!==from&&labels[p]&&(p!=='users'||isOwner));
-    setSearching(true);setNote({text:t("Ищу «{0}» в других разделах…",[c.target]),heard:text,tone:'ok',id:Math.random()});
-    for(const p of order){if(searchRun.current!==run)return;voice.touch();onNavigate(p);el=await waitForControl(variants,1300);if(searchRun.current!==run)return;if(el){setSearching(false);return finish(el,p)}}
-    setSearching(false);if(from&&from!==currentPage.current)onNavigate(from);reply(t("Не нашёл «{0}» ни в одном разделе",[c.target]),text,'error')})();return}
+  if(c.type==='click'){const variants=labelVariants(c.target),run=searchRun.current;
+   (async()=>{const el=await waitForControl(variants,900);if(searchRun.current!==run)return;if(el)return finishClick(el,null,c.said||c.target,text);
+    // Not on this screen: looking through the whole project only after the user says yes.
+    pending.current={variants,target:c.said||c.target,text,from:currentPage.current};voice.touch();chime('ok');
+    setNote({text:t("Не нашёл «{0}» на этой странице. Искать во всех разделах?",[c.said||c.target]),heard:text,tone:'ok',confirm:true,id:Math.random()})})();return}
   if(c.type==='type'||c.type==='clear'){const field=editable(document.activeElement)?document.activeElement:lastField.current;if(!typeInto(field,c.type==='type'?c.text:''))return reply(t("Сначала выберите поле: скажите «нажми» и его название."),text,'error');return reply(c.type==='type'?t("Ввёл: {0}",[c.text]):t("Поле очищено"),text)}
   if(c.type==='stop'){if(wakeRef.current){voice.toWake();return reply(t("Скажите «Привет, Лани», чтобы продолжить"),text)}voice.stop();return reply(t("Голосовое управление выключено"),text)}
   if(c.type==='skills')return reply(t("Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп»."),text);
@@ -116,12 +127,12 @@ export function FloatingVoice({state,page,isOwner,labels,assistantOpen,assistant
  },wakeRef);
  // With the wake phrase on and the microphone already allowed, waiting for "Hey Lani" starts with the page.
  useEffect(()=>{if(!wakeRef.current||!voice.supported)return;let gone=false;navigator.permissions?.query({name:'microphone'}).then(p=>{if(!gone&&p.state==='granted')voice.start(code,'wake')}).catch(()=>{});return()=>{gone=true}},[]);
- useEffect(()=>{if(!note)return;const t=setTimeout(()=>setNote(null),note.tone==='error'?9000:5000);return()=>clearTimeout(t)},[note]);
+ useEffect(()=>{if(!note)return;const t=setTimeout(()=>{if(note.confirm)pending.current=null;setNote(null)},note.confirm?15000:note.tone==='error'?9000:5000);return()=>clearTimeout(t)},[note]);
  useEffect(()=>{const resize=()=>setPos(p=>fit(p));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize)},[]);
  const down=e=>{if(e.button!==0)return;drag.current={x:e.clientX,y:e.clientY,start:pos};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)};
  const move=e=>{const d=drag.current;if(!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(!moved.current&&Math.hypot(dx,dy)<5)return;moved.current=true;setPos(fit({right:d.start.right-dx,bottom:d.start.bottom-dy}))};
  const up=()=>{if(!drag.current)return;drag.current=null;if(moved.current)setPos(p=>{try{localStorage.setItem(posKey,JSON.stringify(p))}catch{}return p})};
- const toggle=()=>{if(moved.current){moved.current=false;return}searchRun.current++;setSearching(false);unlockAudio();lastLang.current=null;setNote(null);
+ const toggle=()=>{if(moved.current){moved.current=false;return}searchRun.current++;setSearching(false);pending.current=null;unlockAudio();lastLang.current=null;setNote(null);
   if(voice.mode==='active'){if(wake)voice.toWake();else voice.stop()}else{if(voice.mode==='wake')voice.activate();else voice.start(code);chime('start')}};
  const toggleWake=()=>{unlockAudio();const on=!wake;setWake(on);try{localStorage.setItem(wakeKey,on?'on':'off')}catch{}
   if(on){if(voice.mode==='off')voice.start(code,'wake');setNote({text:__("Скажите «Привет, Лани», чтобы начать"),heard:'',tone:'ok',id:Math.random()})}else{if(voice.mode==='wake')voice.stop();setNote({text:__("«Привет, Лани» выключено"),heard:'',tone:'ok',id:Math.random()})}};
@@ -131,7 +142,7 @@ export function FloatingVoice({state,page,isOwner,labels,assistantOpen,assistant
  const left=window.innerWidth-pos.right-size,top=window.innerHeight-pos.bottom-size,width=Math.min(320,window.innerWidth-gap*2);
  const bubble={width,left:clamp(left+size/2<window.innerWidth/2?left:left+size-width,gap,window.innerWidth-width-gap),...(top+size/2>window.innerHeight/2?{bottom:pos.bottom+size+12}:{top:top+size+12})};
  const label=voiceLangs.find(v=>v[0]===code)?.[2],live=voice.listening&&voice.interim;
- return <div className="voice-float">{(live||note)&&<div className={'voice-float-bubble'+(note?.tone==='error'&&!live?' is-error':'')} style={bubble} role="status" aria-live="polite">{live?<p className="voice-float-live">{voice.interim}</p>:<><p>{note.heard&&<q>{note.heard}</q>}<span>{note.text}</span></p><button type="button" aria-label={__("Скрыть ответ")} onClick={()=>setNote(null)}><X size={14}/></button></>}</div>}
+ return <div className="voice-float">{(live||note)&&<div className={'voice-float-bubble'+(note?.tone==='error'&&!live?' is-error':'')} style={bubble} role="status" aria-live="polite">{live?<p className="voice-float-live">{voice.interim}</p>:<><p>{note.heard&&<q>{note.heard}</q>}<span>{note.text}</span>{note.confirm&&<span className="voice-float-actions"><button type="button" className="is-primary" onClick={()=>answer(true)}>{__("Искать")}</button><button type="button" onClick={()=>answer(false)}>{__("Нет")}</button></span>}</p><button type="button" aria-label={__("Скрыть ответ")} onClick={()=>{if(note.confirm)pending.current=null;setNote(null)}}><X size={14}/></button></>}</div>}
   <div className={'voice-float-anchor'+(voice.listening?' is-listening':voice.mode==='wake'?' is-waiting':'')+(searching?' is-searching':'')} style={{right:pos.right,bottom:pos.bottom}}>
    <button type="button" className="voice-orb-button" aria-pressed={voice.listening} aria-label={voice.listening?__("Выключить голосовое управление"):__("Включить голосовое управление")} title={(voice.listening?__("Выключить голосовое управление"):voice.mode==='wake'?__("Скажите «Привет, Лани» или нажмите, чтобы начать"):__("Включить голосовое управление"))+' · '+__("перетащите, чтобы переместить")} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onClick={toggle}>
     <span className="voice-orb" ref={voice.orb} aria-hidden="true"><i/><i/><i/><i/></span>{!voice.listening&&<Mic className="voice-orb-icon" size={22} aria-hidden="true"/>}

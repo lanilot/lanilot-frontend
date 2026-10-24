@@ -46,7 +46,7 @@ export function parseVoiceCommand(text,loads=[]){
  const raw=String(text).trim().replace(/[.!?¡¿]+$/u,'').replace(/^[¡¿]/u,'');
  if(exact(q,clearWords))return {type:'clear'};
  const typed=raw.match(typeVerbs);if(typed)return {type:'type',text:typed[1].replace(/^["«“']|["»”']$/gu,'').trim()};
- const click=raw.match(clickVerbs);if(click){const target=normalize(click[1]);if(target)return {type:'click',target}}
+ const click=raw.match(clickVerbs);if(click){const target=normalize(click[1]);if(target)return {type:'click',target,said:click[1].trim()}}
  if(exact(q,skills)||has(q,skills.filter(s=>s.includes(' ')).map(normalize)))return {type:'skills'};
  if(has(q,newChat.map(normalize)))return {type:'newChat'};
  if(exact(q,back))return {type:'back'};
@@ -72,3 +72,6 @@ export function speechText(text){return String(text).normalize('NFC').replace(/(
 const wakeNames=new Set(['lani','lanie','lanni','lannie','lany','laney','lainey','lanny','leni','lenny','lonnie','lonny','лани','лэни','лени','ланни','лане','лонни'].map(normalize));
 const greetings=new Set(['hey','hi','hello','ok','okay','hola','oye','ola','привет','приветик','эй','хей','хэй','алло','ну','слушай','окей'].map(normalize));
 export function parseWake(text){const words=normalize(text).split(' ').filter(Boolean);let i=0;while(i<words.length&&i<2&&greetings.has(words[i]))i++;if(i<words.length&&wakeNames.has(words[i]))return {rest:words.slice(i+1).join(' ')};return null}
+// Answer to "search the other sections?": 'yes' | 'no' | null (something else was said).
+const yesWords=['да','давай','ищи','поищи','конечно','ага','угу','да давай','да ищи','yes','yeah','yep','sure','ok','okay','go','go ahead','search','do it','si','claro','vale','busca','dale','de acuerdo'],noWords=['нет','не надо','не','не ищи','отмена','отмени','no','nope','nah','cancel','dont','no gracias','cancelar','deja'];
+export function parseYesNo(text){const q=normalize(text);if(!q)return null;if(exact(q,noWords)||/^(нет|no|nope|cancel)\b/.test(q))return 'no';if(exact(q,yesWords)||/^(да|yes|yeah|si)\b/.test(q))return 'yes';return null}
