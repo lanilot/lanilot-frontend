@@ -77,4 +77,8 @@ test('voice: control labels match spoken names',async()=>{
  assert.equal(scoreLabel('Delete company','company name'),Math.round(70*1/2*Math.min(1,3/2)));
  assert.ok(scoreLabel('Delete company','company name')<45);
  assert.equal(scoreLabel('Fleet','company name'),0);
+ assert.equal(splitTarget('t q l').text,'tql');
+ assert.equal(splitTarget('TQL').text,'tql');
+ assert.equal(splitTarget('c h robinson').text,'ch robinson');
+ assert.equal(splitTarget('plan a trip').text,'plan a trip');
 });
