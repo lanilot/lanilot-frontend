@@ -1587,5 +1587,22 @@
  "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "L'adresse de votre espace est encore en préparation. Vous pouvez continuer ici et revenir plus tard.",
  "Готовим адрес {0} — это займёт до минуты.": "Préparation de {0} — cela prend jusqu’à une minute.",
  "Переходим на адрес вашей компании…": "Redirection vers l'adresse de votre entreprise…",
- "Остаться на app.lanilot.com": "Rester sur app.lanilot.com"
+ "Остаться на app.lanilot.com": "Rester sur app.lanilot.com",
+ "Нет доступа к микрофону. Разрешите его в настройках браузера.": "Pas d’accès au micro. Autorisez-le dans les paramètres du navigateur.",
+ "Не расслышал. Попробуйте ещё раз.": "Je n’ai pas compris. Réessayez.",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «новый чат» и «назад».": "Dites une section (en anglais, espagnol ou russe) : “open trips”, “fleet map”, “settings”. Une charge par numéro : “load 2046”. Une recherche : “Reefer from Chicago to Dallas”. Et aussi “new chat” et “go back”.",
+ "Возвращаю в кабинет": "Retour au tableau de bord",
+ "Груз {0} не найден": "Charge {0} introuvable",
+ "Открываю груз {0}": "Ouverture de la charge {0}",
+ "Раздел доступен только владельцу компании": "Seul le propriétaire de l’entreprise peut ouvrir cette section",
+ "Открываю «{0}»": "Ouverture de « {0} »",
+ "Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры.": "Je n’ai pas compris. Dites “what can you do” pour entendre des exemples.",
+ "Нажмите на микрофон и скажите: «открой рейсы», «карта автопарка» или «груз 2046»": "Appuyez sur le micro et dites : “open trips”, “fleet map” ou “load 2046”",
+ "Слушаю…": "À l’écoute…",
+ "Скрыть ответ": "Masquer la réponse",
+ "Язык голосовых команд": "Langue des commandes vocales",
+ "Язык голосовых команд: {0}": "Langue des commandes vocales : {0}",
+ "Голосовое управление не поддерживается этим браузером": "Ce navigateur ne prend pas en charge la commande vocale",
+ "Остановить запись": "Arrêter l’enregistrement",
+ "Голосовая команда": "Commande vocale"
 }

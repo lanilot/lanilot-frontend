@@ -1587,5 +1587,22 @@
  "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "Your workspace address is still being set up. You can continue here and come back later.",
  "Готовим адрес {0} — это займёт до минуты.": "Setting up {0} — this takes up to a minute.",
  "Переходим на адрес вашей компании…": "Taking you to your company's address…",
- "Остаться на app.lanilot.com": "Stay on app.lanilot.com"
+ "Остаться на app.lanilot.com": "Stay on app.lanilot.com",
+ "Нет доступа к микрофону. Разрешите его в настройках браузера.": "No microphone access. Allow it in your browser settings.",
+ "Не расслышал. Попробуйте ещё раз.": "I didn't catch that. Please try again.",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «новый чат» и «назад».": "Say a section: “open trips”, “fleet map”, “settings”. A load by number: “load 2046”. A search: “Reefer from Chicago to Dallas”. Also “new chat” and “go back”.",
+ "Возвращаю в кабинет": "Back to the dashboard",
+ "Груз {0} не найден": "Load {0} not found",
+ "Открываю груз {0}": "Opening load {0}",
+ "Раздел доступен только владельцу компании": "Only the company owner can open this section",
+ "Открываю «{0}»": "Opening “{0}”",
+ "Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры.": "I didn't understand. Say “what can you do” to hear examples.",
+ "Нажмите на микрофон и скажите: «открой рейсы», «карта автопарка» или «груз 2046»": "Tap the microphone and say: “open trips”, “fleet map” or “load 2046”",
+ "Слушаю…": "Listening…",
+ "Скрыть ответ": "Hide reply",
+ "Язык голосовых команд": "Voice command language",
+ "Язык голосовых команд: {0}": "Voice command language: {0}",
+ "Голосовое управление не поддерживается этим браузером": "Voice control isn't supported in this browser",
+ "Остановить запись": "Stop recording",
+ "Голосовая команда": "Voice command"
 }

@@ -1587,5 +1587,22 @@
  "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "Kabinet manzili hali tayyorlanmoqda. Shu yerda davom etib, keyinroq qaytishingiz mumkin.",
  "Готовим адрес {0} — это займёт до минуты.": "{0} manzili tayyorlanmoqda — bir daqiqagacha vaqt oladi.",
  "Переходим на адрес вашей компании…": "Kompaniyangiz manziliga oʻtilmoqda…",
- "Остаться на app.lanilot.com": "app.lanilot.com da qolish"
+ "Остаться на app.lanilot.com": "app.lanilot.com da qolish",
+ "Нет доступа к микрофону. Разрешите его в настройках браузера.": "Mikrofonga ruxsat yoʻq. Uni brauzer sozlamalarida yoqing.",
+ "Не расслышал. Попробуйте ещё раз.": "Eshitmadim. Qaytadan urinib koʻring.",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «новый чат» и «назад».": "Boʻlimni ayting (ingliz, ispan yoki rus tilida): “open trips”, “fleet map”, “settings”. Raqam boʻyicha yuk: “load 2046”. Qidiruv: “Reefer from Chicago to Dallas”. Shuningdek “new chat” va “go back”.",
+ "Возвращаю в кабинет": "Kabinetga qaytaman",
+ "Груз {0} не найден": "{0} yuki topilmadi",
+ "Открываю груз {0}": "{0} yukini ochaman",
+ "Раздел доступен только владельцу компании": "Bu boʻlimni faqat kompaniya egasi ochishi mumkin",
+ "Открываю «{0}»": "«{0}» ochilmoqda",
+ "Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры.": "Buyruqni tushunmadim. Misollarni eshitish uchun “what can you do” deng.",
+ "Нажмите на микрофон и скажите: «открой рейсы», «карта автопарка» или «груз 2046»": "Mikrofonni bosing va ayting: “open trips”, “fleet map” yoki “load 2046”",
+ "Слушаю…": "Tinglayapman…",
+ "Скрыть ответ": "Javobni yashirish",
+ "Язык голосовых команд": "Ovozli buyruqlar tili",
+ "Язык голосовых команд: {0}": "Ovozli buyruqlar tili: {0}",
+ "Голосовое управление не поддерживается этим браузером": "Bu brauzer ovozli boshqaruvni qoʻllab-quvvatlamaydi",
+ "Остановить запись": "Yozishni toʻxtatish",
+ "Голосовая команда": "Ovozli buyruq"
 }

@@ -1587,5 +1587,22 @@
  "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "La dirección de su espacio aún se está preparando. Puede continuar aquí y volver más tarde.",
  "Готовим адрес {0} — это займёт до минуты.": "Preparando {0}: tardará hasta un minuto.",
  "Переходим на адрес вашей компании…": "Le llevamos a la dirección de su empresa…",
- "Остаться на app.lanilot.com": "Quedarse en app.lanilot.com"
+ "Остаться на app.lanilot.com": "Quedarse en app.lanilot.com",
+ "Нет доступа к микрофону. Разрешите его в настройках браузера.": "Sin acceso al micrófono. Permítelo en la configuración del navegador.",
+ "Не расслышал. Попробуйте ещё раз.": "No te he entendido. Inténtalo de nuevo.",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «новый чат» и «назад».": "Di una sección: «abre los viajes», «mapa de la flota», «configuración». Una carga por número: «carga 2046». Una búsqueda: «Reefer desde Chicago a Dallas». También «nuevo chat» y «volver».",
+ "Возвращаю в кабинет": "Volviendo al panel",
+ "Груз {0} не найден": "Carga {0} no encontrada",
+ "Открываю груз {0}": "Abriendo la carga {0}",
+ "Раздел доступен только владельцу компании": "Solo el propietario de la empresa puede abrir esta sección",
+ "Открываю «{0}»": "Abriendo «{0}»",
+ "Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры.": "No he entendido. Di «qué puedes hacer» para escuchar ejemplos.",
+ "Нажмите на микрофон и скажите: «открой рейсы», «карта автопарка» или «груз 2046»": "Pulsa el micrófono y di: «abre los viajes», «mapa de la flota» o «carga 2046»",
+ "Слушаю…": "Escuchando…",
+ "Скрыть ответ": "Ocultar respuesta",
+ "Язык голосовых команд": "Idioma de los comandos de voz",
+ "Язык голосовых команд: {0}": "Idioma de los comandos de voz: {0}",
+ "Голосовое управление не поддерживается этим браузером": "Este navegador no admite el control por voz",
+ "Остановить запись": "Detener grabación",
+ "Голосовая команда": "Comando de voz"
 }
