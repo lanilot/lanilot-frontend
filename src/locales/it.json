@@ -1626,5 +1626,19 @@
  "Сначала выберите поле: скажите «нажми» и его название.": "Scegli prima un campo: di’ “click” e il suo nome.",
  "Ввёл: {0}": "Scritto: {0}",
  "Поле очищено": "Campo svuotato",
- "Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп».": "Di’ una sezione (in inglese, spagnolo o russo): “open trips”, “settings”. Un carico: “load 2046”. Una ricerca: “Reefer from Chicago to Dallas”. Nella pagina: “click Save”, “click company name”, poi “type …”. Anche “scroll down”, “go back” e “stop”."
+ "Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп».": "Di’ una sezione (in inglese, spagnolo o russo): “open trips”, “settings”. Un carico: “load 2046”. Una ricerca: “Reefer from Chicago to Dallas”. Nella pagina: “click Save”, “click company name”, poi “type …”. Anche “scroll down”, “go back” e “stop”.",
+ "2–5 грузовиков": "2–5 camion",
+ "6–20 грузовиков": "6–20 camion",
+ "21–50 грузовиков": "21–50 camion",
+ "50+ грузовиков": "50+ camion",
+ "Синий": "Blu",
+ "Бирюзовый": "Verde acqua",
+ "Фиолетовый": "Viola",
+ "Оранжевый": "Arancione",
+ "Малиновый": "Cremisi",
+ "Графитовый": "Grafite",
+ "Зелёный": "Verde",
+ "Голубой": "Azzurro",
+ "Цвет: {0}": "Colore: {0}",
+ "Страница {0}": "Pagina {0}"
 }

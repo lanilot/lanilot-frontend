@@ -1626,5 +1626,19 @@
  "Сначала выберите поле: скажите «нажми» и его название.": "Avval maydonni tanlang: “click” deb uning nomini ayting.",
  "Ввёл: {0}": "Kiritildi: {0}",
  "Поле очищено": "Maydon tozalandi",
- "Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп».": "Boʻlimni ayting (ingliz, ispan yoki rus tilida): “open trips”, “settings”. Yuk: “load 2046”. Qidiruv: “Reefer from Chicago to Dallas”. Sahifada: “click Save”, “click company name”, soʻng “type …”. Shuningdek “scroll down”, “go back” va “stop”."
+ "Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп».": "Boʻlimni ayting (ingliz, ispan yoki rus tilida): “open trips”, “settings”. Yuk: “load 2046”. Qidiruv: “Reefer from Chicago to Dallas”. Sahifada: “click Save”, “click company name”, soʻng “type …”. Shuningdek “scroll down”, “go back” va “stop”.",
+ "2–5 грузовиков": "2–5 ta yuk mashinasi",
+ "6–20 грузовиков": "6–20 ta yuk mashinasi",
+ "21–50 грузовиков": "21–50 ta yuk mashinasi",
+ "50+ грузовиков": "50+ yuk mashinasi",
+ "Синий": "Koʻk",
+ "Бирюзовый": "Firuza",
+ "Фиолетовый": "Binafsha",
+ "Оранжевый": "Toʻq sariq",
+ "Малиновый": "Qirmizi",
+ "Графитовый": "Grafit",
+ "Зелёный": "Yashil",
+ "Голубой": "Havorang",
+ "Цвет: {0}": "Rang: {0}",
+ "Страница {0}": "{0}-sahifa"
 }

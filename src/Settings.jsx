@@ -13,6 +13,8 @@ const contactFields=[['contactName',__("Контактное лицо"),100],['e
 const planLabel=plan=>({trial:__("Пробный период")})[plan]||plan;
 // Settings of the whole company: profile and requisites, contacts, workspace, fleet and workflow, trip costs.
 const presets=['#2858ef','#0f766e','#7c3aed','#c2410c','#be123c','#1f2937','#15803d','#0369a1'];
+// Spoken names for the preset swatches, so they can be picked by voice ("click green").
+const presetNames={'#2858ef':()=>__('Синий'),'#0f766e':()=>__('Бирюзовый'),'#7c3aed':()=>__('Фиолетовый'),'#c2410c':()=>__('Оранжевый'),'#be123c':()=>__('Малиновый'),'#1f2937':()=>__('Графитовый'),'#15803d':()=>__('Зелёный'),'#0369a1':()=>__('Голубой')};
 const baseDomain=()=>window.location.hostname.split('.').slice(-2).join('.');
 // Logo upload goes straight to the server; the accent color and landing texts are saved with the form.
 function Branding({draft,setBranding,brand,isOwner,workspace,onBrandChange,busy}){
@@ -30,7 +32,7 @@ function Branding({draft,setBranding,brand,isOwner,workspace,onBrandChange,busy}
       <small>{__("PNG, JPEG или WebP до 512 КБ. Лучше горизонтальный, на прозрачном фоне.")}</small></div></div>
     {error&&<p className="chat-error" role="alert">{error}</p>}</div>
    <div className="brand-block"><span className="ob-group-title">{__("Цвет бренда")}</span>
-    <div className="brand-colors">{presets.map(c=><button type="button" key={c} className={b.color===c?'active':''} style={{background:c}} aria-label={c} aria-pressed={b.color===c} disabled={busy} onClick={()=>setBranding('color',c)}/>)}
+    <div className="brand-colors">{presets.map(c=><button type="button" key={c} className={b.color===c?'active':''} style={{background:c}} aria-label={__("Цвет: {0}",[presetNames[c]()])} title={presetNames[c]()} aria-pressed={b.color===c} disabled={busy} onClick={()=>setBranding('color',c)}/>)}
      <label className="brand-custom"><input type="color" value={b.color} disabled={busy} onChange={e=>setBranding('color',e.target.value)} aria-label={__("Свой цвет")}/><input value={b.color} maxLength={7} disabled={busy} onChange={e=>setBranding('color',e.target.value)} aria-label={__("Цвет в формате #RRGGBB")}/></label></div>
     <div className="brand-preview" style={{'--brand':/^#[0-9a-f]{6}$/i.test(b.color)?b.color:undefined}}><span className="brand-preview-chip">{draft.company.name}</span><button type="button" className="button primary" tabIndex={-1}>{__("Кнопка")}</button><a>{__("Ссылка")}</a></div></div>
   </div>

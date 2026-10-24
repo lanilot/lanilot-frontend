@@ -14,10 +14,10 @@ export function scoreLabel(label,target){const a=normalize(label),b=normalize(ta
  // All spoken words found, and the label is not much longer than what was said.
  return Math.round(70*hits/words.length*Math.min(1,(words.length+1)/have.length))}
 const isField=el=>el.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,select,[contenteditable=true]');
-function labelOf(el){const parts=[el.getAttribute('aria-label')];const by=el.getAttribute('aria-labelledby');if(by)parts.push(...by.split(' ').map(id=>document.getElementById(id)?.textContent));
+export function labelOf(el){const parts=[el.getAttribute('aria-label')];const by=el.getAttribute('aria-labelledby');if(by)parts.push(...by.split(' ').map(id=>document.getElementById(id)?.textContent));
  if(isField(el)||el.matches('input')){for(const l of el.labels||[])parts.push(l.textContent);parts.push(el.getAttribute('placeholder'),el.closest('label')?.textContent)}else{const text=el.innerText||'';parts.push(text.slice(0,120),...text.split('\n').slice(0,6))}
  parts.push(el.getAttribute('title'),el.matches('input[type=button],input[type=submit]')?el.value:null);return parts.filter(Boolean).map(s=>s.replace(/\s+/g,' ').trim()).filter(s=>s.length<=120)}
-function visible(el){if(el.closest('.voice-float,[inert],[hidden],[aria-hidden=true]')||el.disabled)return false;const r=el.getBoundingClientRect();if(!r.width&&!r.height)return false;const cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none'}
+export function visible(el){if(el.closest('.voice-float,[inert],[hidden],[aria-hidden=true]')||el.disabled)return false;const r=el.getBoundingClientRect();if(!r.width&&!r.height)return false;const cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none'}
 // An open modal dialog takes precedence: only its controls are considered.
 function scope(){const dialogs=[...document.querySelectorAll('[role=dialog][aria-modal=true],dialog[open]')].filter(d=>visible(d));return dialogs.at(-1)||document}
 export function findControl(variants){const {kind}=splitTarget(variants[0]),targets=[...new Set(variants.map(v=>splitTarget(v).text).filter(Boolean))];let best=null;
