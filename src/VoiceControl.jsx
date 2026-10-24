@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {Mic,X} from 'lucide-react';
 import {__,lang,appLocale} from './i18n.js';
-import {voiceLangs,parseVoiceCommand,spokenLang} from './voice-commands.js';
+import {voiceLangs,parseVoiceCommand,spokenLang,isEcho} from './voice-commands.js';
 import {demoMatches} from './assistant-demo.js';
 const Recognition=typeof window==='undefined'?null:window.SpeechRecognition||window.webkitSpeechRecognition||null;
 export const voiceSupported=!!Recognition;
@@ -13,10 +13,11 @@ const dicts={ru:{}};
 export async function loadVoiceDict(code){if(dicts[code])return;try{dicts[code]=(await import(`./locales/${code}.json`)).default}catch{dicts[code]={}}}
 const tr=(code,key,vars)=>{let s=dicts[code]?.[key]??key;if(vars)s=s.replace(/\{(\w+)\}/g,(m,k)=>vars[k]??m);return s};
 const plural=(code,n,one,few,many)=>`${n} ${tr(code,code==='ru'?(n%100>=11&&n%100<=14?many:n%10===1?one:n%10>=2&&n%10<=4?few:many):n===1?one:many)}`;
-// While a reply is spoken (and briefly after) the microphone hears our own voice, so those phrases are dropped.
-// The pause is capped by the reply length in case the browser never reports the end of speech.
+// While a reply is spoken (and briefly after) the microphone would hear our own voice, so phrases are dropped.
+// The pause is capped by the reply length in case the browser never reports the end of speech; onDone runs once either way.
 let quietUntil=0;const speaking=()=>Date.now()<quietUntil;
-export function speak(text,code=lang){try{const synth=window.speechSynthesis;if(!synth||!text)return;synth.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=voiceLangs.find(v=>v[0]===code)?.[1]||appLocale;const voice=synth.getVoices().find(v=>v.lang?.toLowerCase().startsWith(code));if(voice)u.voice=voice;quietUntil=Date.now()+Math.min(9000,900+text.length*75);u.onend=u.onerror=()=>{quietUntil=Date.now()+400};synth.speak(u)}catch{quietUntil=0}}
+export function speak(text,code=lang,onDone){let done=false;const finish=()=>{if(done)return;done=true;quietUntil=Date.now()+600;onDone?.()};const max=Math.min(9000,1200+text.length*80);
+ try{const synth=window.speechSynthesis;if(!synth||!text)return finish();synth.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=voiceLangs.find(v=>v[0]===code)?.[1]||appLocale;const voice=synth.getVoices().find(v=>v.lang?.toLowerCase().startsWith(code));if(voice)u.voice=voice;quietUntil=Date.now()+max;u.onend=u.onerror=finish;setTimeout(finish,max);synth.speak(u)}catch{finish()}}
 const IDLE_MS=8000;
 const fatal=['not-allowed','service-not-allowed','audio-capture'];
 // Continuous listening: once started it keeps hearing phrases until stop() or 8 s of silence ({idle:true}); each final phrase goes to onResult({text}).
@@ -24,22 +25,24 @@ const fatal=['not-allowed','service-not-allowed','audio-capture'];
 export function useVoice(onResult){
  const rec=useRef(null),want=useRef(false),code=useRef('en'),latest=useRef(onResult),fails=useRef(0),timer=useRef(0),meter=useRef(null),orbs=useRef(new Set()),[listening,setListening]=useState(false),[interim,setInterim]=useState('');latest.current=onResult;
  // Voice control switches itself off after this long without any speech; replies extend it while they are spoken.
- const idle=useRef(0),bump=()=>{clearTimeout(idle.current);idle.current=setTimeout(()=>{if(!want.current)return;if(speaking())return bump();stop();latest.current({idle:true})},IDLE_MS)};
+ const idle=useRef(0),paused=useRef(false),bump=()=>{clearTimeout(idle.current);idle.current=setTimeout(()=>{if(!want.current)return;if(speaking())return bump();stop();latest.current({idle:true})},IDLE_MS)};
  const setLevel=v=>{for(const el of orbs.current)el.style.setProperty('--level',v.toFixed(3))};
  // Mic loudness drives the orb; without access the orb simply keeps its idle motion.
  const startMeter=async()=>{if(meter.current||!navigator.mediaDevices?.getUserMedia)return;const m={stopped:false};meter.current=m;try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});if(m.stopped){stream.getTracks().forEach(t=>t.stop());return}const ctx=new (window.AudioContext||window.webkitAudioContext)(),analyser=ctx.createAnalyser();ctx.resume?.().catch(()=>{});analyser.fftSize=512;ctx.createMediaStreamSource(stream).connect(analyser);const data=new Uint8Array(analyser.fftSize);let smooth=0;
   const tick=()=>{if(m.stopped)return;analyser.getByteTimeDomainData(data);let sum=0;for(const v of data)sum+=(v-128)**2;const rms=Math.min(1,Math.sqrt(sum/data.length)/40);smooth=smooth*.7+rms*.3;setLevel(smooth);m.frame=requestAnimationFrame(tick)};tick();Object.assign(m,{stream,ctx})}catch{meter.current=null}};
  const stopMeter=()=>{const m=meter.current;meter.current=null;if(!m)return;m.stopped=true;cancelAnimationFrame(m.frame);m.stream?.getTracks().forEach(t=>t.stop());m.ctx?.close().catch(()=>{});setLevel(0)};
- const begin=()=>{if(!want.current)return;const r=new Recognition(),started=Date.now();r.lang=voiceLangs.find(v=>v[0]===code.current)?.[1]||'en-US';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+ const begin=()=>{if(!want.current||paused.current)return;const r=new Recognition(),started=Date.now();r.lang=voiceLangs.find(v=>v[0]===code.current)?.[1]||'en-US';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
   r.onresult=e=>{if(rec.current!==r)return;fails.current=0;bump();let live='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal){const text=x[0].transcript.trim();if(text&&!speaking())latest.current({text})}else live+=x[0].transcript}setInterim(speaking()?'':live)};
   r.onerror=e=>{if(rec.current!==r)return;if(fatal.includes(e.error)){stop();latest.current({error:e.error})}};
   r.onend=()=>{if(rec.current!==r)return;rec.current=null;setInterim('');if(!want.current)return;fails.current=Date.now()-started<1500?fails.current+1:0;if(fails.current>=5){stop();latest.current({error:'network'});return}timer.current=setTimeout(begin,fails.current?600:150)};
   rec.current=r;try{r.start()}catch{rec.current=null;timer.current=setTimeout(begin,600)}};
- function stop(){want.current=false;clearTimeout(timer.current);clearTimeout(idle.current);const r=rec.current;rec.current=null;r?.abort();setListening(false);setInterim('');stopMeter()}
+ // The microphone is switched off while a reply is spoken, so the orb never hears and repeats itself.
+ const say=(text,lang)=>{paused.current=true;clearTimeout(timer.current);const r=rec.current;rec.current=null;r?.abort();setInterim('');speak(text,lang,()=>{paused.current=false;bump();if(want.current&&!rec.current)timer.current=setTimeout(begin,400)})};
+ function stop(){want.current=false;paused.current=false;clearTimeout(timer.current);clearTimeout(idle.current);const r=rec.current;rec.current=null;r?.abort();setListening(false);setInterim('');stopMeter()}
  const start=c=>{if(!Recognition)return;code.current=c;want.current=true;fails.current=0;clearTimeout(timer.current);const old=rec.current;rec.current=null;old?.abort();setListening(true);bump();begin();startMeter()};
  useEffect(()=>()=>{want.current=false;clearTimeout(timer.current);clearTimeout(idle.current);rec.current?.abort();rec.current=null;stopMeter()},[]);
  const orb=el=>{if(el)orbs.current.add(el)};
- return {supported:!!Recognition,listening,interim,start,stop,orb};
+ return {supported:!!Recognition,listening,interim,start,stop,orb,say};
 }
 export const voicePageLabels={overview:"Обзор",loads:"Грузы",trips:"Рейсы",offers:"Предложения",chat:"Переписка",radar:'Load Radar',lanes:"Выделенные линии",brokers:"Проверка брокеров",fleet:"Автопарк",eld:"Карта автопарка",finances:"Финансы",telegram:'Telegram',integrations:"Интеграции",settings:"Настройки",users:"Пользователи",help:"Помощь"};
 const posKey='lanilot-voice-position-v2',size=60,gap=12;
@@ -50,14 +53,17 @@ function initialPosition(){try{const p=JSON.parse(localStorage.getItem(posKey));
 // Floating voice orb on every dashboard screen, the AI assistant included. Every command calls the app's own handlers,
 // so voice control never leaves the page; the listening session survives switching sections.
 export function FloatingVoice({state,isOwner,labels,assistantOpen,assistant,onNavigate,onOpenLoad,onSearch,onBack}){
- const [code,setCode]=useState(initialVoiceLang),[pos,setPos]=useState(initialPosition),[note,setNote]=useState(null),drag=useRef(null),moved=useRef(false),lastLang=useRef(null);
+ const [code,setCode]=useState(initialVoiceLang),[pos,setPos]=useState(initialPosition),[note,setNote]=useState(null),drag=useRef(null),moved=useRef(false),lastLang=useRef(null),lastReply=useRef(null),lastCommand=useRef(null),voiceRef=useRef(null);
  // Replies are given in the language of the phrase just heard (errors: in the selected recognition language).
- let sp=code;const t=(key,vars)=>tr(sp,key,vars),reply=(text,heard,tone='ok')=>{setNote({text,heard,tone,id:Math.random()});speak(text,sp)};
+ let sp=code;const t=(key,vars)=>tr(sp,key,vars),reply=(text,heard,tone='ok')=>{setNote({text,heard,tone,id:Math.random()});lastReply.current={text,at:Date.now()};voiceRef.current?.say(text,sp)};
  useEffect(()=>{for(const [c] of voiceLangs)loadVoiceDict(c)},[]);
  const voice=useVoice(({text,error,idle})=>{
   if(idle)return setNote({text:tr(lastLang.current||code,"Голосовое управление выключено"),heard:'',tone:'ok',id:Math.random()});
   if(error)return reply(fatal.includes(error)?t("Нет доступа к микрофону. Разрешите его в настройках браузера."):t("Распознавание речи недоступно. Проверьте интернет и включите микрофон снова."),'','error');
+  // Our own reply caught by the microphone, or the same command repeated within 4 s, is ignored.
+  if(lastReply.current&&Date.now()-lastReply.current.at<15000&&isEcho(text,lastReply.current.text))return;
   sp=lastLang.current=spokenLang(text,code);const c=parseVoiceCommand(text,state.loads);
+  const key=JSON.stringify([c.type,c.page,c.id,c.dir,c.text]);if(c.type!=='scroll'&&lastCommand.current?.key===key&&Date.now()-lastCommand.current.at<4000)return;lastCommand.current={key,at:Date.now()};
   if(c.type==='empty')return;
   if(c.type==='stop'){voice.stop();return reply(t("Голосовое управление выключено"),text)}
   if(c.type==='skills')return reply(t("Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп»."),text);
@@ -69,6 +75,7 @@ export function FloatingVoice({state,isOwner,labels,assistantOpen,assistant,onNa
   if(c.type==='search'){const found=demoMatches(c.criteria,state.loads,state.defaultCosts).length;if(assistantOpen&&assistant.current)assistant.current.submit(c.text,c.criteria);else onSearch(c.criteria);return reply(found?t("Найдено")+' '+plural(sp,found,"подходящий груз","подходящих груза","подходящих грузов"):t("Ничего не найдено. Измените условия."),text)}
   reply(t("Не понял команду. Скажите «что ты умеешь», чтобы услышать примеры."),text,'error');
  });
+ voiceRef.current=voice;
  useEffect(()=>{if(!note)return;const t=setTimeout(()=>setNote(null),note.tone==='error'?9000:5000);return()=>clearTimeout(t)},[note]);
  useEffect(()=>{const resize=()=>setPos(p=>fit(p));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize)},[]);
  const down=e=>{if(e.button!==0)return;drag.current={x:e.clientX,y:e.clientY,start:pos};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)};

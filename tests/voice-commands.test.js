@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseVoiceCommand,normalize,spokenLang} from '../src/voice-commands.js';
+import {parseVoiceCommand,normalize,spokenLang,isEcho} from '../src/voice-commands.js';
 const loads=[{id:'LD-2046',origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Reefer'},{id:'LD-3110',origin:'Dallas, TX',destination:'Phoenix, AZ',equipment:'Dry Van'}];
 const page=t=>{const c=parseVoiceCommand(t,loads);return c.type==='navigate'?c.page:c.type};
 
@@ -31,4 +31,13 @@ test('voice: scrolling inside the page',()=>{
 
 test('voice: reply language follows the phrase',()=>{
  for(const [text,sel,exp] of [['посмотри оферы','en','ru'],['open finances','ru','en'],['abre los viajes','ru','es'],['¿qué puedes hacer?','en','es'],['configuración','en','es'],['show trips','es','en'],['2046','es','es']])assert.equal(spokenLang(text,sel),exp,text);
+});
+
+test('voice: own replies heard by the microphone are recognised as echo',()=>{
+ assert.ok(isEcho('открываю предложения','Открываю «Предложения»'));
+ assert.ok(isEcho('opening offers','Opening “Offers”'));
+ assert.ok(isEcho('abriendo viajes','Abriendo «Viajes»'));
+ assert.ok(isEcho('найдено 2 подходящих груза','Найдено 2 подходящих груза'));
+ assert.ok(!isEcho('открой настройки','Открываю «Предложения»'));
+ assert.ok(!isEcho('open settings','Opening “Offers”'));
 });

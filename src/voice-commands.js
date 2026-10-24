@@ -52,3 +52,5 @@ export function parseVoiceCommand(text,loads=[]){
 }
 // Language of the phrase itself, so the reply matches what the user actually said whatever the selected recognition language.
 export function spokenLang(text,selected='en'){const t=String(text).toLowerCase();if(/[а-яё]/.test(t))return 'ru';if(/[ñ¿¡áéíóú]/.test(t)||/(^|\s)(abre|abrir|ir|ve|vamos|mostrar|muestra|ver|los|las|el|la|del|de|desde|hacia|para|cargas?|viajes?|ajustes|configuracion|finanzas|ofertas|flota|mapa|volver|basta|ayuda|nuevo)(\s|$)/.test(t))return 'es';return selected==='es'&&!/[a-z]/.test(t)?'es':'en'}
+// True when the heard phrase is mostly words of our last spoken reply (the speakers leaking into the microphone).
+export function isEcho(heard,reply){const h=normalize(heard).split(' ').filter(w=>w.length>2),r=new Set(normalize(reply).split(' '));if(!h.length)return false;const hits=h.filter(w=>r.has(w)||[...r].some(x=>x.length>3&&(x.startsWith(w)||w.startsWith(x)))).length;return hits/h.length>=.6}
