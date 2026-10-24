@@ -4,7 +4,7 @@ import {randomBytes,createHash,timingSafeEqual} from 'node:crypto';
 import {verifyPassword} from './auth.js';
 import {onboardingFunnel,onboardingSteps} from './onboarding.js';
 import {PLANS,TRIAL_DAYS,trialEnd,companyMrr} from './plans.js';
-import {DEFAULT_COMPANY} from './tenancy.js';
+import {DEFAULT_COMPANY,slugError,changeSlug} from './tenancy.js';
 
 const COOKIE='lanilot_admin',SESSION_HOURS=12;
 const sha=v=>createHash('sha256').update(v).digest('hex');
@@ -126,7 +126,8 @@ export function registerAdmin(app,db){
  });
  app.patch('/api/admin/companies/:id',(req,res)=>{
   const c=raw.prepare('SELECT * FROM companies WHERE id=?').get(req.params.id);if(!c)return res.status(404).json({error:'Компания не найдена'});
-  const {plan,status,trialEndsAt,notes}=req.body??{};
+  const {plan,status,trialEndsAt,notes,slug}=req.body??{};
+  if(slug!==undefined&&slug!==c.slug){if(c.id===DEFAULT_COMPANY)return res.status(409).json({error:'Адрес основной компании изменить нельзя'});const e=slugError(db,String(slug).toLowerCase(),c.id);if(e)return res.status(400).json({error:e})}
   if(plan!==undefined&&!PLANS[plan])return res.status(400).json({error:'Неизвестный тариф'});
   if(status!==undefined&&!['active','suspended'].includes(status))return res.status(400).json({error:'Неизвестный статус'});
   if(status==='suspended'&&c.id===DEFAULT_COMPANY)return res.status(409).json({error:'Основную компанию платформы приостановить нельзя'});
@@ -134,6 +135,7 @@ export function registerAdmin(app,db){
   if(notes!==undefined&&(typeof notes!=='string'||notes.length>2000))return res.status(400).json({error:'Заметка: до 2000 символов'});
   const now=new Date().toISOString();
   raw.prepare('UPDATE companies SET plan=?,status=?,trial_ends_at=?,notes=?,plan_changed_at=? WHERE id=?').run(plan??c.plan,status??c.status,trialEndsAt===undefined?c.trial_ends_at:trialEndsAt&&trialEndsAt+'T23:59:59.000Z',notes??c.notes,plan&&plan!==c.plan?now:c.plan_changed_at,c.id);
+  if(slug!==undefined&&slug!==c.slug)changeSlug(db,c.id,String(slug).toLowerCase());
   if(status==='suspended')raw.prepare('DELETE FROM sessions WHERE company_id=?').run(c.id);
   res.json(companyRow(raw.prepare('SELECT * FROM companies WHERE id=?').get(c.id)));
  });

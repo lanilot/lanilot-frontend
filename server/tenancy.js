@@ -9,7 +9,7 @@ export const tenantContext=new AsyncLocalStorage();
 export const currentTenant=()=>tenantContext.getStore()??null;
 export const DEFAULT_COMPANY='workspace';
 // Platform-level tables, never filtered by company (telegram tables carry their own company_id).
-export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities']);
+export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities','company_slug_history']);
 // Server keys any company may use (public registries); all other provider keys belong to the primary company.
 const SHARED_ENV=new Set(['LANILOT_FMCSA_WEBKEY']);
 
@@ -22,6 +22,8 @@ export function installTenancy(raw){
  raw.function('current_company',{deterministic:false},()=>tenantContext.getStore()?.companyId??fallback);
  raw.exec(`CREATE TABLE IF NOT EXISTS companies(id TEXT PRIMARY KEY,slug TEXT NOT NULL UNIQUE,name TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','suspended')),plan TEXT NOT NULL DEFAULT 'trial',demo INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL)`);
  raw.prepare("INSERT OR IGNORE INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,1,?)").run(DEFAULT_COMPANY,'app','Lanilot Cargo',new Date().toISOString());
+ // Previous subdomains keep redirecting to the company's current one.
+ raw.exec('CREATE TABLE IF NOT EXISTS company_slug_history(slug TEXT PRIMARY KEY,company_id TEXT NOT NULL,changed_at TEXT NOT NULL)');
  const physical=name=>!!raw.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get('t_'+name);
  // Schema changes written against the plain names are redirected to the physical tables.
  const rewrite=sql=>sql
@@ -91,11 +93,31 @@ export const companyBySlug=(db,slug)=>db.raw.prepare('SELECT * FROM companies WH
 export const companyById=(db,id)=>db.raw.prepare('SELECT * FROM companies WHERE id=?').get(id)??null;
 // Subdomains kept for the platform itself.
 export const RESERVED_SLUGS=new Set(['app','www','admin','api','mail','static','assets','status','help','docs','demo','login','signup']);
+const formerOwner=(db,slug)=>db.raw.prepare('SELECT company_id FROM company_slug_history WHERE slug=?').get(slug)?.company_id??null;
+// A subdomain is taken by a company or by a company's previous address (it still redirects).
+const slugTaken=(db,slug,companyId)=>{const c=companyBySlug(db,slug),f=formerOwner(db,slug);return !!(c&&c.id!==companyId||f&&f!==companyId)};
+export const SLUG_PATTERN=/^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$/;
+export function slugError(db,slug,companyId){
+ if(typeof slug!=='string'||!SLUG_PATTERN.test(slug)||slug.includes('--'))return 'Адрес: от 3 до 32 латинских букв, цифр или дефисов, без дефиса в начале и в конце';
+ if(RESERVED_SLUGS.has(slug)||slug.startsWith('demo-'))return 'Этот адрес зарезервирован';
+ if(slugTaken(db,slug,companyId))return 'Этот адрес уже занят';
+ return null;
+}
+// Moves a company to a new subdomain; the old one is kept as a redirect.
+export function changeSlug(db,companyId,slug){
+ const raw=db.raw,c=raw.prepare('SELECT slug FROM companies WHERE id=?').get(companyId);if(!c||c.slug===slug)return;
+ raw.exec('BEGIN IMMEDIATE');try{
+  raw.prepare('INSERT OR REPLACE INTO company_slug_history VALUES(?,?,?)').run(c.slug,companyId,new Date().toISOString());
+  raw.prepare('DELETE FROM company_slug_history WHERE slug=? AND company_id=?').run(slug,companyId);
+  raw.prepare('UPDATE companies SET slug=? WHERE id=?').run(slug,companyId);raw.exec('COMMIT');
+ }catch(e){raw.exec('ROLLBACK');throw e}
+}
+export const movedCompany=(db,slug)=>{const id=formerOwner(db,slug);return id?companyById(db,id):null};
 // Free subdomain from a company name: "Acme Trucking LLC" → acme-trucking-llc, acme-trucking-llc-2, …
 export function uniqueSlug(db,name){
  const base=String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,28).replace(/-+$/,'');
  const root=base.length>=3&&!RESERVED_SLUGS.has(base)?base:`company-${base||'new'}`.slice(0,28).replace(/-+$/,'');
- for(let n=1;;n++){const slug=n===1?root:`${root}-${n}`;if(!companyBySlug(db,slug))return slug}
+ for(let n=1;;n++){const slug=n===1?root:`${root}-${n}`;if(!slugTaken(db,slug,null))return slug}
 }
 export const listCompanies=db=>db.raw.prepare('SELECT * FROM companies ORDER BY created_at').all();
 

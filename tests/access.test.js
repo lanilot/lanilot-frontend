@@ -89,3 +89,32 @@ test('platform tables created late are not converted to company tables on restar
   assert.equal((await run()).status,302);const second=await run();assert.equal(second.status,302);assert.deepEqual(second.tables,[]);
  }finally{rmSync(dir,{recursive:true,force:true})}
 });
+
+test('company subdomain: owner changes it, the old one redirects, taken and reserved names are refused',async()=>{
+ const s=await start();
+ try{
+  const p=s.port,reg=await call(p,'POST','/auth/register',{body:{name:'Ola',company:'ABC LLC',email:'ola@abc.test',password:'olapassword1'}}),o=reg.cookie;
+  await call(p,'POST','/auth/register',{body:{name:'Zed',company:'Zed Haul',email:'zed@zed.test',password:'zedpassword1'}});
+  assert.equal((await call(p,'GET','/tenant',{cookie:o})).data.company.slug,'abc-llc');
+  for(const [slug,code] of [['ab',400],['-abc',400],['abc--d',400],['UPPER case',400],['admin',400],['demo-123',400],['zed-haul',400]])assert.equal((await call(p,'PUT','/settings/subdomain',{cookie:o,body:{slug}})).status,code,slug);
+  const ch=await call(p,'PUT','/settings/subdomain',{cookie:o,body:{slug:'abc-kkc'}});assert.equal(ch.status,200);assert.equal(ch.data.previous,'abc-llc');
+  assert.equal((await call(p,'GET','/tenant',{host:'abc-kkc.lanilot.com'})).data.company.name,'ABC LLC');
+  // The old address redirects pages and API, keeping the path.
+  const r=await call(p,'GET','/tenant',{host:'abc-llc.lanilot.com'});assert.equal(r.status,301);assert.equal(r.location,'http://abc-kkc.lanilot.com/api/tenant');
+  assert.equal((await call(p,'POST','/auth/login',{host:'abc-llc.lanilot.com',body:{}})).status,308);
+  // Nobody else can take the old address; the company can take it back.
+  const zed=(await call(p,'POST','/auth/login',{body:{email:'zed@zed.test',password:'zedpassword1'}})).cookie;
+  assert.equal((await call(p,'PUT','/settings/subdomain',{cookie:zed,body:{slug:'abc-llc'}})).status,400);
+  assert.equal((await call(p,'PUT','/settings/subdomain',{cookie:o,body:{slug:'abc-llc'}})).status,200);
+  assert.equal((await call(p,'GET','/tenant',{host:'abc-llc.lanilot.com'})).status,200);
+  assert.equal((await call(p,'GET','/tenant',{host:'abc-kkc.lanilot.com'})).status,301);
+  // A new sign-up never gets a former address; dispatchers and demo sandboxes cannot change it.
+  assert.equal((await call(p,'POST','/auth/register',{body:{name:'K',company:'ABC KKC',email:'k@k.test',password:'kpassword12'}})).status,201);
+  assert.equal(s.db.raw.prepare("SELECT slug FROM companies WHERE name='ABC KKC'").get().slug,'abc-kkc-2');
+  const inv=await call(p,'POST','/users/invites',{cookie:o,body:{email:'d@abc.test',role:'dispatcher'}});const d=(await call(p,'POST','/auth/invites/'+inv.data.path.split('/').pop()+'/accept',{body:{name:'D',password:'dpassword12'}})).cookie;
+  assert.equal((await call(p,'PUT','/settings/subdomain',{cookie:d,body:{slug:'abc-new'}})).status,403);
+  const demo=await call(p,'POST','/public/demo-access',{host:'lanilot.com',body:{name:'V',email:'v@v.test',company:'V Co'}});const dc=(await call(p,'POST','/auth/demo-access',{body:{token:demo.data.token}})).cookie;
+  assert.equal((await call(p,'PUT','/settings/subdomain',{cookie:dc,body:{slug:'v-company'}})).status,403);
+  assert.equal((await call(p,'GET','/state',{cookie:o})).data.workspace.editableSlug,true);
+ }finally{await s.close();s.db.close()}
+});

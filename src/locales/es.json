@@ -1498,5 +1498,14 @@
  "Демо-доступ": "Acceso demo",
  "Демо-кабинет посетителя": "Espacio demo del visitante",
  "Заявок пока нет. Они приходят с формы демо-доступа на lanilot.com.": "Aún no hay solicitudes. Llegan desde el formulario de acceso demo de lanilot.com.",
- "Ссылка демо-доступа недействительна или уже использована": "El enlace de acceso demo no es válido o ya se usó"
+ "Ссылка демо-доступа недействительна или уже использована": "El enlace de acceso demo no es válido o ya se usó",
+ "Адрес кабинета": "Dirección del espacio",
+ "Сохранить адрес": "Guardar dirección",
+ "Адрес изменён. Старый адрес перенаправляет на новый.": "Dirección cambiada. La antigua redirige a la nueva.",
+ "Латинские буквы, цифры и дефис. SSL-сертификат для нового адреса выпускается автоматически в течение 5 минут.": "Letras latinas, dígitos y guiones. El certificado SSL de la nueva dirección se emite automáticamente en 5 minutos.",
+ "Адрес этого кабинета изменить нельзя": "La dirección de este espacio no se puede cambiar",
+ "Адрес: от 3 до 32 латинских букв, цифр или дефисов, без дефиса в начале и в конце": "Dirección: de 3 a 32 letras latinas, dígitos o guiones, sin guion al principio ni al final",
+ "Этот адрес зарезервирован": "Esta dirección está reservada",
+ "Этот адрес уже занят": "Esta dirección ya está ocupada",
+ "Адрес основной компании изменить нельзя": "La dirección de la empresa principal no se puede cambiar"
 }

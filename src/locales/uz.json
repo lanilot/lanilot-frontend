@@ -1498,5 +1498,14 @@
  "Демо-доступ": "Demo-kirish",
  "Демо-кабинет посетителя": "Tashrif buyuruvchining demo-kabineti",
  "Заявок пока нет. Они приходят с формы демо-доступа на lanilot.com.": "Hozircha soʻrovlar yoʻq. Ular lanilot.com dagi demo-kirish shaklidan keladi.",
- "Ссылка демо-доступа недействительна или уже использована": "Demo-kirish havolasi yaroqsiz yoki allaqachon ishlatilgan"
+ "Ссылка демо-доступа недействительна или уже использована": "Demo-kirish havolasi yaroqsiz yoki allaqachon ishlatilgan",
+ "Адрес кабинета": "Kabinet manzili",
+ "Сохранить адрес": "Manzilni saqlash",
+ "Адрес изменён. Старый адрес перенаправляет на новый.": "Manzil oʻzgartirildi. Eski manzil yangisiga yoʻnaltiradi.",
+ "Латинские буквы, цифры и дефис. SSL-сертификат для нового адреса выпускается автоматически в течение 5 минут.": "Lotin harflari, raqamlar va defis. Yangi manzil uchun SSL sertifikati 5 daqiqa ichida avtomatik beriladi.",
+ "Адрес этого кабинета изменить нельзя": "Bu kabinet manzilini oʻzgartirib boʻlmaydi",
+ "Адрес: от 3 до 32 латинских букв, цифр или дефисов, без дефиса в начале и в конце": "Manzil: 3–32 ta lotin harfi, raqam yoki defis, boshida va oxirida defissiz",
+ "Этот адрес зарезервирован": "Bu manzil band qilingan",
+ "Этот адрес уже занят": "Bu manzil allaqachon band",
+ "Адрес основной компании изменить нельзя": "Asosiy kompaniya manzilini oʻzgartirib boʻlmaydi"
 }

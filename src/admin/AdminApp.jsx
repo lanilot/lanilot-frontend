@@ -74,10 +74,10 @@ function Overview({days}){
 
 function CompanyDrawer({id,plans,onClose,onChanged}){
  const [c,setC]=useState(null),[form,setForm]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[saved,setSaved]=useState(false);
- const load=useCallback(()=>api('/companies/'+id).then(d=>{setC(d);setForm({plan:d.plan,status:d.status,trialEndsAt:d.trialEndsAt?d.trialEndsAt.slice(0,10):'',notes:d.notes||''})}).catch(e=>setError(e.message)),[id]);
+ const load=useCallback(()=>api('/companies/'+id).then(d=>{setC(d);setForm({plan:d.plan,status:d.status,slug:d.slug,trialEndsAt:d.trialEndsAt?d.trialEndsAt.slice(0,10):'',notes:d.notes||''})}).catch(e=>setError(e.message)),[id]);
  useEffect(()=>{load()},[load]);
  useEffect(()=>{const k=e=>{if(e.key==='Escape')onClose()};document.addEventListener('keydown',k);return()=>document.removeEventListener('keydown',k)},[onClose]);
- const save=async()=>{setBusy(true);setError('');setSaved(false);try{await api('/companies/'+id,'PATCH',{plan:form.plan,status:form.status,notes:form.notes,...(form.plan==='trial'?{trialEndsAt:form.trialEndsAt||null}:{})});await load();onChanged();setSaved(true)}catch(e){setError(e.message)}setBusy(false)};
+ const save=async()=>{setBusy(true);setError('');setSaved(false);try{await api('/companies/'+id,'PATCH',{plan:form.plan,status:form.status,notes:form.notes,...(form.slug!==c.slug?{slug:form.slug.trim().toLowerCase()}:{}),...(form.plan==='trial'?{trialEndsAt:form.trialEndsAt||null}:{})});await load();onChanged();setSaved(true)}catch(e){setError(e.message)}setBusy(false)};
  return <div className="ad-drawer-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><aside className="ad-drawer" role="dialog" aria-modal="true" aria-label={c?.name||__('Компания')}>
   <header><div><h2>{c?.name||'…'}</h2>{c&&<a href={companyUrl(c.slug)} target="_blank" rel="noreferrer">{c.slug}.{baseDomain()} <ExternalLink size={11}/></a>}</div><button className="icon-button" aria-label={__('Закрыть')} onClick={onClose}><X size={18}/></button></header>
   {!c?<div className="ad-loading"/>:<div className="ad-drawer-body">
@@ -88,6 +88,7 @@ function CompanyDrawer({id,plans,onClose,onChanged}){
      <label className="form-label">{__('Тариф')}<SearchSelect aria-label={__('Тариф')} value={form.plan} disabled={busy} onChange={e=>setForm({...form,plan:e.target.value})}>{Object.entries(plans).map(([k,p])=><option key={k} value={k}>{p.name} · {usd(p.price)}/{__('мес')}</option>)}</SearchSelect></label>
      {form.plan==='trial'&&<label className="form-label">{__('Пробный период до')}<input type="date" value={form.trialEndsAt} disabled={busy} onChange={e=>setForm({...form,trialEndsAt:e.target.value})}/></label>}
      <label className="form-label">{__('Статус')}<SearchSelect aria-label={__('Статус')} value={form.status} disabled={busy||c.id==='workspace'} onChange={e=>setForm({...form,status:e.target.value})}><option value="active">{statusLabel('active')}</option><option value="suspended">{statusLabel('suspended')}</option></SearchSelect></label>
+     {c.id!=='workspace'&&!c.sandbox&&<label className="form-label wide">{__('Адрес кабинета')}<span className="subdomain-input"><span>https://</span><input value={form.slug} maxLength={32} disabled={busy} spellCheck={false} onChange={e=>setForm({...form,slug:e.target.value.replace(/[^a-zA-Z0-9-]/g,'')})}/><span>.{baseDomain()}</span></span></label>}
      <label className="form-label wide">{__('Заметка (видна только админам)')}<textarea maxLength={2000} value={form.notes} disabled={busy} onChange={e=>setForm({...form,notes:e.target.value})}/></label>
     </div>
     {form.status==='suspended'&&c.status!=='suspended'&&<p className="ad-warn"><AlertTriangle size={14}/>{__('Все пользователи компании будут разлогинены и не смогут войти.')}</p>}

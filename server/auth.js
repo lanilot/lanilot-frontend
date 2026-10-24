@@ -4,7 +4,7 @@ import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 import {installOnboarding} from './onboarding.js';
 import {installDemoAccess} from './demo-access.js';
 import {installOAuth,configuredProviders} from './oauth.js';
-import {tenantContext,slugFromHost,companyBySlug,companyById,uniqueSlug,asCompany,DEFAULT_COMPANY} from './tenancy.js';
+import {tenantContext,slugFromHost,companyBySlug,companyById,uniqueSlug,asCompany,movedCompany,DEFAULT_COMPANY} from './tenancy.js';
 
 export const roles=['owner','dispatcher','viewer'];
 const SESSION_DAYS=30,INVITE_DAYS=7,COOKIE='lanilot_session';
@@ -57,6 +57,9 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
 
  // Company from the host name; unknown subdomains get 404, suspended companies 403.
  const resolveTenant=(req,res,next)=>{
+  // A company's previous subdomain sends every request (pages and API) to its current one.
+  const hostSlug=slugFromHost(req.get('host'),baseDomain);
+  if(hostSlug&&hostSlug!=='app'&&hostSlug!=='admin'&&!companyBySlug(db,hostSlug)){const moved=movedCompany(db,hostSlug);if(moved)return res.redirect(['GET','HEAD'].includes(req.method)?301:308,`${req.protocol}://${req.get('host').replace(hostSlug+'.',moved.slug+'.')}${req.originalUrl}`)}
   if(!req.path.startsWith('/api/'))return next();
   const slug=slugFromHost(req.get('host'),baseDomain);
   // admin.<domain> serves only the platform admin API.
