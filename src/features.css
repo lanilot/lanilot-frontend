@@ -34,7 +34,11 @@
 .export-summary{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 12px;border-radius:8px;background:#f4f7fd;font-size:10px;color:#6d7b92}
 .export-summary strong{color:#242d3d}
 
-.lanes-page,.brokers-page,.fleet-map-page{display:grid;gap:14px}
+.lanes-page,.brokers-page{display:grid;gap:14px}
+.fleet-map-page{display:flex;flex-direction:column;gap:12px;min-height:0}
+.fleet-map-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.fleet-map-toolbar .status-chips{margin:0}
+.eld-refresh{display:flex;align-items:center;gap:10px}
 .lane-week{padding:14px 16px}
 .lane-week h2,.broker-history h2{display:flex;align-items:center;gap:7px;margin:0 0 10px;font-size:12px}
 .lane-week>div{display:flex;flex-wrap:wrap;gap:8px}
@@ -98,8 +102,8 @@
 .eld-updated{font-size:10px;color:#8691a3}
 .eld-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#b2bccb;flex:none}
 .eld-dot.driving{background:#179965}.eld-dot.on_duty{background:var(--brand)}.eld-dot.off_duty{background:#9aa6b8}.eld-dot.maintenance{background:#e0a23a}.eld-dot.inactive{background:#dc4a60}
-.fleet-map-layout{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:14px;min-height:560px}
-.eld-list{padding:8px;display:flex;flex-direction:column;gap:4px;max-height:640px;overflow:auto}
+.fleet-map-layout{flex:1;display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:14px;min-height:0}
+.eld-list{padding:8px;display:flex;flex-direction:column;gap:4px;min-height:0;overflow:auto}
 .eld-unit{display:flex;justify-content:flex-start;gap:10px;align-items:flex-start;width:100%;padding:10px;border:1px solid transparent;border-radius:8px;background:none;text-align:left;cursor:pointer}
 .eld-unit:hover{background:#f6f8fc}
 .eld-unit.selected{border-color:#c9d6f5;background:var(--brand-soft)}
@@ -109,7 +113,11 @@
 .eld-unit-main strong small{font-size:10px;font-weight:500;color:#6d7b92}
 .eld-unit-status,.eld-unit-trip,.eld-unit-hos{display:flex;align-items:center;gap:4px}
 .eld-unit-main>small{font-size:9px;color:#a6b1c2}
-.eld-map{position:relative;overflow:hidden;min-height:560px}
+.eld-map{position:relative;overflow:hidden;min-height:0}
+.eld-map-hint{position:absolute;top:10px;right:10px;left:60px;margin-left:auto;z-index:500;display:flex;align-items:flex-start;gap:6px;width:fit-content;max-width:560px;padding:7px 10px;border-radius:8px;background:#ffffffe6;border:1px solid #e4e9f1;box-shadow:0 4px 14px #2237581a;font-size:10px;line-height:1.45;color:#5b6a84}
+.eld-map-hint>svg{flex:none;margin-top:1px;color:#8691a3}
+.eld-map-hint span{display:block}
+@media(max-width:899px){.fleet-map-layout{grid-template-columns:1fr}.eld-list{max-height:320px}.eld-map{min-height:420px}}
 .eld-map-canvas{position:absolute;inset:0}
 .eld-map-card{position:absolute;left:12px;bottom:12px;z-index:500;display:grid;gap:4px;max-width:300px;padding:12px 14px;border-radius:10px;background:#fff;border:1px solid #e4e9f1;box-shadow:0 10px 30px #2237581f;font-size:10px;color:#6d7b92}
 .eld-map-card strong{display:flex;align-items:center;gap:6px;font-size:12px;color:#242d3d}
