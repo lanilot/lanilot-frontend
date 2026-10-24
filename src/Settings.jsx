@@ -1,4 +1,5 @@
 import {__} from './i18n.js';
+import BrandLogo from './BrandLogo.jsx';
 import ProfitBreakdown from './ProfitBreakdown.jsx';
 import React,{useEffect,useState} from 'react';
 import {Building2,Calculator,Save,RotateCcw,Info,Contact,Truck,LayoutGrid,Users as UsersIcon,Palette,Upload,Trash2,ExternalLink} from 'lucide-react';
@@ -26,10 +27,10 @@ function Branding({draft,setBranding,brand,isOwner,workspace,onBrandChange,busy}
  return <section className="panel settings-panel span-2"><div className="settings-heading"><Palette size={18}/><div><h2>{__("Брендинг")}</h2><p>{__("Логотип и цвет применяются к кабинету, экрану входа и странице компании.")}</p></div></div>
   <div className="brand-editor">
    <div className="brand-block"><span className="ob-group-title">{__("Логотип")}</span>
-    <div className="brand-logo-row"><div className="brand-logo-preview">{brand?.logo?<img src={brand.logo} alt=""/>:<span>{__("Нет логотипа")}</span>}</div>
+    <div className="brand-logo-row"><div className="brand-logo-preview">{brand?.logo?<BrandLogo src={brand.logo} alt=""/>:<span>{__("Нет логотипа")}</span>}</div>
      <div className="brand-logo-actions"><label className={'button secondary'+(!isOwner||uploading?' disabled':'')}><Upload size={14}/>{uploading?__("Загружаем…"):__("Загрузить")}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!isOwner||uploading} onChange={e=>{upload(e.target.files[0]);e.target.value=''}}/></label>
       {brand?.logo&&<button type="button" className="button danger-outline" disabled={!isOwner||uploading} onClick={remove}><Trash2 size={14}/>{__("Удалить")}</button>}
-      <small>{__("PNG, JPEG или WebP до 512 КБ. Лучше горизонтальный, на прозрачном фоне.")}</small></div></div>
+      <small>{__("PNG, JPEG или WebP до 512 КБ. Лучше горизонтальный, на прозрачном фоне.")}</small><small>{__("Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».")}</small></div></div>
     {error&&<p className="chat-error" role="alert">{error}</p>}</div>
    <div className="brand-block"><span className="ob-group-title">{__("Цвет бренда")}</span>
     <div className="brand-colors">{presets.map(c=><button type="button" key={c} className={b.color===c?'active':''} style={{background:c}} aria-label={__("Цвет: {0}",[presetNames[c]()])} title={presetNames[c]()} aria-pressed={b.color===c} disabled={busy} onClick={()=>setBranding('color',c)}/>)}

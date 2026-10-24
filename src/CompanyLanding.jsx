@@ -1,5 +1,6 @@
 import React,{useEffect,useRef} from 'react';
 import LogoMark from './LogoMark.jsx';
+import BrandLogo from './BrandLogo.jsx';
 import {LogIn,Phone,Mail,Globe,MapPin,Truck,ShieldCheck,Snowflake,Package,Zap,Repeat,Radar,Search,Handshake,FileCheck,Headphones,Navigation,ArrowRight,CheckCircle2,UserRound,CalendarClock} from 'lucide-react';
 import {__} from './i18n.js';
 import LangSwitch from './LangSwitch.jsx';
@@ -92,7 +93,7 @@ export default function CompanyLanding({company,urls}){
  const svc=services(l.businessType,eq),eqText=equipmentText();
  const nav=[['services',__('Услуги')],eq.length&&['equipment',__('Техника')],lanes.length&&['lanes',__('Линии')],['contact',__('Контакты')]].filter(Boolean);
  return <div className="clx" ref={root}>
-  <header className="clx-top"><a className="clx-brand" href="#top">{b.logo?<img src={b.logo} alt={b.name}/>:<><span className="clx-mark"><LogoMark/></span><strong>{b.name}</strong></>}</a>
+  <header className="clx-top"><a className="clx-brand" href="#top">{b.logo?<BrandLogo src={b.logo} alt={b.name}/>:<><span className="clx-mark"><LogoMark/></span><strong>{b.name}</strong></>}</a>
    <nav className="clx-nav">{nav.map(([id,t])=><a key={id} href={'#'+id}>{t}</a>)}</nav>
    <div className="clx-top-actions"><LangSwitch/><a className="clx-btn ghost sm" href={signIn}><LogIn size={14}/>{__('Войти')}</a></div></header>
 
@@ -124,6 +125,6 @@ export default function CompanyLanding({company,urls}){
   <section className="clx-contact" id="contact" data-reveal><div><h2>{__('Нужна машина под груз?')}</h2><p>{__('Напишите или позвоните — ответим и предложим ставку.')}</p></div>
    <div className="clx-contact-links">{tel&&<a href={tel}><Phone size={16}/>{l.phone}</a>}{l.email&&<a href={'mailto:'+l.email}><Mail size={16}/>{l.email}</a>}{site&&<a href={site} target="_blank" rel="noreferrer"><Globe size={16}/>{l.website}</a>}{l.city&&<span><MapPin size={16}/>{l.city}</span>}</div></section>
 
-  <footer className="clx-footer"><span>© {new Date().getFullYear()} {b.name}{l.mc?` · MC ${l.mc}`:''}{l.dot?` · DOT ${l.dot}`:''}</span><a href={signIn}>{__('Вход для сотрудников и партнёров')}</a><small>{__('Работает на Lanilot')}</small></footer>
+  <footer className="clx-footer"><span>© {new Date().getFullYear()} {b.name}{l.mc?` · MC ${l.mc}`:''}{l.dot?` · DOT ${l.dot}`:''}</span><a href={signIn}>{__('Вход для сотрудников и партнёров')}</a><a className="clx-powered" href="https://lanilot.com" target="_blank" rel="noopener" aria-label="Powered by Lanilot"><span>powered by</span><LogoMark color="#2563eb"/><strong>Lanilot</strong></a></footer>
  </div>;
 }

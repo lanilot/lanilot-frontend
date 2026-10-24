@@ -1699,5 +1699,6 @@
  "Подключить продукт может только владелец компании": "Mahsulotni faqat kompaniya egasi ulay oladi",
  "Выберите продукт и тариф": "Mahsulot va tarifni tanlang",
  "Продукт уже подключён": "Mahsulot allaqachon ulangan",
- "Укажите enabled: true или false": "enabled: true yoki false koʻrsating"
+ "Укажите enabled: true или false": "enabled: true yoki false koʻrsating",
+ "Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».": "Logotip ustida doim kichik “powered by Lanilot” belgisi koʻrsatiladi."
 }

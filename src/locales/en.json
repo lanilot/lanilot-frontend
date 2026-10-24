@@ -1699,5 +1699,6 @@
  "Подключить продукт может только владелец компании": "Only the company owner can connect a product",
  "Выберите продукт и тариф": "Choose a product and a plan",
  "Продукт уже подключён": "Product is already connected",
- "Укажите enabled: true или false": "Set enabled to true or false"
+ "Укажите enabled: true или false": "Set enabled to true or false",
+ "Поверх логотипа всегда показывается небольшая метка «powered by Lanilot».": "A small “powered by Lanilot” mark is always shown over the logo."
 }
