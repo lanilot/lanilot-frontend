@@ -36,11 +36,11 @@ export function useVoice(onResult){
  return {supported:!!Recognition,listening,interim,start,stop,orb};
 }
 export const voicePageLabels={overview:__("Обзор"),loads:__("Грузы"),trips:__("Рейсы"),offers:__("Предложения"),chat:__("Переписка"),radar:'Load Radar',lanes:__("Выделенные линии"),brokers:__("Проверка брокеров"),fleet:__("Автопарк"),eld:__("Карта автопарка"),finances:__("Финансы"),telegram:'Telegram',integrations:__("Интеграции"),settings:__("Настройки"),users:__("Пользователи"),help:__("Помощь")};
-const posKey='lanilot-voice-position',size=60,gap=12;
+const posKey='lanilot-voice-position-v2',size=60,gap=12;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
-// Default sits above the action bars of drawers and the assistant composer. Position is kept as the distance from the right and bottom edges and is always clamped to the viewport.
+// Default is 30px from the bottom-right corner. Position is kept as the distance from the right and bottom edges and is always clamped to the viewport.
 function fit(p){return {right:clamp(p.right,gap,window.innerWidth-size-gap),bottom:clamp(p.bottom,gap,window.innerHeight-size-gap)}}
-function initialPosition(){try{const p=JSON.parse(localStorage.getItem(posKey));if(Number.isFinite(p?.right)&&Number.isFinite(p?.bottom))return fit(p)}catch{}return fit({right:24,bottom:96})}
+function initialPosition(){try{const p=JSON.parse(localStorage.getItem(posKey));if(Number.isFinite(p?.right)&&Number.isFinite(p?.bottom))return fit(p)}catch{}return fit({right:30,bottom:30})}
 // Floating voice orb on every dashboard screen, the AI assistant included. Every command calls the app's own handlers,
 // so voice control never leaves the page; the listening session survives switching sections.
 export function FloatingVoice({state,isOwner,labels,assistantOpen,assistant,onNavigate,onOpenLoad,onSearch,onBack}){
