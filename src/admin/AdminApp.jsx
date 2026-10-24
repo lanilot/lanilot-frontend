@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useState} from 'react';
-import {Inbox,Mail,Phone,LayoutDashboard,Building2,Users,CreditCard,Filter,LogOut,RefreshCw,Search,X,ArrowUpRight,ArrowDownRight,Minus,ExternalLink,ShieldCheck,AlertTriangle,Route} from 'lucide-react';
+import LogoMark from '../LogoMark.jsx';
+import {Inbox,Mail,Phone,LayoutDashboard,Building2,Users,CreditCard,Filter,LogOut,RefreshCw,Search,X,ArrowUpRight,ArrowDownRight,Minus,ExternalLink,ShieldCheck,AlertTriangle} from 'lucide-react';
 import {__,fmtDate,translateDeep} from '../i18n.js';
 import LangSwitch from '../LangSwitch.jsx';
 import SearchSelect from '../SearchSelect.jsx';
@@ -36,7 +37,7 @@ function Panel({title,hint,children,className=''}){return <section className={'a
 function Login({onDone}){
  const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  return <div className="ad-login"><form onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');try{await api('/login','POST',{email,password});onDone()}catch(err){setError(err.message);setBusy(false)}}}>
-  <div className="ad-logo"><span><Route size={18}/></span><strong>lanilot<i>.</i></strong><em>admin</em></div>
+  <div className="ad-logo"><span><LogoMark color="#2563eb"/></span><strong>lanilot<i>.</i></strong><em>admin</em></div>
   <h1>{__('Админ-панель платформы')}</h1><p>{__('Только для администраторов Lanilot.')}</p>
   <label className="form-label">Email<input type="email" required autoFocus autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label>
   <label className="form-label">{__('Пароль')}<input type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
@@ -198,7 +199,7 @@ export default function AdminApp(){
  if(me===false)return <div className="ad-login"><p className="chat-error">{__('Сервер недоступен')}</p></div>;
  const title=pages.find(p=>p[0]===page)[2]();
  return <div className="ad-shell">
-  <aside className="ad-nav"><div className="ad-logo"><span><Route size={18}/></span><strong>lanilot<i>.</i></strong><em>admin</em></div>
+  <aside className="ad-nav"><div className="ad-logo"><span><LogoMark color="#2563eb"/></span><strong>lanilot<i>.</i></strong><em>admin</em></div>
    <nav>{pages.map(([id,Icon,text])=><button key={id} className={page===id?'active':''} aria-current={page===id?'page':undefined} onClick={()=>setPage(id)}><Icon size={17}/>{text()}{id==='requests'&&newRequests>0&&<b aria-label={__('новых: {0}',[newRequests])}>{newRequests}</b>}</button>)}</nav>
    <div className="ad-me"><span>{me.user.name}<small>{me.user.email}</small></span><button className="icon-button" aria-label={__('Выйти')} title={__('Выйти')} onClick={async()=>{await api('/logout','POST');setMe(null)}}><LogOut size={16}/></button></div></aside>
   <main className="ad-main">

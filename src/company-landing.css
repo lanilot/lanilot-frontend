@@ -16,7 +16,7 @@
 .clx a{text-decoration:none}
 .clx-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:24px;max-width:1180px;margin:0 auto;padding:16px 24px;background:color-mix(in srgb,#f6f9ff 78%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .clx-brand{display:flex;align-items:center;gap:10px;color:#18243d;font-size:17px}.clx-brand img{height:38px;max-width:180px;object-fit:contain}
-.clx-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff}
+.clx-mark{display:block;width:36px;height:36px;flex:none}
 .clx-nav{display:flex;gap:22px;margin-left:12px}.clx-nav a{color:#4c5a74;font-size:14px;font-weight:500}.clx-nav a:hover{color:var(--brand)}
 .clx-top-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
 .clx-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:center;gap:48px;max-width:1180px;margin:0 auto;padding:56px 24px 40px}

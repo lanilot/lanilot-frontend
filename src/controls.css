@@ -111,3 +111,6 @@
 .assistant-fullscreen .ai-logo-return>strong>span{font:inherit;color:var(--brand);background:none;border:0;border-radius:0;padding:0;margin:0;letter-spacing:inherit}
 /* No reserved gap while the back arrow is hidden. */
 .assistant-fullscreen .assistant-sidebar-top{padding-left:9px}.ai-logo-return>strong{transform:translateX(0)}.ai-logo-return:hover>strong,.ai-logo-return:focus-within>strong{transform:translateX(30px)}.assistant-fullscreen .ai-logo-return>.assistant-back{left:0;transform:translateX(10px)}.assistant-fullscreen .ai-logo-return:hover>.assistant-back,.assistant-fullscreen .ai-logo-return:focus-within>.assistant-back{transform:translateX(0)}@media(hover:none),(max-width:767px){.ai-logo-return>strong{transform:translateX(30px)}.assistant-fullscreen .ai-logo-return>.assistant-back{opacity:1;transform:translateX(0)}}
+/* Lanilot mark (LogoMark draws its own tile) */
+.sidebar-logo{background:none!important;padding:0;overflow:visible}
+.pitch-logo-mark{display:block;width:34px;height:34px;flex:none}

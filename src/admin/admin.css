@@ -2,7 +2,7 @@
 .ad-shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh;background:#f5f7fb;color:#1f2f4d}
 .ad-nav{position:sticky;top:0;display:flex;flex-direction:column;height:100vh;padding:18px 12px;background:#fff;border-right:1px solid #e7ecf4}
 .ad-logo{display:flex;align-items:center;gap:8px;padding:0 8px 18px;font-size:17px}
-.ad-logo>span{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--brand);color:#fff}
+.ad-logo>span{display:block;width:32px;height:32px;flex:none}
 .ad-logo i{color:var(--brand);font-style:normal}.ad-logo em{margin-left:2px;padding:2px 7px;border-radius:6px;background:#1f2f4d;color:#fff;font-size:10px;font-style:normal;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .ad-nav nav{display:grid;gap:2px}
 .ad-nav nav button{display:flex;align-items:center;justify-content:flex-start;gap:10px;height:38px;padding:0 12px;border:0;border-radius:8px;background:none;color:#5b6a84;font-size:13px;text-align:left;cursor:pointer}

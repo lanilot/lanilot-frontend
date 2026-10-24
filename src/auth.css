@@ -6,7 +6,7 @@
 .auth-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .auth-card{margin:auto 0;padding:40px 0}
 .auth-brand{display:flex;align-items:center;gap:9px;font-size:15px}
-.auth-brand .sidebar-logo{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--brand);color:#fff}
+.auth-brand .sidebar-logo{display:block;width:34px;height:34px;flex:none}
 .auth-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--brand-soft);color:var(--brand);margin-bottom:14px}
 .auth-card h1{margin:0;font-size:20px;letter-spacing:-.02em}
 .auth-subtitle{margin:6px 0 4px;font-size:12px;line-height:1.5;color:#6d7b92}

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Route} from 'lucide-react';
+import LogoMark from './LogoMark.jsx';
 import {__,translateDeep} from './i18n.js';
 import LangSwitch from './LangSwitch.jsx';
 import './auth.css';
@@ -8,7 +8,7 @@ import './auth.css';
 export async function post(path,body){const r=await fetch('/api'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error?translateDeep(data.error):__('Ошибка сервера'));return data}
 export function Shell({company,icon:Icon,title,subtitle,children,wide}){
  return <div className="auth-page"><div className="auth-main">
-  <header className="auth-top"><div className="auth-brand">{company?.brand?.logo?<img className="auth-brand-logo" src={company.brand.logo} alt={company.brand.name}/>:<><span className="sidebar-logo"><Route size={20}/></span><strong>{company?.brand?.name||company?.name||'Lanilot'}</strong></>}</div><LangSwitch/></header>
+  <header className="auth-top"><div className="auth-brand">{company?.brand?.logo?<img className="auth-brand-logo" src={company.brand.logo} alt={company.brand.name}/>:<><span className="sidebar-logo"><LogoMark color={company?undefined:'#2563eb'}/></span><strong>{company?.brand?.name||company?.name||'Lanilot'}</strong></>}</div><LangSwitch/></header>
   <section className={wide?"auth-card wide":"auth-card"} aria-labelledby="auth-title">
    <span className="auth-icon"><Icon size={20}/></span><h1 id="auth-title">{title}</h1>{subtitle&&<p className="auth-subtitle">{subtitle}</p>}{children}
   </section><p className="auth-footer">Lanilot · {__('Рабочее место диспетчера')}</p>
