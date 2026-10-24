@@ -1604,5 +1604,12 @@
  "Язык голосовых команд: {0}": "Ovozli buyruqlar tili: {0}",
  "Голосовое управление не поддерживается этим браузером": "Bu brauzer ovozli boshqaruvni qoʻllab-quvvatlamaydi",
  "Остановить запись": "Yozishni toʻxtatish",
- "Голосовая команда": "Ovozli buyruq"
+ "Голосовая команда": "Ovozli buyruq",
+ "Включите голосовой шар и говорите: «открой рейсы», «карта автопарка» или «груз 2046»": "Ovozli sharni yoqing va ayting: “open trips”, “fleet map” yoki “load 2046”",
+ "Распознавание речи недоступно. Проверьте интернет и включите микрофон снова.": "Nutqni aniqlash mavjud emas. Internetni tekshiring va mikrofonni qayta yoqing.",
+ "Голосовое управление выключено": "Ovozli boshqaruv oʻchirildi",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп».": "Boʻlimni ayting (ingliz, ispan yoki rus tilida): “open trips”, “fleet map”, “settings”. Raqam boʻyicha yuk: “load 2046”. Qidiruv: “Reefer from Chicago to Dallas”. Shuningdek “scroll down”, “to the top”, “go back” va “stop”.",
+ "Выключить голосовое управление": "Ovozli boshqaruvni oʻchirish",
+ "Включить голосовое управление": "Ovozli boshqaruvni yoqish",
+ "перетащите, чтобы переместить": "koʻchirish uchun torting"
 }

@@ -1604,5 +1604,12 @@
  "Язык голосовых команд: {0}": "Idioma de los comandos de voz: {0}",
  "Голосовое управление не поддерживается этим браузером": "Este navegador no admite el control por voz",
  "Остановить запись": "Detener grabación",
- "Голосовая команда": "Comando de voz"
+ "Голосовая команда": "Comando de voz",
+ "Включите голосовой шар и говорите: «открой рейсы», «карта автопарка» или «груз 2046»": "Activa la esfera de voz y di: «abre los viajes», «mapa de la flota» o «carga 2046»",
+ "Распознавание речи недоступно. Проверьте интернет и включите микрофон снова.": "El reconocimiento de voz no está disponible. Revisa la conexión y vuelve a activar el micrófono.",
+ "Голосовое управление выключено": "Control por voz desactivado",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп».": "Di una sección: «abre los viajes», «mapa de la flota», «configuración». Una carga por número: «carga 2046». Una búsqueda: «Reefer desde Chicago a Dallas». También «abajo», «al principio», «volver» y «basta».",
+ "Выключить голосовое управление": "Desactivar el control por voz",
+ "Включить голосовое управление": "Activar el control por voz",
+ "перетащите, чтобы переместить": "arrastra para mover"
 }

@@ -8,7 +8,7 @@ test('voice: sections in Russian, English and Spanish',()=>{
  for(const [text,expected] of [
   ['Открой рейсы','trips'],['покажи грузы','loads'],['Карта автопарка','eld'],['перейди в автопарк','fleet'],['грузовики','fleet'],['открой настройки','settings'],['Финансы','finances'],['выделенные линии','lanes'],['проверка брокеров','brokers'],['переписка','chat'],['Load Radar','radar'],['главная','overview'],
   ['Open trips','trips'],['go to the fleet map','eld'],['show me the loads','loads'],['open settings','settings'],['dashboard','overview'],['open inbox','chat'],['integrations','integrations'],
-  ['Abre los viajes','trips'],['ir a la configuración','settings'],['mostrar las cargas','loads'],['abre el mapa','eld'],['finanzas','finances'],['ofertas','offers'],['ir al inicio','overview'],['usuarios','users'],
+  ['Abre los viajes','trips'],['ir a la configuración','settings'],['mostrar las cargas','loads'],['abre el mapa','eld'],['finanzas','finances'],['ofertas','offers'],['ir al inicio','overview'],['usuarios','users'],['открой ИИ помощник','assistant'],['open the AI assistant','assistant'],['abre el asistente','assistant'],['справка','help'],
  ])assert.equal(page(text),expected,text);
 });
 
@@ -23,4 +23,8 @@ test('voice: control words, load numbers and searches',()=>{
  assert.equal(parseVoiceCommand('Dry Van loads from Dallas',loads).criteria.equipment,'Dry Van');
  assert.equal(page('расскажи анекдот'),'unknown');
  assert.equal(normalize('Configuración — ¡ya!'),'configuracion ya');
+});
+
+test('voice: scrolling inside the page',()=>{
+ for(const [text,dir] of [['вниз','down'],['прокрути вниз','down'],['scroll down','down'],['baja','down'],['вверх','up'],['scroll up','up'],['arriba','up'],['наверх','top'],['scroll to top','top'],['al principio','top']]){const c=parseVoiceCommand(text,[]);assert.equal(c.type,'scroll',text);assert.equal(c.dir,dir,text)}
 });

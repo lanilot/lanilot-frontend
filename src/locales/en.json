@@ -1604,5 +1604,12 @@
  "Язык голосовых команд: {0}": "Voice command language: {0}",
  "Голосовое управление не поддерживается этим браузером": "Voice control isn't supported in this browser",
  "Остановить запись": "Stop recording",
- "Голосовая команда": "Voice command"
+ "Голосовая команда": "Voice command",
+ "Включите голосовой шар и говорите: «открой рейсы», «карта автопарка» или «груз 2046»": "Turn on the voice orb and say: “open trips”, “fleet map” or “load 2046”",
+ "Распознавание речи недоступно. Проверьте интернет и включите микрофон снова.": "Speech recognition is unavailable. Check your connection and turn the microphone on again.",
+ "Голосовое управление выключено": "Voice control is off",
+ "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп».": "Say a section: “open trips”, “fleet map”, “settings”. A load by number: “load 2046”. A search: “Reefer from Chicago to Dallas”. Also “scroll down”, “to the top”, “go back” and “stop”.",
+ "Выключить голосовое управление": "Turn off voice control",
+ "Включить голосовое управление": "Turn on voice control",
+ "перетащите, чтобы переместить": "drag to move"
 }
