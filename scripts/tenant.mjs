@@ -10,6 +10,7 @@ import {existsSync,mkdirSync} from 'node:fs';
 if(existsSync('.env'))process.loadEnvFile('.env');
 const {createApp}=await import('../server/app.js');
 const {companyBySlug,listCompanies,RESERVED_SLUGS,asCompany}=await import('../server/tenancy.js');
+const {grantProduct}=await import('../server/products.js');
 const {hashPassword}=await import('../server/auth.js');
 const {onboardingFunnel}=await import('../server/onboarding.js');
 
@@ -31,7 +32,7 @@ try{
   if(typeof args.owner!=='string'||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(args.owner))fail('--owner email is required');
   const id='co-'+crypto.randomUUID();
   db.raw.prepare('INSERT INTO companies(id,slug,name,demo,created_at) VALUES(?,?,?,?,?)').run(id,slug,args.name.trim(),args.demo?1:0,new Date().toISOString());
-  seedCompany({id,demo:args.demo?1:0});
+  seedCompany({id,demo:args.demo?1:0});grantProduct(db,id,'dash','manual');
   console.log(`Created ${args.name.trim()} → ${url(slug)}`);
   console.log(`Owner invitation for ${args.owner} (valid 7 days):\n  ${url(slug,access.createInvite(id,args.owner,'owner'))}`);
  }
@@ -52,7 +53,7 @@ try{
   const password=typeof args.password==='string'?args.password:'Demo-'+crypto.randomUUID().slice(0,8);
   if(password.length<8)fail('--password: at least 8 characters');
   let c=companyBySlug(db,'demo');
-  if(!c){db.raw.prepare("INSERT INTO companies(id,slug,name,demo,internal,created_at) VALUES('co-demo','demo','Lanilot Trucking',1,1,?)").run(new Date().toISOString());c=companyBySlug(db,'demo');seedCompany(c);asCompany(c.id,()=>{const st=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);st.company.name=c.name;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(st))})}
+  if(!c){db.raw.prepare("INSERT INTO companies(id,slug,name,demo,internal,created_at) VALUES('co-demo','demo','Lanilot Trucking',1,1,?)").run(new Date().toISOString());c=companyBySlug(db,'demo');seedCompany(c);grantProduct(db,c.id,'dash','manual');asCompany(c.id,()=>{const st=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);st.company.name=c.name;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(st))})}
   const now=new Date().toISOString(),hash=hashPassword(password);
   console.log(`Demo company "${c.name}": sign in at https://app.${base} (or ${url(c.slug)}) — password for all accounts: ${password}`);
   for(const [role,name] of [['owner','Alex Carter'],['dispatcher','Maria Lopez'],['viewer','Sam Patel']]){

@@ -1,6 +1,7 @@
 // Platform admin (admin.<domain>): companies, users, subscriptions and product analytics across all tenants.
 // Separate accounts list (platform_admins), separate cookie and sessions; never reachable from a company host.
 import {randomBytes,createHash,timingSafeEqual} from 'node:crypto';
+import {PRODUCTS,companyProducts,grantProduct,revokeProduct} from './products.js';
 import {verifyPassword} from './auth.js';
 import {onboardingFunnel,onboardingSteps} from './onboarding.js';
 import {PLANS,TRIAL_DAYS,trialEnd,companyMrr} from './plans.js';
@@ -60,7 +61,7 @@ export function registerAdmin(app,db){
   res.cookie(COOKIE,value,{httpOnly:true,sameSite:'strict',secure:req.secure,path:'/',maxAge:SESSION_HOURS*3600000});res.json({ok:true});
  });
  app.post('/api/admin/logout',(req,res)=>{const v=readCookie(req);if(v)raw.prepare('DELETE FROM admin_sessions WHERE id=?').run(sha(v));res.clearCookie(COOKIE,{path:'/'});res.json({ok:true})});
- app.get('/api/admin/me',(req,res)=>res.json({user:{name:req.admin.name,email:req.admin.email},plans:PLANS,trialDays:TRIAL_DAYS,newRequests:raw.prepare("SELECT count(*) n FROM demo_requests WHERE status='new'").get().n}));
+ app.get('/api/admin/me',(req,res)=>res.json({user:{name:req.admin.name,email:req.admin.email},plans:PLANS,trialDays:TRIAL_DAYS,newRequests:raw.prepare("SELECT count(*) n FROM demo_requests WHERE status='new'").get().n,products:PRODUCTS,newProductRequests:raw.prepare("SELECT count(*) n FROM product_requests WHERE status='new'").get().n}));
  app.get('/api/admin/requests',(req,res)=>{const status=requestStatuses.includes(req.query.status)?req.query.status:null;res.json({counts:Object.fromEntries(raw.prepare('SELECT status,count(*) n FROM demo_requests GROUP BY status').all().map(r=>[r.status,r.n])),requests:raw.prepare(`SELECT * FROM demo_requests ${status?'WHERE status=?':''} ORDER BY created_at DESC LIMIT 500`).all(...(status?[status]:[]))})});
  app.patch('/api/admin/requests/:id',(req,res)=>{
   const r=raw.prepare('SELECT * FROM demo_requests WHERE id=?').get(req.params.id);if(!r)return res.status(404).json({error:'Заявка не найдена'});
@@ -98,7 +99,7 @@ export function registerAdmin(app,db){
    funnel:onboardingFunnel(raw,{days:n}),plans,sources});
  });
 
- const companyRow=c=>({id:c.id,slug:c.slug,name:c.name,status:c.status,plan:c.plan,internal:!!c.internal,sandbox:!!c.sandbox,createdAt:c.created_at,trialEndsAt:c.plan==='trial'?trialEnd(c):null,mrr:companyMrr(c),notes:c.notes,
+ const companyRow=c=>({productRequests:raw.prepare("SELECT count(*) n FROM product_requests WHERE company_id=? AND status='new'").get(c.id).n,id:c.id,slug:c.slug,name:c.name,status:c.status,plan:c.plan,internal:!!c.internal,sandbox:!!c.sandbox,createdAt:c.created_at,trialEndsAt:c.plan==='trial'?trialEnd(c):null,mrr:companyMrr(c),notes:c.notes,
   users:raw.prepare('SELECT count(*) n FROM memberships WHERE company_id=?').get(c.id).n,
   owner:raw.prepare("SELECT u.name,u.email FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.company_id=? AND m.role='owner' ORDER BY m.created_at LIMIT 1").get(c.id)??null,
   lastActive:raw.prepare('SELECT max(day) d FROM activity WHERE company_id=?').get(c.id).d,
@@ -122,7 +123,16 @@ export function registerAdmin(app,db){
   res.json({...companyRow(c),profile:s.company??null,operations:s.operations??null,
    members:raw.prepare('SELECT u.id,u.name,u.email,m.role,m.created_at,(SELECT max(day) FROM activity a WHERE a.user_id=u.id AND a.company_id=m.company_id) last_active FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.company_id=? ORDER BY m.created_at').all(c.id),
    signup:lead?{source:lead.source,startedAt:lead.created_at,completedAt:lead.completed_at,answers:JSON.parse(lead.data)}:null,
-   activity:{dates:list,users:list.map(d=>rows[d]??0)}});
+   activity:{dates:list,users:list.map(d=>rows[d]??0)},
+   products:companyProducts(db,c.id),productRequests:raw.prepare("SELECT r.id,r.product,r.plan,r.status,r.created_at,u.name user_name,u.email user_email FROM product_requests r LEFT JOIN users u ON u.id=r.user_id WHERE r.company_id=? ORDER BY r.created_at DESC LIMIT 20").all(c.id)});
+ });
+ // Turns a product on or off for a company (for now instead of online payment); turning it on closes its requests.
+ app.put('/api/admin/companies/:id/products/:product',(req,res)=>{
+  const c=raw.prepare('SELECT id FROM companies WHERE id=?').get(req.params.id);if(!c)return res.status(404).json({error:'Компания не найдена'});
+  if(!PRODUCTS.some(p=>p.id===req.params.product))return res.status(400).json({error:'Неизвестный продукт'});
+  if(typeof req.body?.enabled!=='boolean')return res.status(400).json({error:'Укажите enabled: true или false'});
+  if(req.body.enabled)grantProduct(db,c.id,req.params.product,'manual');else revokeProduct(db,c.id,req.params.product);
+  res.json({products:companyProducts(db,c.id)});
  });
  app.patch('/api/admin/companies/:id',(req,res)=>{
   const c=raw.prepare('SELECT * FROM companies WHERE id=?').get(req.params.id);if(!c)return res.status(404).json({error:'Компания не найдена'});

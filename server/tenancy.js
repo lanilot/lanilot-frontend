@@ -10,7 +10,7 @@ export const tenantContext=new AsyncLocalStorage();
 export const currentTenant=()=>tenantContext.getStore()??null;
 export const DEFAULT_COMPANY='workspace';
 // Platform-level tables, never filtered by company (telegram tables carry their own company_id).
-export const GLOBAL_TABLES=new Set(['companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities','company_slug_history','session_handoffs']);
+export const GLOBAL_TABLES=new Set(['company_products','product_requests','companies','users','memberships','sessions','invites','telegram_settings','telegram_notifications','signup_leads','signup_events','activity','platform_admins','admin_sessions','demo_requests','demo_access_tokens','oauth_states','user_identities','company_slug_history','session_handoffs']);
 // Server keys any company may use (public registries); all other provider keys belong to the primary company.
 const SHARED_ENV=new Set(['LANILOT_FMCSA_WEBKEY']);
 
@@ -134,6 +134,9 @@ export function tenantEnv(base){
 
 // Hosts: <slug>.<baseDomain> is the company's public site, dash.<slug>.<baseDomain> its dashboard;
 // the app host (app., the bare domain, localhost, IPs) serves the dashboard of any company (picked by session).
+// Product subdomains in front of a company's slug (see PRODUCTS in products.js).
+export const PRODUCT_HOSTS=['dash','erp','crm','fuel','safety','driver'];
+const PRODUCT_HOST=new RegExp(`^(${PRODUCT_HOSTS.join('|')})\\.([a-z0-9-]+)$`);
 export function hostInfo(host,baseDomain){
  const raw=String(host||'').toLowerCase(),port=(raw.match(/:\d+$/)||[''])[0],name=raw.slice(0,raw.length-port.length);
  if(name==='localhost')return {slug:'app',kind:'app',base:'localhost',port};
@@ -142,8 +145,9 @@ export function hostInfo(host,baseDomain){
  for(const base of [baseDomain,'localhost'].filter(Boolean)){
   if(name===base)return {slug:'app',kind:'app',base,port};
   if(name.endsWith('.'+base)){
-   const sub=name.slice(0,-base.length-1),dash=sub.match(/^dash\.([a-z0-9-]+)$/);
-   if(dash)return {slug:dash[1],kind:dash[1]==='app'?'app':'dash',base,port};
+   // <product>.<company>: dash is the dispatch dashboard, the other products have their own kind.
+   const sub=name.slice(0,-base.length-1),product=sub.match(PRODUCT_HOST);
+   if(product)return {slug:product[2],kind:product[2]==='app'?'app':product[1]==='dash'?'dash':'product',product:product[1],base,port};
    if(sub.includes('.'))return {slug:null,kind:null,base,port};
    return {slug:sub,kind:sub==='app'?'app':sub==='admin'?'admin':'site',base,port};
   }

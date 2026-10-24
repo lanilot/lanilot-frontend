@@ -6,6 +6,7 @@ import LangSwitch from '../LangSwitch.jsx';
 import SearchSelect from '../SearchSelect.jsx';
 import {AreaChart,BarList,MiniColumns} from './charts.jsx';
 import {label as answerLabel} from '../Onboarding.jsx';
+import {productMeta} from '../Products.jsx';
 import '../styles.css';
 import '../controls.css';
 import '../auth.css';
@@ -96,6 +97,11 @@ function CompanyDrawer({id,plans,onClose,onChanged}){
     {error&&<p className="chat-error" role="alert">{error}</p>}
     <div className="ad-actions"><span>{saved?__('Сохранено'):__('Оплата пока отмечается вручную — Stripe подключается на этапе 5.')}</span><button className="button primary" disabled={busy} onClick={save}>{busy?__('Сохраняем…'):__('Сохранить')}</button></div>
    </Panel>
+   <Panel title={__('Продукты')} hint={__('Доступ компании наследуют все её сотрудники')}>
+    <div className="ad-products">{['dash','erp','crm','fuel','safety','driver'].map(p=>{const m=productMeta(p),on=c.products.includes(p),req=c.productRequests.find(r=>r.product===p&&r.status==='new');return <label key={p} className={'ad-product'+(on?' is-on':'')}>
+     <input type="checkbox" checked={on} disabled={busy} onChange={async e=>{setBusy(true);setError('');try{await api('/companies/'+id+'/products/'+p,'PUT',{enabled:e.target.checked});await load();onChanged()}catch(err){setError(err.message)}setBusy(false)}}/>
+     <span><strong>{m.name}</strong>{req?<small className="ad-product-request">{__('Заявка: тариф {0} · {1}',[plans[req.plan]?.name??req.plan,day(req.created_at)])}</small>:<small>{on?__('Подключено'):__('Не подключено')}</small>}</span></label>})}</div>
+   </Panel>
    <Panel title={__('Сотрудники')}><table className="ad-table compact"><tbody>{c.members.map(m=><tr key={m.id}><td><strong>{m.name}</strong><small>{m.email}</small></td><td>{roleName(m.role)}</td><td className="muted">{day(m.last_active)}</td></tr>)}</tbody></table></Panel>
    <Panel title={__('Профиль')}><dl className="ad-facts">
     {[[__('Создана'),day(c.createdAt)],[__('Владелец'),c.owner?`${c.owner.name} · ${c.owner.email}`:'—'],['MC / DOT',[c.profile?.mc,c.profile?.dot].filter(Boolean).join(' / ')||'—'],[__('Город'),c.profile?.city||'—'],[__('Телефон'),c.profile?.phone||'—'],[__('Автопарк'),c.operations?.fleetSize?answerLabel('fleetSize',c.operations.fleetSize):'—'],[__('Техника'),c.operations?.equipment?.join(', ')||'—'],['ELD',c.operations?.eld?answerLabel('eld',c.operations.eld):'—'],[__('Источник регистрации'),c.signup?.source||'—']].map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
@@ -114,7 +120,7 @@ function Companies({plans,onOpen,version}){
    <label className="auth-check"><input type="checkbox" checked={internal} onChange={e=>setInternal(e.target.checked)}/><span>{__('Показать внутренние')}</span></label></div>
   <Panel>{!list?<div className="ad-loading"/>:list.length===0?<p className="ad-empty">{__('Компаний не найдено')}</p>:<div className="ad-table-wrap"><table className="ad-table"><thead><tr><th>{__('Компания')}</th><th>{__('Владелец')}</th><th>{__('Тариф')}</th><th>{__('Статус')}</th><th className="num">{__('Польз.')}</th><th className="num">{__('Грузовики')}</th><th>{__('Активность 30д')}</th><th>{__('Последний визит')}</th><th>{__('Создана')}</th></tr></thead><tbody>
    {list.map(c=><tr key={c.id} className="clickable" tabIndex={0} onClick={()=>onOpen(c.id)} onKeyDown={e=>{if(e.key==='Enter')onOpen(c.id)}}>
-    <td><strong>{c.name}{c.sandbox&&<span className="ad-badge sandbox">{__('Демо-доступ')}</span>}</strong><small>{c.slug}{c.internal&&' · '+__('внутренняя')}</small></td><td>{c.owner?<><span>{c.owner.name}</span><small>{c.owner.email}</small></>:'—'}</td>
+    <td><strong>{c.name}{c.sandbox&&<span className="ad-badge sandbox">{__('Демо-доступ')}</span>}{c.productRequests>0&&<span className="ad-badge request">{__('Заявка на продукт')}</span>}</strong><small>{c.slug}{c.internal&&' · '+__('внутренняя')}</small></td><td>{c.owner?<><span>{c.owner.name}</span><small>{c.owner.email}</small></>:'—'}</td>
     <td><span className={'ad-badge plan-'+c.plan}>{plans[c.plan]?.name||c.plan}</span>{c.trialEndsAt&&<small>{__('до {0}',[day(c.trialEndsAt)])}</small>}</td>
     <td><span className={'ad-status '+c.status}>{statusLabel(c.status)}</span></td><td className="num">{c.users}</td><td className="num">{c.trucks}</td>
     <td><span className="ad-meter" title={__('{0} из 30 дней',[c.activeDays30])}><i style={{width:`${c.activeDays30/30*100}%`}}/></span><small>{__('{0} дн.',[c.activeDays30])}</small></td><td className="muted">{day(c.lastActive)}</td><td className="muted">{day(c.createdAt)}</td></tr>)}

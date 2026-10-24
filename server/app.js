@@ -22,6 +22,7 @@ import {installTenancy,tenantizeTables,asCompany,listCompanies,tenantEnv,current
 import {installAuth} from './auth.js';
 import {installStaff,registerStaffRoutes} from './staff.js';
 import {registerAdmin} from './admin.js';
+import {installProducts,registerProductRoutes} from './products.js';
 import {installBranding,brandingReader,registerBrandingRoutes,registerLogoRoutes} from './branding.js';
 
 // One database, many companies: see tenancy.js. Startup (schema, migrations, seeds) runs as the primary company.
@@ -62,7 +63,7 @@ function buildApp(db,dbPath,{seedDemo=true,auth=true,baseDomain=process.env.LANI
   if(seedDemo){seedDemoData(db);seedRadars(db);seedBrokers(db);seedLanes(db);seedDocuments(db);seedAttachments(db);seedFinances(db);seedIntegrations(db,integrationVault);telegram.seed()}
  });
  for(const company of listCompanies(db))seedCompany(company);
- const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken,signup,oauthOptions,seedCompany,brandOf:brandingReader(db,readSettings)});app.use(access.resolveTenant);registerBrandingRoutes(app,db);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));registerAdmin(app,db);access.register(app);telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);registerStaffRoutes(app,db,staffVault,access);registerLogoRoutes(app,db);
+ const app=express();app.set('trust proxy','loopback');const access=installAuth(db,{enabled:auth,baseDomain,setupToken,signup,oauthOptions,seedCompany,brandOf:brandingReader(db,readSettings)});installProducts(db);app.use(access.resolveTenant);registerBrandingRoutes(app,db);app.use((req,res,next)=>req.path.endsWith('/attachments')?next():express.json({limit:'100kb'})(req,res,next));registerAdmin(app,db);access.register(app);registerProductRoutes(app,db,{baseDomain});telegram.register(app);registerIntegrationRoutes(app,db,integrationVault);registerFleetRoutes(app,db);registerRadarRoutes(app,db);registerFinanceRoutes(app,db);registerDocumentRoutes(app,db);registerAttachmentRoutes(app,db);registerBrokerRoutes(app,db,integrationVault);registerProviderRoutes(app,db,integrationVault);registerLaneRoutes(app,db);registerEldRoutes(app,db,integrationVault);registerStaffRoutes(app,db,staffVault,access);registerLogoRoutes(app,db);
  const enrichLoad=l=>({...l,originCoordinates:locations[l.origin]??null,destinationCoordinates:locations[l.destination]??null});
  const loadById=id=>{const r=db.prepare('SELECT data FROM loads WHERE id=?').get(id);return r?enrichLoad(JSON.parse(r.data)):null};
  const offerById=id=>db.prepare('SELECT * FROM offers WHERE id=?').get(id);

@@ -5,6 +5,7 @@ import {Shell,Field,post,SocialButtons} from './AuthShell.jsx';
 import Onboarding from './Onboarding.jsx';
 import {applyBrand} from './brand.js';
 import CompanyLanding from './CompanyLanding.jsx';
+import {ProductPicker,ComingSoon} from './Products.jsx';
 import './auth.css';
 
 const roleLabel=role=>({owner:__('Владелец'),dispatcher:__('Диспетчер'),viewer:__('Наблюдатель')})[role]||role;
@@ -50,15 +51,6 @@ function AcceptInvite({company:hostCompany,token}){
 }
 
 // After signing in on the app host: hand the session over to dash.<company> (waits while its HTTPS is being issued).
-function MovingToDash({company,onStay}){
- const [slow,setSlow]=useState(false),[failed,setFailed]=useState(false);
- useEffect(()=>{let alive=true;const t=setTimeout(()=>setSlow(true),6000);
-  (async()=>{for(let i=0;i<60&&alive;i++){try{const r=await post('/auth/handoff/create',{});if(r.url){window.location.replace(r.url);return}if(!r.pending){onStay();return}}catch{break}await new Promise(r=>setTimeout(r,3000))}if(alive)setFailed(true)})();
-  return()=>{alive=false;clearTimeout(t)}},[]);
- return <Shell company={company} icon={Clock} title={__('Открываем кабинет {0}',[company.name])} subtitle={failed?__('Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.'):slow?__('Готовим адрес {0} — это займёт до минуты.',[`dash.${company.slug}`]):__('Переходим на адрес вашей компании…')}>
-  {!failed&&<div className="auth-page-loading"><div className="auth-loading" aria-label={__('Загрузка')}/></div>}
-  <p className="auth-switch"><a href="/" onClick={e=>{e.preventDefault();onStay()}}>{__('Остаться на app.lanilot.com')}</a></p></Shell>;
-}
 
 // Decides what to show before the workspace: company check, sign-in, owner setup or an invitation.
 export default function AuthGate({render}){
@@ -86,13 +78,22 @@ export default function AuthGate({render}){
   if(me.status===401)return setView({kind:'login',company:signup?null:tenant.company,signup,providers:tenant.auth.providers,oauthStart:tenant.auth.oauthStart});
   if(['/login','/signup'].includes(path)||window.location.search.includes('oauth_error'))window.history.replaceState(null,'','/');
   const session=await me.json();
-  // Signed in on app.<domain>: the company's own dashboard is dash.<company>.<domain>.
-  const stay=(()=>{try{return sessionStorage.getItem('lanilot-stay-on-app')==='1'}catch{return false}})();
-  if(tenant.host?.kind==='app'&&session.company?.slug&&session.company.slug!=='app'&&!stay)return setView({kind:'moving',company:session.company,session});
+  // Every sign-in first picks a product. On its own address (<product>.<company>) the company needs access to it;
+  // app.<domain> forwards to the chosen product's address. Only the dispatch dashboard is built, others are "coming soon".
+  if(session.authEnabled){
+   const pr=await fetch('/api/products');const products=pr.ok?await pr.json():null;
+   if(products){
+    const here=products.products.find(p=>p.id===products.current);
+    if(here){if(!products.chosen||!here.access)return setView({kind:'picker',session,locked:here.access?null:here.id});if(here.id!=='dash')return setView({kind:'soon',session,product:here.id})}
+    else{const stay=(()=>{try{return sessionStorage.getItem('lanilot-stay-on-app')==='1'}catch{return false}})();
+     if(!products.chosen||!(products.chosen==='dash'&&stay))return setView({kind:'picker',session,autoEnter:products.chosen})}
+   }
+  }
   setView({kind:'ready',session});
  })().catch(()=>setView({kind:'error'}))},[]);
  if(view.kind==='ready')return render(view.session);
- if(view.kind==='moving')return <MovingToDash company={view.company} onStay={()=>{try{sessionStorage.setItem('lanilot-stay-on-app','1')}catch{}setView({kind:'ready',session:view.session})}}/>;
+ if(view.kind==='picker')return <ProductPicker session={view.session} locked={view.locked} autoEnter={view.autoEnter} onEnter={id=>setView(id==='dash'?{kind:'ready',session:view.session}:{kind:'soon',session:view.session,product:id})}/>;
+ if(view.kind==='soon')return <ComingSoon session={view.session} product={view.product}/>;
  if(view.kind==='expired'||view.kind==='demoInvalid')return <Shell company={null} icon={Clock} title={view.kind==='expired'?__('Демо-доступ закончился'):__('Ссылка демо-доступа недействительна')} subtitle={view.kind==='expired'?__('Зарегистрируйтесь, чтобы продолжить работу со своими данными.'):__('Ссылка одноразовая и действует 30 минут. Войдите или зарегистрируйтесь.')}>
   <div className="auth-choice"><a className="button primary full" href="/signup" onClick={async e=>{e.preventDefault();await fetch('/api/auth/logout',{method:'POST'});window.location.assign('/signup')}}>{__('Регистрация')}</a><a className="button secondary full" href="/login" onClick={async e=>{e.preventDefault();await fetch('/api/auth/logout',{method:'POST'});window.location.assign('/login')}}>{__('Войти')}</a></div></Shell>;
  if(view.kind==='login')return <Login company={view.company} signup={view.signup} providers={view.providers} oauthStart={view.oauthStart}/>;

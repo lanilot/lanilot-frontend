@@ -28,24 +28,25 @@ export function installOAuth(app,db,{enabled,env=process.env,fetch:fetchImpl=fet
  raw.exec(`CREATE TABLE IF NOT EXISTS user_identities(provider TEXT NOT NULL,subject TEXT NOT NULL,user_id TEXT NOT NULL REFERENCES users(id),email TEXT,created_at TEXT NOT NULL,PRIMARY KEY(provider,subject));
  CREATE TABLE IF NOT EXISTS oauth_states(id TEXT PRIMARY KEY,provider TEXT NOT NULL,nonce TEXT NOT NULL,created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS session_handoffs(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,company_id TEXT NOT NULL,created_at TEXT NOT NULL,expires_at TEXT NOT NULL,used_at TEXT);`);
+ if(!raw.prepare('PRAGMA table_info(session_handoffs)').all().some(c=>c.name==='product'))raw.exec('ALTER TABLE session_handoffs ADD COLUMN product TEXT');
  if(!raw.prepare('PRAGMA table_info(oauth_states)').all().some(c=>c.name==='return_slug'))raw.exec('ALTER TABLE oauth_states ADD COLUMN return_slug TEXT');
  // Providers know only app.<domain>; a company host signs in there and comes back with a one-time handoff token.
  const dashUrl=(req,slug)=>{const h=hostInfo(req.get('host'),baseDomain);return `${req.protocol}://dash.${slug}.${h.base??baseDomain}${h.port}`};
  const dashBack=(req,res,slug,code)=>res.redirect(303,`${dashUrl(req,slug)}/login?oauth_error=${code}`);
- const handoff=(req,res,user,company)=>{const t=randomBytes(24).toString('base64url'),now=Date.now();raw.prepare('INSERT INTO session_handoffs VALUES(?,?,?,?,?,NULL)').run(sha(t),user,company.id,new Date(now).toISOString(),new Date(now+120000).toISOString());res.redirect(303,`${dashUrl(req,company.slug)}/?handoff=${encodeURIComponent(t)}`)};
+ const handoff=(req,res,user,company)=>{const t=randomBytes(24).toString('base64url'),now=Date.now();raw.prepare('INSERT INTO session_handoffs(id,user_id,company_id,created_at,expires_at,used_at) VALUES(?,?,?,?,?,NULL)').run(sha(t),user,company.id,new Date(now).toISOString(),new Date(now+120000).toISOString());res.redirect(303,`${dashUrl(req,company.slug)}/?handoff=${encodeURIComponent(t)}`)};
  // Signed in on the app host: send the user to their company's own dashboard host (once its HTTPS is ready).
  app.post('/api/auth/handoff/create',(req,res)=>{
   if(!req.session||!onAppHost(req))return res.status(401).json({error:'Войдите в кабинет'});
   const company=req.company,h=hostInfo(req.get('host'),baseDomain);if(!company||company.slug==='app'||!h.base)return res.json({url:null});
   if(!dashReady(company.slug,env))return res.json({url:null,pending:true});
-  const t=randomBytes(24).toString('base64url'),now=Date.now();raw.prepare('INSERT INTO session_handoffs VALUES(?,?,?,?,?,NULL)').run(sha(t),req.session.user_id,company.id,new Date(now).toISOString(),new Date(now+120000).toISOString());
+  const t=randomBytes(24).toString('base64url'),now=Date.now();raw.prepare('INSERT INTO session_handoffs(id,user_id,company_id,created_at,expires_at,used_at) VALUES(?,?,?,?,?,NULL)').run(sha(t),req.session.user_id,company.id,new Date(now).toISOString(),new Date(now+120000).toISOString());
   res.json({url:`${dashUrl(req,company.slug)}/?handoff=${encodeURIComponent(t)}`});
  });
  app.post('/api/auth/handoff',(req,res)=>{
   const {token}=req.body??{},row=typeof token==='string'&&token.length<=100&&raw.prepare('SELECT * FROM session_handoffs WHERE id=?').get(sha(token));
   if(!row||row.used_at||row.expires_at<new Date().toISOString()||row.company_id!==req.company?.id)return res.status(404).json({error:'Ссылка входа недействительна. Войдите ещё раз.'});
   if(!Number(raw.prepare('UPDATE session_handoffs SET used_at=? WHERE id=? AND used_at IS NULL').run(new Date().toISOString(),row.id).changes))return res.status(404).json({error:'Ссылка входа недействительна. Войдите ещё раз.'});
-  startSession(res,req,row.user_id,row.company_id);res.json({ok:true});
+  startSession(res,req,row.user_id,row.company_id,row.product??null);res.json({ok:true});
  });
  const readCookie=req=>{const m=String(req.headers.cookie||'').match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`));return m?decodeURIComponent(m[1]):null};
  const back=(res,code)=>res.redirect(303,'/login?oauth_error='+code);

@@ -1,6 +1,7 @@
 // Users, sessions, invitations and roles. Accounts are global (one email, many companies);
 // access is a membership in a company with a role: owner > dispatcher > viewer.
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
+import {grantProduct} from './products.js';
 import {installOnboarding} from './onboarding.js';
 import {provisionHosts} from './provision.js';
 import {installDemoAccess} from './demo-access.js';
@@ -28,9 +29,11 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  const raw=db.raw;
  raw.exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE COLLATE NOCASE,name TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
- CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),created_at TEXT NOT NULL,expires_at TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),created_at TEXT NOT NULL,expires_at TEXT NOT NULL,product TEXT);
  CREATE TABLE IF NOT EXISTS activity(day TEXT NOT NULL,company_id TEXT NOT NULL,user_id TEXT NOT NULL,PRIMARY KEY(day,company_id,user_id));
  CREATE TABLE IF NOT EXISTS invites(id TEXT PRIMARY KEY,company_id TEXT NOT NULL REFERENCES companies(id),email TEXT NOT NULL COLLATE NOCASE,role TEXT NOT NULL,created_by TEXT,created_at TEXT NOT NULL,expires_at TEXT NOT NULL,accepted_at TEXT);`);
+ // The product picked after signing in (products.js); null until the user chooses one.
+ if(!raw.prepare('PRAGMA table_info(sessions)').all().some(c=>c.name==='product'))raw.exec('ALTER TABLE sessions ADD COLUMN product TEXT');
  // One-time owner setup for a company without members: token from LANILOT_SETUP_TOKEN or printed at start.
  const members=companyId=>raw.prepare('SELECT count(*) n FROM memberships WHERE company_id=?').get(companyId).n;
  let setup=setupToken||null;
@@ -39,8 +42,8 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
  const limited=(key,max=10,windowMs=15*60000)=>{const now=Date.now(),list=(attempts.get(key)||[]).filter(t=>now-t<windowMs);attempts.set(key,list);return list.length>=max};
  const fail=key=>attempts.set(key,[...(attempts.get(key)||[]),Date.now()]);
 
- const startSession=(res,req,userId,companyId)=>{
-  const value=token(),now=new Date();raw.prepare('INSERT INTO sessions VALUES(?,?,?,?,?)').run(sha(value),userId,companyId,now.toISOString(),new Date(now.getTime()+SESSION_DAYS*86400000).toISOString());
+ const startSession=(res,req,userId,companyId,product=null)=>{
+  const value=token(),now=new Date();raw.prepare('INSERT INTO sessions(id,user_id,company_id,created_at,expires_at,product) VALUES(?,?,?,?,?,?)').run(sha(value),userId,companyId,now.toISOString(),new Date(now.getTime()+SESSION_DAYS*86400000).toISOString(),product);
   res.cookie(COOKIE,value,{httpOnly:true,sameSite:'lax',secure:req.secure,path:'/',maxAge:SESSION_DAYS*86400000});
  };
  const readCookie=req=>{const m=String(req.headers.cookie||'').match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`));return m?decodeURIComponent(m[1]):null};
@@ -88,6 +91,8 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
    raw.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(userId,email.trim(),cleanName(name),hashPassword(password),now);
    raw.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(userId,companyId,'owner',now);raw.exec('COMMIT');
   }catch(e){raw.exec('ROLLBACK');throw e}
+  // Every new company starts with the dispatch dashboard; other products are bought separately.
+  grantProduct(db,companyId,'dash','trial');
   seedCompany({id:companyId,demo:demo?1:0});
   asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim(),...(phone?{phone}:{}),...(city?{city}:{}),...profile};if(operations)s.operations=operations;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
   provisionHosts();
