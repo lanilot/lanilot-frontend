@@ -26,32 +26,43 @@ function Top({company,user}){
 // Required after every sign-in: which Lanilot product to open. Products the company has not bought show plans to
 // the owner and "ask your administrator" to everyone else; the company's access is what all its members get.
 export function ProductPicker({session,locked,autoEnter,onEnter}){
- const [data,setData]=useState(null),[error,setError]=useState(''),[open,setOpen]=useState(locked||null),[going,setGoing]=useState(null),[sent,setSent]=useState(null),[busy,setBusy]=useState(false);
+ const [data,setData]=useState(null),[error,setError]=useState(''),[open,setOpen]=useState(null),[going,setGoing]=useState(null),[sent,setSent]=useState(null),[busy,setBusy]=useState(false);
  const load=()=>api('/products').then(setData).catch(e=>setError(e.message));
  useEffect(()=>{load()},[]);
+ // The list (/products) and each product's plans (/products/<id>) are browser history entries. A guard entry under the
+ // list keeps Back on the list instead of returning to the sign-in provider's pages.
+ useEffect(()=>{
+  const initial=locked||window.location.pathname.match(/^\/products\/([a-z]+)\/?$/)?.[1]||null;
+  window.history.replaceState({pp:'guard'},'','/products');window.history.pushState({pp:'list'},'','/products');
+  if(initial){window.history.pushState({pp:initial},'','/products/'+initial);setOpen(initial)}
+  const back=e=>{const s=e.state?.pp;if(s==='guard'){window.history.pushState({pp:'list'},'','/products');setOpen(null)}else if(s){setOpen(s==='list'?null:s);setSent(null)}};
+  window.addEventListener('popstate',back);return()=>window.removeEventListener('popstate',back);
+ },[]);
+ const show=id=>{window.history.pushState({pp:id},'','/products/'+id);setOpen(id)};
+ const leave=id=>{window.history.replaceState(null,'','/');onEnter(id)};
  // Opens a product the company has: on this host, or via a one-time handoff to <product>.<company>.<domain>
  // (its HTTPS address may still be getting ready right after the company is created).
  const enter=async id=>{setError('');setGoing(id);
-  for(let i=0;i<60;i++){try{const r=await api('/products/choose',{product:id});if(r.url)return window.location.replace(r.url);if(!r.pending){setGoing(null);return onEnter(id)}}catch(e){setGoing(null);if(e.data?.code==='no_access')return setOpen(id);return setError(e.message)}await new Promise(r=>setTimeout(r,3000))}
+  for(let i=0;i<60;i++){try{const r=await api('/products/choose',{product:id});if(r.url)return window.location.replace(r.url);if(!r.pending){setGoing(null);return leave(id)}}catch(e){setGoing(null);if(e.data?.code==='no_access')return show(id);return setError(e.message)}await new Promise(r=>setTimeout(r,3000))}
   setGoing(null);setError(__('Адрес продукта ещё готовится. Попробуйте через минуту.'))};
  useEffect(()=>{if(autoEnter&&data)enter(autoEnter)},[autoEnter,!!data]);
  const buy=async(product,plan)=>{setBusy(true);setError('');try{await api('/products/request',{product,plan});setSent({product,plan});await load()}catch(e){setError(e.message)}setBusy(false)};
  const company=session?.company,products=data?.products??[],selected=products.find(p=>p.id===open),meta=selected&&productMeta(selected.id);
  if(going)return <div className="pp-page"><Top company={company} user={session?.user}/><main className="pp-main pp-going"><div className="auth-loading" aria-label={__('Загрузка')}/><h1>{__('Открываем «{0}»',[productMeta(going).name])}</h1><p>{__('Переходим на адрес {0}…',[`${going}.${company?.slug}`])}</p>
-  {going==='dash'&&<button type="button" className="pp-link" onClick={()=>{try{sessionStorage.setItem('lanilot-stay-on-app','1')}catch{}setGoing(null);onEnter('dash')}}>{__('Остаться на app.lanilot.com')}</button>}</main></div>;
+  {going==='dash'&&<button type="button" className="pp-link" onClick={()=>{try{sessionStorage.setItem('lanilot-stay-on-app','1')}catch{}setGoing(null);leave('dash')}}>{__('Остаться на app.lanilot.com')}</button>}</main></div>;
  return <div className="pp-page"><Top company={company} user={session?.user}/>
   <main className="pp-main">
    {!selected?<>
     <h1>{__('Куда вы хотите войти?')}</h1><p className="pp-lead">{__('Выберите продукт Lanilot для компании {0}.',[company?.name??''])}</p>
     {error&&<p className="pp-error" role="alert">{error}</p>}
     {!data&&!error?<div className="pp-grid">{Array.from({length:6},(_,i)=><div key={i} className="pp-card pp-skeleton"/>)}</div>:
-    <div className="pp-grid">{products.map(p=>{const m=productMeta(p.id),Icon=m.icon;return <button type="button" key={p.id} className={'pp-card'+(p.access?'':' is-locked')} style={{'--tone':m.tone}} onClick={()=>p.access?enter(p.id):setOpen(p.id)} aria-label={m.name+' — '+(p.access?(p.live?__('Подключено'):__('Подключено · скоро')):__('Не подключено'))}>
+    <div className="pp-grid">{products.map(p=>{const m=productMeta(p.id),Icon=m.icon;return <button type="button" key={p.id} className={'pp-card'+(p.access?'':' is-locked')} style={{'--tone':m.tone}} onClick={()=>p.access?enter(p.id):show(p.id)} aria-label={m.name+' — '+(p.access?(p.live?__('Подключено'):__('Подключено · скоро')):__('Не подключено'))}>
      <span className="pp-icon"><Icon size={22}/></span><strong>{m.name}</strong><span className="pp-text">{m.text}</span>
      <span className={'pp-chip'+(p.access?' is-on':'')}>{p.access?<><Check size={12}/>{p.live?__('Подключено'):__('Подключено · скоро')}</>:p.requested?<><Clock size={12}/>{__('Заявка отправлена')}</>:<><Lock size={12}/>{__('Не подключено')}</>}</span>
      {p.access&&<ArrowRight className="pp-go" size={18}/>}
     </button>})}</div>}
    </>:<section className="pp-detail" style={{'--tone':meta.tone}}>
-    <button type="button" className="pp-link pp-back" onClick={()=>{setOpen(null);setSent(null)}}><ArrowLeft size={15}/>{__('Все продукты')}</button>
+    <button type="button" className="pp-link pp-back" onClick={()=>window.history.back()}><ArrowLeft size={15}/>{__('Все продукты')}</button>
     <span className="pp-icon big"><meta.icon size={26}/></span><h1>{meta.name}</h1><p className="pp-lead">{meta.text}</p>
     {error&&<p className="pp-error" role="alert">{error}</p>}
     {!data.canBuy?<div className="pp-locked"><Lock size={18}/><div><strong>{__('У вашей компании нет доступа к этому продукту')}</strong><p>{data.owner?__('Обратитесь к администратору компании: {0} ({1}).',[data.owner.name,data.owner.email]):__('Обратитесь к администратору компании.')}</p></div></div>:

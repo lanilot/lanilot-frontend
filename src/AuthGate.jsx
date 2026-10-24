@@ -89,6 +89,7 @@ export default function AuthGate({render}){
      if(!products.chosen||!(products.chosen==='dash'&&stay))return setView({kind:'picker',session,autoEnter:products.chosen})}
    }
   }
+  if(screenPath().startsWith('/products'))window.history.replaceState(null,'','/');
   setView({kind:'ready',session});
  })().catch(()=>setView({kind:'error'}))},[]);
  if(view.kind==='ready')return render(view.session);

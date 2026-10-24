@@ -36,7 +36,10 @@ export default function Onboarding({providers=[]}){
  const [oauth,setOauth]=useState(null),[token,setToken]=useState(null),[options,setOptions]=useState(null),[index,setIndex]=useState(0),[done,setDone]=useState(0),[form,setForm]=useState(empty);
  const [account,setAccount]=useState({password:'',demo:true}),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const start=async()=>{const d=await request('POST','',{source:source(),lang});storage.set(d.token);return d};
- const apply=(d,t)=>{setOauth(d.oauth||null);setToken(t);setOptions(d.options);setDone(d.step);setIndex(Math.min(d.step,steps.length-1));setForm(f=>Object.fromEntries(Object.entries(empty).map(([k,v])=>[k,{...v,...f[k],...d.data[k]}])))};
+ // Every step is its own browser history entry (/signup?step=company…), so Back and Forward move between steps.
+ const go=(i,push=true)=>{setError('');setIndex(i);const url='/signup?step='+steps[i].key;if(push)window.history.pushState({signupStep:i},'',url);else window.history.replaceState({signupStep:i},'',url)};
+ useEffect(()=>{const back=e=>{const i=e.state?.signupStep;if(Number.isInteger(i))setIndex(Math.min(i,steps.length-1))};window.addEventListener('popstate',back);return()=>window.removeEventListener('popstate',back)},[]);
+ const apply=(d,t)=>{setOauth(d.oauth||null);setToken(t);setOptions(d.options);setDone(d.step);go(Math.min(d.step,steps.length-1),false);setForm(f=>Object.fromEntries(Object.entries(empty).map(([k,v])=>[k,{...v,...f[k],...d.data[k]}])))};
  useEffect(()=>{(async()=>{
   // Google/Apple sign-in for a new person hands over a started sign-up.
   const handed=new URLSearchParams(window.location.search).get('onboarding');if(handed){storage.set(handed);window.history.replaceState(null,'','/signup')}
@@ -50,13 +53,13 @@ export default function Onboarding({providers=[]}){
   e.preventDefault();setBusy(true);setError('');
   try{
    if(step.key==='account'){await request('POST',`/${token}/complete`,oauth?{demo:account.demo}:account);storage.set(null);window.location.replace('/');return}
-   const d=await request('PUT',`/${token}/${step.key}`,form[step.key]);setDone(d.step);setIndex(index+1);
+   const d=await request('PUT',`/${token}/${step.key}`,form[step.key]);setDone(d.step);go(index+1);
   }catch(err){setError(err.message)}
   setBusy(false);
  };
  if(!options)return <Shell icon={Rocket} title={__('Регистрация компании')} subtitle={error||__('Готовим регистрацию…')} wide/>;
  return <Shell icon={Rocket} title={step.title()} subtitle={step.subtitle()} wide>
-  <ol className="ob-progress" aria-label={__('Шаг {0} из {1}',[index+1,steps.length])}>{steps.map((s,i)=><li key={s.key} className={i===index?'current':i<done?'done':''}><button type="button" disabled={i>done||busy} onClick={()=>{setError('');setIndex(i)}}><span>{i<done&&i!==index?<Check size={11}/>:i+1}</span>{s.label()}</button></li>)}</ol>
+  <ol className="ob-progress" aria-label={__('Шаг {0} из {1}',[index+1,steps.length])}>{steps.map((s,i)=><li key={s.key} className={i===index?'current':i<done?'done':''}><button type="button" disabled={i>done||busy} onClick={()=>go(i)}><span>{i<done&&i!==index?<Check size={11}/>:i+1}</span>{s.label()}</button></li>)}</ol>
   <form onSubmit={submit} noValidate={false}>
    {step.key==='contact'&&!oauth&&index===0&&<SocialButtons providers={providers}/>}
    {step.key==='contact'&&<>
