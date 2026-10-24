@@ -20,7 +20,7 @@ function Branding({draft,setBranding,brand,isOwner,workspace,onBrandChange,busy}
  const upload=async file=>{setError('');if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)||file.size>512*1024){setError(__('Логотип: PNG, JPEG или WebP до 512 КБ'));return}
   setUploading(true);try{const r=await fetch('/api/settings/logo',{method:'PUT',headers:{'Content-Type':file.type},body:file});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error?translateDeep(d.error):__('Ошибка сервера'));await onBrandChange()}catch(e){setError(e.message)}setUploading(false)};
  const remove=async()=>{setUploading(true);try{await fetch('/api/settings/logo',{method:'DELETE'});await onBrandChange()}finally{setUploading(false)}};
- const site=workspace.slug&&workspace.slug!=='app'?`https://${workspace.slug}.${baseDomain()}`:null;
+ const site=workspace.urls?.site??null;
  return <section className="panel settings-panel span-2"><div className="settings-heading"><Palette size={18}/><div><h2>{__("Брендинг")}</h2><p>{__("Логотип и цвет применяются к кабинету, экрану входа и странице компании.")}</p></div></div>
   <div className="brand-editor">
    <div className="brand-block"><span className="ob-group-title">{__("Логотип")}</span>
@@ -40,16 +40,16 @@ function Branding({draft,setBranding,brand,isOwner,workspace,onBrandChange,busy}
  </section>;
 }
 // The company's own address <slug>.<domain>; the previous one keeps redirecting.
-function SubdomainField({slug,onChanged}){
+function SubdomainField({slug,urls,onChanged}){
  const [value,setValue]=useState(slug),[error,setError]=useState(''),[busy,setBusy]=useState(false),[done,setDone]=useState('');
  useEffect(()=>{setValue(slug)},[slug]);
  const clean=value.trim().toLowerCase(),changed=clean!==slug;
  const save=async()=>{setBusy(true);setError('');setDone('');try{const r=await fetch('/api/settings/subdomain',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:clean})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error?translateDeep(d.error):__("Ошибка сервера"));
   // On the old subdomain itself, move to the new address (sign-in is per address).
-  if(window.location.hostname.startsWith(slug+'.')){window.location.assign(`${window.location.protocol}//${window.location.host.replace(slug+'.',d.slug+'.')}/login`);return}
+  const onOwn=new RegExp(`(^|\\.)${slug}\\.`);if(onOwn.test(window.location.hostname)){window.location.assign(`${window.location.protocol}//${window.location.host.replace(onOwn,`$1${d.slug}.`)}/login`);return}
   setDone(__("Адрес изменён. Старый адрес перенаправляет на новый."));await onChanged()}catch(e){setError(e.message)}setBusy(false)};
  return <div className="subdomain-field"><label className="form-label">{__("Адрес кабинета")}<span className="subdomain-input"><span>https://</span><input value={value} maxLength={32} disabled={busy} spellCheck={false} autoCapitalize="off" onChange={e=>{setValue(e.target.value.replace(/[^a-zA-Z0-9-]/g,''));setDone('');setError('')}}/><span>.{baseDomain()}</span></span></label>
-  <div className="subdomain-actions"><button type="button" className="button secondary" disabled={busy||!changed||clean.length<3} onClick={save}>{busy?__("Сохраняем…"):__("Сохранить адрес")}</button><a href={`https://${slug}.${baseDomain()}`} target="_blank" rel="noreferrer">{slug}.{baseDomain()}<ExternalLink size={11}/></a></div>
+  <div className="subdomain-actions"><button type="button" className="button secondary" disabled={busy||!changed||clean.length<3} onClick={save}>{busy?__("Сохраняем…"):__("Сохранить адрес")}</button>{urls?.site&&<a href={urls.site} target="_blank" rel="noreferrer">{__("Сайт")}: {urls.site.replace(/^https?:\/\//,'')}<ExternalLink size={11}/></a>}{urls?.dash&&<a href={urls.dash} target="_blank" rel="noreferrer">{__("Кабинет")}: {urls.dash.replace(/^https?:\/\//,'')}<ExternalLink size={11}/></a>}</div>
   {error&&<p className="chat-error" role="alert">{error}</p>}{done&&<p className="subdomain-done" role="status">{done}</p>}
   <small className="field-hint">{__("Латинские буквы, цифры и дефис. SSL-сертификат для нового адреса выпускается автоматически в течение 5 минут.")}</small></div>;
 }
@@ -73,7 +73,7 @@ export default function Settings({settings,timezones,companyOptions,workspace,is
  <Branding draft={draft} setBranding={setBranding} brand={brand} isOwner={isOwner} workspace={workspace} onBrandChange={onBrandChange} busy={busy}/>
  <section className="panel settings-panel"><div className="settings-heading"><Contact size={18}/><div><h2>{__("Контакты")}</h2><p>{__("Для брокеров и уведомлений.")}</p></div></div><div className="settings-fields">{contactFields.map(field)}</div></section>
  <section className="panel settings-panel"><div className="settings-heading"><LayoutGrid size={18}/><div><h2>{__("Кабинет компании")}</h2><p>{__("Адрес входа и тариф.")}</p></div></div>
-  {isOwner&&workspace.editableSlug&&<SubdomainField slug={workspace.slug} onChanged={onWorkspaceChange}/>}<dl className="settings-facts"><div><dt>{__("Вход")}</dt><dd>{window.location.host}</dd></div>{!(isOwner&&workspace.editableSlug)&&<div><dt>{__("Адрес кабинета")}</dt><dd>{workspace.slug?`${workspace.slug}.${baseDomain()}`:'—'}</dd></div>}<div><dt>{__("Тариф")}</dt><dd>{workspace.plan?planLabel(workspace.plan):'—'}</dd></div><div><dt>{__("Создан")}</dt><dd>{workspace.createdAt?fmtDate(workspace.createdAt,{day:'numeric',month:'short',year:'numeric'},'date'):'—'}</dd></div></dl>
+  {isOwner&&workspace.editableSlug&&<SubdomainField slug={workspace.slug} urls={workspace.urls} onChanged={onWorkspaceChange}/>}<dl className="settings-facts"><div><dt>{__("Вход")}</dt><dd>{window.location.host}</dd></div>{!(isOwner&&workspace.editableSlug)&&<div><dt>{__("Адрес кабинета")}</dt><dd>{workspace.slug?`${workspace.slug}.${baseDomain()}`:'—'}</dd></div>}<div><dt>{__("Тариф")}</dt><dd>{workspace.plan?planLabel(workspace.plan):'—'}</dd></div><div><dt>{__("Создан")}</dt><dd>{workspace.createdAt?fmtDate(workspace.createdAt,{day:'numeric',month:'short',year:'numeric'},'date'):'—'}</dd></div></dl>
   {isOwner&&<button type="button" className="button secondary" onClick={()=>onNavigate('users')}><UsersIcon size={14}/>{__("Пользователи и роли")}</button>}</section>
  <section className="panel settings-panel"><div className="settings-heading"><Truck size={18}/><div><h2>{__("Автопарк и работа")}</h2><p>{__("Помогает подбирать грузы и интеграции.")}</p></div></div>
   <div className="ob-group"><span className="ob-group-title">{__("Сколько у вас грузовиков?")}</span><Choice group="fleetSize" options={companyOptions.fleetSize} value={ops.fleetSize} onChange={updateOps('fleetSize')}/></div>

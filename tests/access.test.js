@@ -118,3 +118,20 @@ test('company subdomain: owner changes it, the old one redirects, taken and rese
   assert.equal((await call(p,'GET','/state',{cookie:o})).data.workspace.editableSlug,true);
  }finally{await s.close();s.db.close()}
 });
+
+test('company site and dashboard hosts: <slug> is the public site, dash.<slug> and app. the dashboard',async()=>{
+ const s=await start();
+ try{
+  const p=s.port,reg=await call(p,'POST','/auth/register',{body:{name:'Ola',company:'ABC LLC',email:'ola@abc.test',password:'olapassword1'}});
+  const site=(await call(p,'GET','/tenant',{host:'abc-llc.lanilot.com'})).data;assert.equal(site.host.kind,'site');assert.equal(site.host.dash,'http://dash.abc-llc.lanilot.com');assert.equal(site.host.site,'http://abc-llc.lanilot.com');
+  assert.ok(site.company.brand.landing);assert.equal(site.company.brand.landing.lanes.length,2);assert.equal(site.company.brand.landing.trucks,8);assert.ok(!JSON.stringify(site.company.brand.landing.lanes).includes('rate'));
+  const dash=(await call(p,'GET','/tenant',{host:'dash.abc-llc.lanilot.com'})).data;assert.equal(dash.host.kind,'dash');assert.equal(dash.company.slug,'abc-llc');
+  const login=await call(p,'POST','/auth/login',{host:'dash.abc-llc.lanilot.com',body:{email:'ola@abc.test',password:'olapassword1'}});assert.equal(login.status,200);
+  assert.equal((await call(p,'GET','/state',{host:'dash.abc-llc.lanilot.com',cookie:login.cookie})).status,200);
+  assert.equal((await call(p,'GET','/tenant',{cookie:reg.cookie})).data.host.kind,'app');
+  // A changed address moves the dashboard host too.
+  await call(p,'PUT','/settings/subdomain',{cookie:reg.cookie,body:{slug:'abc-kkc'}});
+  const moved=await call(p,'GET','/tenant',{host:'dash.abc-llc.lanilot.com'});assert.equal(moved.status,301);assert.equal(moved.location,'http://dash.abc-kkc.lanilot.com/api/tenant');
+  assert.equal((await call(p,'GET','/state',{cookie:reg.cookie})).data.workspace.urls.dash,'http://dash.abc-kkc.lanilot.com');
+ }finally{await s.close();s.db.close()}
+});

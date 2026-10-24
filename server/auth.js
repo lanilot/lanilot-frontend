@@ -4,7 +4,7 @@ import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 import {installOnboarding} from './onboarding.js';
 import {installDemoAccess} from './demo-access.js';
 import {installOAuth,configuredProviders} from './oauth.js';
-import {tenantContext,slugFromHost,companyBySlug,companyById,uniqueSlug,asCompany,movedCompany,DEFAULT_COMPANY} from './tenancy.js';
+import {tenantContext,slugFromHost,hostInfo,companyUrls,companyBySlug,companyById,uniqueSlug,asCompany,movedCompany,DEFAULT_COMPANY} from './tenancy.js';
 
 export const roles=['owner','dispatcher','viewer'];
 const SESSION_DAYS=30,INVITE_DAYS=7,COOKIE='lanilot_session';
@@ -97,7 +97,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   const seen=new Map(),touch=s=>{const day=new Date().toISOString().slice(0,10),key=s.user_id+'|'+s.company_id;if(seen.get(key)===day)return;seen.set(key,day);raw.prepare('INSERT OR IGNORE INTO activity VALUES(?,?,?)').run(day,s.company_id,s.user_id)};
   app.use((req,res,next)=>{req.session=enabled?sessionOf(req):null;if(req.session)touch(req.session);next()});
 
-  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),auth:{enabled,signup:enabled&&signup&&onAppHost(req),providers:enabled&&onAppHost(req)?configuredProviders(oauthOptions.env??process.env):[],setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
+  app.get('/api/tenant',(req,res)=>res.json({company:publicCompany(req.company),host:{kind:hostInfo(req.get('host'),baseDomain).kind,...companyUrls(req,req.company.slug,baseDomain)},auth:{enabled,signup:enabled&&signup&&onAppHost(req),providers:enabled&&onAppHost(req)?configuredProviders(oauthOptions.env??process.env):[],setupRequired:enabled&&req.company.id===DEFAULT_COMPANY&&!members(req.company.id)}}));
   app.get('/api/auth/me',(req,res)=>{
    if(!enabled)return res.json({user:null,role:'owner',company:publicCompany(req.company),authEnabled:false});
    if(!req.session)return res.status(401).json({error:'Войдите в кабинет',code:'unauthenticated'});

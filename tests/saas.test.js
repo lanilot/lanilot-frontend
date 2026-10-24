@@ -26,6 +26,9 @@ test('host names map to company slugs',()=>{
  assert.equal(slugFromHost('127.0.0.1:3001','lanilot.com'),'app');
  assert.equal(slugFromHost('acme.localhost:5180','lanilot.com'),'acme');
  assert.equal(slugFromHost('a.b.lanilot.com','lanilot.com'),null);
+ assert.equal(slugFromHost('dash.acme.lanilot.com','lanilot.com'),'acme');
+ assert.equal(slugFromHost('dash.acme.localhost:5180','lanilot.com'),'acme');
+ assert.equal(slugFromHost('x.acme.lanilot.com','lanilot.com'),null);
 });
 
 test('companies are isolated: data, identical demo IDs and writes never cross',async()=>{

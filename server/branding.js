@@ -28,7 +28,10 @@ export function brandingReader(db,readSettings){
   const s=readSettings(),b=s.branding,logo=db.prepare("SELECT updated_at FROM brand_assets WHERE id='logo'").get();
   const ops=s.operations,c=s.company;
   return {name:c.name,color:b.color,logo:logo?`/api/brand/logo?v=${encodeURIComponent(logo.updated_at)}`:null,
-   landing:b.landingEnabled?{headline:b.headline,description:b.description,phone:c.phone,email:c.email,website:c.website,city:c.city,mc:c.mc,dot:c.dot,equipment:ops.equipment,fleetSize:ops.fleetSize}:null};
+   landing:b.landingEnabled?{headline:b.headline,description:b.description,phone:c.phone,email:c.email,website:c.website,city:c.city,mc:c.mc,dot:c.dot,businessType:c.businessType,equipment:ops.equipment,fleetSize:ops.fleetSize,
+    // Public facts only: lane routes without brokers or rates, and the fleet size.
+    lanes:db.prepare('SELECT origin,destination,equipment,days FROM lanes WHERE active=1 ORDER BY created_at LIMIT 6').all().map(l=>({origin:l.origin,destination:l.destination,equipment:l.equipment,perWeek:String(l.days).split(',').filter(Boolean).length})),
+    trucks:db.prepare('SELECT count(*) n FROM trucks').get().n}:null};
  });
 }
 

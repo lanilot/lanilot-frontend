@@ -101,30 +101,6 @@
 .auth-brand-logo{height:36px;max-width:180px;object-fit:contain;border-radius:6px}
 .sidebar-brand-logo{display:block;height:30px;max-width:150px;object-fit:contain;object-position:left center}
 .app-sidebar.is-collapsed .sidebar-brand-logo{max-width:34px}
-/* Company public page (white-label landing) */
-.company-landing{min-height:100vh;background:radial-gradient(70% 50% at 80% 0%,var(--brand-soft),transparent 70%),#fff;color:#1f2f4d}
-.cl-top{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1120px;margin:0 auto;padding:22px 24px}
-.cl-brand{display:flex;align-items:center;gap:10px;font-size:16px}.cl-brand img{height:38px;max-width:160px;object-fit:contain}
-.cl-brand .sidebar-logo{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--brand);color:#fff}
-.cl-top-actions{display:flex;align-items:center;gap:10px}.cl-top-actions .button{height:36px}
-.cl-hero{max-width:1120px;margin:0 auto;padding:72px 24px 48px}
-.cl-eyebrow{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:12px;font-weight:600}
-.cl-hero h1{max-width:760px;margin:18px 0 14px;font-size:clamp(30px,5vw,52px);line-height:1.08;letter-spacing:-.03em}
-.cl-hero p{max-width:640px;margin:0;font-size:16px;line-height:1.65;color:#566580;white-space:pre-line}
-.cl-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}.cl-cta .button{height:44px;padding:0 18px;font-size:14px}
-.cl-facts{display:flex;flex-wrap:wrap;gap:12px;margin:36px 0 0;padding:0}
-.cl-facts div{min-width:130px;padding:14px 16px;border:1px solid #e6ebf4;border-radius:12px;background:#fff}
-.cl-facts dt{font-size:11px;color:#8b9ab0}.cl-facts dd{margin:5px 0 0;font-size:16px;font-weight:650}
-.cl-section{max-width:1120px;margin:0 auto;padding:28px 24px}
-.cl-section h2{margin:0 0 16px;font-size:20px;letter-spacing:-.01em}
-.cl-equipment{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
-.cl-equipment span{display:flex;align-items:center;gap:10px;padding:16px;border-radius:12px;background:#f6f8fd;font-weight:600;font-size:14px}.cl-equipment svg{color:var(--brand)}
-.cl-contacts>div{display:flex;flex-wrap:wrap;gap:12px}
-.cl-contacts a,.cl-contacts span{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border:1px solid #e6ebf4;border-radius:10px;color:#1f2f4d;text-decoration:none;font-size:14px}
-.cl-contacts a:hover{border-color:var(--brand);color:var(--brand)}.cl-contacts svg{color:var(--brand)}
-.cl-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:1120px;margin:40px auto 0;padding:24px;border-top:1px solid #edf1f7;font-size:12px;color:#8b9ab0}
-.cl-footer span{display:inline-flex;align-items:center;gap:6px}.cl-footer a{color:var(--brand);font-weight:600;text-decoration:none}
-@media(max-width:600px){.cl-top{padding:16px}.cl-hero{padding:40px 16px 28px}.cl-section{padding:20px 16px}.cl-top-actions .button span{display:none}}
 .auth-choice{display:grid;gap:10px;margin-top:20px}.auth-choice .button{height:40px;justify-content:center;text-decoration:none}
 /* Sign in with Google / Apple */
 .auth-social{display:grid;gap:10px;margin-top:20px}

@@ -130,10 +130,26 @@ export function tenantEnv(base){
  return new Proxy({},{get:(_,key)=>typeof key==='string'&&allowed(key)?base[key]:undefined,has:(_,key)=>allowed(key)&&key in base,ownKeys:()=>Reflect.ownKeys(base).filter(k=>typeof k==='string'&&allowed(k)),getOwnPropertyDescriptor:(_,key)=>allowed(key)&&key in base?{value:base[key],enumerable:true,configurable:true}:undefined});
 }
 
-// Company from the request host: <slug>.<baseDomain>; the app host, localhost and IPs use the primary company.
-export function slugFromHost(host,baseDomain){
- const name=String(host||'').toLowerCase().replace(/:\d+$/,'');
- if(!name||name==='localhost'||/^[\d.]+$/.test(name)||name.startsWith('['))return 'app';
- for(const base of [baseDomain,'localhost'].filter(Boolean)){if(name===base)return 'app';if(name.endsWith('.'+base)){const sub=name.slice(0,-base.length-1);return sub.includes('.')?null:sub}}
- return 'app';
+// Hosts: <slug>.<baseDomain> is the company's public site, dash.<slug>.<baseDomain> its dashboard;
+// the app host (app., the bare domain, localhost, IPs) serves the dashboard of any company (picked by session).
+export function hostInfo(host,baseDomain){
+ const raw=String(host||'').toLowerCase(),port=(raw.match(/:\d+$/)||[''])[0],name=raw.slice(0,raw.length-port.length);
+ if(!name||name==='localhost'||/^[\d.]+$/.test(name)||name.startsWith('['))return {slug:'app',kind:'app',base:null,port};
+ for(const base of [baseDomain,'localhost'].filter(Boolean)){
+  if(name===base)return {slug:'app',kind:'app',base,port};
+  if(name.endsWith('.'+base)){
+   const sub=name.slice(0,-base.length-1),dash=sub.match(/^dash\.([a-z0-9-]+)$/);
+   if(dash)return {slug:dash[1],kind:dash[1]==='app'?'app':'dash',base,port};
+   if(sub.includes('.'))return {slug:null,kind:null,base,port};
+   return {slug:sub,kind:sub==='app'?'app':sub==='admin'?'admin':'site',base,port};
+  }
+ }
+ return {slug:'app',kind:'app',base:null,port};
+}
+export const slugFromHost=(host,baseDomain)=>hostInfo(host,baseDomain).slug;
+// Public site and dashboard addresses of a company, on the same base domain and port as the request.
+export function companyUrls(req,slug,baseDomain){
+ const h=hostInfo(req.get('host'),baseDomain),base=h.base??baseDomain,proto=req.protocol;
+ if(!slug||slug==='app')return {site:null,dash:`${proto}://${req.get('host')}`};
+ return {site:`${proto}://${slug}.${base}${h.port}`,dash:`${proto}://dash.${slug}.${base}${h.port}`};
 }

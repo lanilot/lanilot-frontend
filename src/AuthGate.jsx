@@ -58,14 +58,17 @@ export default function AuthGate({render}){
   if(demoToken){window.history.replaceState(null,'',window.location.pathname);try{await post('/auth/demo-access',{token:demoToken})}catch{return setView({kind:'demoInvalid'})}}
   const t=await fetch('/api/tenant');if(t.status===404)return setView({kind:'missing'});const tenant=await t.json();applyBrand(tenant.company?.brand);
   if(tenant.company?.status==='suspended')return setView({kind:'suspended',company:tenant.company});
+  // <company>.<domain> is the public site; the dashboard lives on dash.<company>.<domain> (and app.<domain>).
+  if(tenant.host?.kind==='site'){
+   if(screenPath()===''&&tenant.company.brand?.landing&&tenant.company.status==='active')return setView({kind:'landing',company:tenant.company,urls:tenant.host});
+   return window.location.replace(tenant.host.dash+window.location.pathname+window.location.search);
+  }
   const token=inviteToken();if(token)return setView({kind:'invite',company:tenant.company,token});
   const signup=!!tenant.auth.signup,path=screenPath();
   if(path==='/signup'&&signup)return setView({kind:'register',providers:tenant.auth.providers});
   if(tenant.company?.status==='expired')return setView({kind:'expired',company:null,signup});
   if(tenant.auth.setupRequired&&path!=='/login')return setView({kind:'setup',company:tenant.company,signup});
   const me=await fetch('/api/auth/me');
-  // A company's own subdomain greets visitors with its public page; /login leads into the workspace.
-  if(me.status===401&&path===''&&tenant.company.slug!=='app'&&tenant.company.brand?.landing)return setView({kind:'landing',company:tenant.company});
   if(me.status===401)return setView({kind:'login',company:signup?null:tenant.company,signup,providers:tenant.auth.providers});
   if(['/login','/signup'].includes(path)||window.location.search.includes('oauth_error'))window.history.replaceState(null,'','/');
   setView({kind:'ready',session:await me.json()});
@@ -75,7 +78,7 @@ export default function AuthGate({render}){
   <div className="auth-choice"><a className="button primary full" href="/signup" onClick={async e=>{e.preventDefault();await fetch('/api/auth/logout',{method:'POST'});window.location.assign('/signup')}}>{__('Регистрация')}</a><a className="button secondary full" href="/login" onClick={async e=>{e.preventDefault();await fetch('/api/auth/logout',{method:'POST'});window.location.assign('/login')}}>{__('Войти')}</a></div></Shell>;
  if(view.kind==='login')return <Login company={view.company} signup={view.signup} providers={view.providers}/>;
  if(view.kind==='register')return <Onboarding providers={view.providers}/>;
- if(view.kind==='landing')return <CompanyLanding company={view.company}/>;
+ if(view.kind==='landing')return <CompanyLanding company={view.company} urls={view.urls}/>;
  if(view.kind==='setup')return <Setup company={view.company} signup={view.signup}/>;
  if(view.kind==='invite')return <AcceptInvite company={view.company} token={view.token}/>;
  if(view.kind==='loading')return <div className="auth-page auth-page-loading"><div className="auth-loading" aria-label={__('Загрузка')}/></div>;
