@@ -1618,5 +1618,13 @@
  "Скажите «Привет, Лани» или нажмите, чтобы начать": "“Hey Lani” deng yoki boshlash uchun bosing",
  "«Привет, Лани» включено — нажмите, чтобы выключить": "“Hey Lani” yoqilgan — oʻchirish uchun bosing",
  "Включить «Привет, Лани»": "“Hey Lani”ni yoqish",
- "Голосовая активация «Привет, Лани»": "“Hey Lani” ovozli faollashtirish"
+ "Голосовая активация «Привет, Лани»": "“Hey Lani” ovozli faollashtirish",
+ "Эта ссылка ведёт за пределы Lanilot": "Bu havola Lanilot’dan tashqariga olib chiqadi",
+ "Не нашёл на странице «{0}»": "Sahifada «{0}» topilmadi",
+ "Поле выбрано. Скажите «введи» и текст.": "Maydon tanlandi. “type” deb matnni ayting.",
+ "Нажимаю «{0}»": "«{0}» bosilmoqda",
+ "Сначала выберите поле: скажите «нажми» и его название.": "Avval maydonni tanlang: “click” deb uning nomini ayting.",
+ "Ввёл: {0}": "Kiritildi: {0}",
+ "Поле очищено": "Maydon tozalandi",
+ "Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп».": "Boʻlimni ayting (ingliz, ispan yoki rus tilida): “open trips”, “settings”. Yuk: “load 2046”. Qidiruv: “Reefer from Chicago to Dallas”. Sahifada: “click Save”, “click company name”, soʻng “type …”. Shuningdek “scroll down”, “go back” va “stop”."
 }

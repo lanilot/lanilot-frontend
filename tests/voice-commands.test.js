@@ -56,3 +56,25 @@ test('voice: wake phrase in English, Spanish and Russian',()=>{
  assert.equal(parseVoiceCommand(parseWake('Привет Лани открой рейсы').rest,[]).page,'trips');
  for(const t of ['открой рейсы','из-за лени ничего','hello world','plan a trip with lani'])assert.equal(parseWake(t),null,t);
 });
+
+test('voice: page actions — click, type, clear',()=>{
+ for(const [text,target] of [['Click company name','company name'],['click on the Save button','save button'],['press Save','save'],['нажми на Сохранить','сохранить'],['Кликни по названию компании','названию компании'],['выбери Reefer','reefer'],['haz clic en Guardar','guardar'],['pulsa el botón guardar','boton guardar']]){const c=parseVoiceCommand(text,[]);assert.equal(c.type,'click',text);assert.equal(c.target,target,text)}
+ assert.deepEqual(parseVoiceCommand('type Demo Haul LLC',[]),{type:'type',text:'Demo Haul LLC'});
+ assert.deepEqual(parseVoiceCommand('Введи «Демо Хол»',[]),{type:'type',text:'Демо Хол'});
+ assert.deepEqual(parseVoiceCommand('escribe Transportes Núñez.',[]),{type:'type',text:'Transportes Núñez'});
+ for(const t of ['clear the field','очисти поле','borra el campo'])assert.equal(parseVoiceCommand(t,[]).type,'clear',t);
+ assert.equal(parseVoiceCommand('открой рейсы',[]).page,'trips');
+});
+
+test('voice: control labels match spoken names',async()=>{
+ const {scoreLabel,splitTarget}=await import('../src/voice-page.js');
+ assert.deepEqual(splitTarget('company name field'),{text:'company name',kind:'field'});
+ assert.deepEqual(splitTarget('кнопку сохранить'),{text:'сохранить',kind:'button'});
+ assert.ok(scoreLabel('Company name','company name')===100);
+ assert.ok(scoreLabel('Название компании','названию компании')>=45);
+ assert.ok(scoreLabel('Save changes','save')>=45);
+ assert.ok(scoreLabel('Guardar cambios','guardar')>=45);
+ assert.equal(scoreLabel('Delete company','company name'),Math.round(70*1/2*Math.min(1,3/2)));
+ assert.ok(scoreLabel('Delete company','company name')<45);
+ assert.equal(scoreLabel('Fleet','company name'),0);
+});

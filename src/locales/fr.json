@@ -1618,5 +1618,13 @@
  "Скажите «Привет, Лани» или нажмите, чтобы начать": "Dites “Hey Lani” ou appuyez pour commencer",
  "«Привет, Лани» включено — нажмите, чтобы выключить": "“Hey Lani” activé — appuyez pour désactiver",
  "Включить «Привет, Лани»": "Activer “Hey Lani”",
- "Голосовая активация «Привет, Лани»": "Activation vocale “Hey Lani”"
+ "Голосовая активация «Привет, Лани»": "Activation vocale “Hey Lani”",
+ "Эта ссылка ведёт за пределы Lanilot": "Ce lien sort de Lanilot",
+ "Не нашёл на странице «{0}»": "« {0} » introuvable sur cette page",
+ "Поле выбрано. Скажите «введи» и текст.": "Champ sélectionné. Dites “type” et le texte.",
+ "Нажимаю «{0}»": "Clic sur « {0} »",
+ "Сначала выберите поле: скажите «нажми» и его название.": "Choisissez d’abord un champ : dites “click” et son nom.",
+ "Ввёл: {0}": "Saisi : {0}",
+ "Поле очищено": "Champ effacé",
+ "Скажите раздел: «открой рейсы», «настройки». Груз: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». На странице: «нажми Сохранить», «нажми название компании», затем «введи …». А также «вниз», «назад» и «стоп».": "Dites une section (en anglais, espagnol ou russe) : “open trips”, “settings”. Une charge : “load 2046”. Une recherche : “Reefer from Chicago to Dallas”. Sur la page : “click Save”, “click company name”, puis “type …”. Et aussi “scroll down”, “go back” et “stop”."
 }

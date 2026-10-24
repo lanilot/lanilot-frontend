@@ -34,9 +34,19 @@ const skills=['что ты умеешь','что умеешь','какие ко�
 const scroll={top:['наверх','в начало','в самый верх','to the top','scroll to top','top','al principio','arriba del todo','al inicio de la pagina'],up:['вверх','выше','up','higher','arriba','sube'],down:['вниз','ниже','листай','прокрути','down','scroll','lower','abajo','baja','desplaza']};
 const newChat=['новый чат','новый запрос','начни заново','очисти чат','new chat','new conversation','start over','clear chat','nuevo chat','nueva conversacion','empezar de nuevo','borrar chat'];
 // Returns {type:'stop'|'back'|'skills'|'newChat'|'unknown'} | {type:'scroll',dir:'top'|'up'|'down'} | {type:'openLoad',id,load} | {type:'navigate',page} | {type:'search',text,criteria}.
+// Page actions: "click company name", "нажми на Сохранить", "haz clic en Guardar" → {type:'click',target};
+// "type Demo Haul", "введи Demo Haul", "escribe Demo Haul" → {type:'type',text} (the original wording is kept);
+// "clear the field", "очисти поле", "borra el campo" → {type:'clear'}.
+const clickVerbs=/^(?:please\s+)?(?:click(?:\s+on)?|press|tap(?:\s+on)?|select|choose|check|uncheck|toggle|нажми(?:те)?(?:\s+на)?|кликни(?:те)?(?:\s+на|\s+по)?|клик(?:\s+на|\s+по)?|жми(?:\s+на)?|ткни(?:\s+на|\s+в)?|выбери(?:те)?|отметь|haz\s+(?:clic|click)\s+en|(?:clic|click)\s+en|pulsa(?:\s+en)?|presiona|toca|selecciona|elige|marca)\s+(?:the\s+|on\s+the\s+|el\s+|la\s+|los\s+|las\s+)?(.+)$/iu;
+const typeVerbs=/^(?:please\s+)?(?:type|write|enter|input|введи(?:те)?|напиши(?:те)?|впиши(?:те)?|набери(?:те)?|вбей|escribe|introduce|teclea|ingresa)\s+(.+)$/iu;
+const clearWords=['clear','clear field','clear the field','erase','очисти','очисти поле','сотри','удали текст','borra','borra el campo','limpia','limpia el campo'];
 export function parseVoiceCommand(text,loads=[]){
  const q=normalize(text);if(!q)return {type:'empty'};
  if(exact(q,stop))return {type:'stop'};
+ const raw=String(text).trim().replace(/[.!?¡¿]+$/u,'').replace(/^[¡¿]/u,'');
+ if(exact(q,clearWords))return {type:'clear'};
+ const typed=raw.match(typeVerbs);if(typed)return {type:'type',text:typed[1].replace(/^["«“']|["»”']$/gu,'').trim()};
+ const click=raw.match(clickVerbs);if(click){const target=normalize(click[1]);if(target)return {type:'click',target}}
  if(exact(q,skills)||has(q,skills.filter(s=>s.includes(' ')).map(normalize)))return {type:'skills'};
  if(has(q,newChat.map(normalize)))return {type:'newChat'};
  if(exact(q,back))return {type:'back'};
