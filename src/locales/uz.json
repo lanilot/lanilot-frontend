@@ -1611,5 +1611,12 @@
  "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп».": "Boʻlimni ayting (ingliz, ispan yoki rus tilida): “open trips”, “fleet map”, “settings”. Raqam boʻyicha yuk: “load 2046”. Qidiruv: “Reefer from Chicago to Dallas”. Shuningdek “scroll down”, “to the top”, “go back” va “stop”.",
  "Выключить голосовое управление": "Ovozli boshqaruvni oʻchirish",
  "Включить голосовое управление": "Ovozli boshqaruvni yoqish",
- "перетащите, чтобы переместить": "koʻchirish uchun torting"
+ "перетащите, чтобы переместить": "koʻchirish uchun torting",
+ "Скажите «Привет, Лани», чтобы продолжить": "Davom etish uchun “Hey Lani” deng",
+ "Скажите «Привет, Лани», чтобы начать": "Boshlash uchun “Hey Lani” deng",
+ "«Привет, Лани» выключено": "“Hey Lani” oʻchirildi",
+ "Скажите «Привет, Лани» или нажмите, чтобы начать": "“Hey Lani” deng yoki boshlash uchun bosing",
+ "«Привет, Лани» включено — нажмите, чтобы выключить": "“Hey Lani” yoqilgan — oʻchirish uchun bosing",
+ "Включить «Привет, Лани»": "“Hey Lani”ni yoqish",
+ "Голосовая активация «Привет, Лани»": "“Hey Lani” ovozli faollashtirish"
 }

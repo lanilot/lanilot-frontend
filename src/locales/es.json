@@ -1611,5 +1611,12 @@
  "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп».": "Di una sección: «abre los viajes», «mapa de la flota», «configuración». Una carga por número: «carga 2046». Una búsqueda: «Reefer desde Chicago a Dallas». También «abajo», «al principio», «volver» y «basta».",
  "Выключить голосовое управление": "Desactivar el control por voz",
  "Включить голосовое управление": "Activar el control por voz",
- "перетащите, чтобы переместить": "arrastra para mover"
+ "перетащите, чтобы переместить": "arrastra para mover",
+ "Скажите «Привет, Лани», чтобы продолжить": "Di «Hola Lani» para continuar",
+ "Скажите «Привет, Лани», чтобы начать": "Di «Hola Lani» para empezar",
+ "«Привет, Лани» выключено": "«Hola Lani» desactivado",
+ "Скажите «Привет, Лани» или нажмите, чтобы начать": "Di «Hola Lani» o pulsa para empezar",
+ "«Привет, Лани» включено — нажмите, чтобы выключить": "«Hola Lani» activado: pulsa para desactivar",
+ "Включить «Привет, Лани»": "Activar «Hola Lani»",
+ "Голосовая активация «Привет, Лани»": "Activación por voz «Hola Lani»"
 }

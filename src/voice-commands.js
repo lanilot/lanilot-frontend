@@ -57,3 +57,8 @@ export function isEcho(heard,reply){const h=normalize(heard).split(' ').filter(w
 // Text for speech synthesis: quotes, slashes, brackets, arrows and other symbols are dropped (some voices read them aloud
 // as "backslash" or "quote"); dashes and dots inside words become spaces, sentence punctuation stays for natural pauses.
 export function speechText(text){return String(text).normalize('NFC').replace(/(\p{L}|\p{N})[-–—_/.·](?=\p{L}|\p{N})/gu,'$1 ').replace(/[^\p{L}\p{N}\s.,!?;:]/gu,' ').replace(/\s+([.,!?;:])/g,'$1').replace(/([.,!?;:])\1+/g,'$1').replace(/\s+/g,' ').trim()}
+// Wake phrase: "Lani", "Hey/Hello/Hi Lani", "Hola Lani", "Привет, Лани", "Эй, Лени"… The name must open the phrase
+// (optionally after a greeting) so the word inside a sentence does not wake the orb. Returns {rest} (words after it) or null.
+const wakeNames=new Set(['lani','lanie','lanni','lannie','lany','laney','lainey','lanny','leni','lenny','lonnie','lonny','лани','лэни','лени','ланни','лане','лонни'].map(normalize));
+const greetings=new Set(['hey','hi','hello','ok','okay','hola','oye','ola','привет','приветик','эй','хей','хэй','алло','ну','слушай','окей'].map(normalize));
+export function parseWake(text){const words=normalize(text).split(' ').filter(Boolean);let i=0;while(i<words.length&&i<2&&greetings.has(words[i]))i++;if(i<words.length&&wakeNames.has(words[i]))return {rest:words.slice(i+1).join(' ')};return null}

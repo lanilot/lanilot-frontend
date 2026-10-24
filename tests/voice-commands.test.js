@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseVoiceCommand,normalize,spokenLang,isEcho,speechText} from '../src/voice-commands.js';
+import {parseVoiceCommand,normalize,spokenLang,isEcho,speechText,parseWake} from '../src/voice-commands.js';
 const loads=[{id:'LD-2046',origin:'Chicago, IL',destination:'Dallas, TX',equipment:'Reefer'},{id:'LD-3110',origin:'Dallas, TX',destination:'Phoenix, AZ',equipment:'Dry Van'}];
 const page=t=>{const c=parseVoiceCommand(t,loads);return c.type==='navigate'?c.page:c.type};
 
@@ -48,4 +48,11 @@ test('voice: symbols are never spoken',()=>{
  assert.equal(speechText('Открываю груз LD-2046'),'Открываю груз LD 2046');
  assert.equal(speechText('Path \\ a/b → c * "x" (y) [z] {w} #1 @ $ % ^ & | ~ `'),'Path a b c x y z w 1');
  assert.equal(speechText('¿Qué puedes hacer?'),'Qué puedes hacer?');
+});
+
+test('voice: wake phrase in English, Spanish and Russian',()=>{
+ for(const t of ['Lani','Hey Lani','hello lani','Hi, Lani!','Hola Lani','Привет, Лани','привет лани','Эй, Лени','Лени','hey lonnie','ok lani'])assert.deepEqual(parseWake(t),{rest:''},t);
+ assert.deepEqual(parseWake('Hey Lani open trips'),{rest:'open trips'});
+ assert.equal(parseVoiceCommand(parseWake('Привет Лани открой рейсы').rest,[]).page,'trips');
+ for(const t of ['открой рейсы','из-за лени ничего','hello world','plan a trip with lani'])assert.equal(parseWake(t),null,t);
 });

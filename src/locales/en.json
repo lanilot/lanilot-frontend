@@ -1611,5 +1611,12 @@
  "Скажите раздел: «открой рейсы», «карта автопарка», «настройки». Груз по номеру: «груз 2046». Поиск: «Reefer из Чикаго в Даллас». А также «вниз», «наверх», «назад» и «стоп».": "Say a section: “open trips”, “fleet map”, “settings”. A load by number: “load 2046”. A search: “Reefer from Chicago to Dallas”. Also “scroll down”, “to the top”, “go back” and “stop”.",
  "Выключить голосовое управление": "Turn off voice control",
  "Включить голосовое управление": "Turn on voice control",
- "перетащите, чтобы переместить": "drag to move"
+ "перетащите, чтобы переместить": "drag to move",
+ "Скажите «Привет, Лани», чтобы продолжить": "Say “Hey Lani” to continue",
+ "Скажите «Привет, Лани», чтобы начать": "Say “Hey Lani” to start",
+ "«Привет, Лани» выключено": "“Hey Lani” is off",
+ "Скажите «Привет, Лани» или нажмите, чтобы начать": "Say “Hey Lani” or tap to start",
+ "«Привет, Лани» включено — нажмите, чтобы выключить": "“Hey Lani” is on — tap to turn off",
+ "Включить «Привет, Лани»": "Turn on “Hey Lani”",
+ "Голосовая активация «Привет, Лани»": "Voice activation “Hey Lani”"
 }
