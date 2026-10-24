@@ -145,17 +145,16 @@
 @keyframes voice-orb-breathe{50%{transform:scale(1.08);box-shadow:0 0 0 6px #7aa2ff33,0 12px 34px #3d7bff66}}
 @media(prefers-reduced-motion:reduce){.voice-float-anchor.is-searching .voice-orb::after,.voice-float-anchor.is-searching .voice-orb-button{animation:none}}
 
-/* Voice pill (seventech.uz style): orb + status + pause + close, translucent with a glow from the orb side */
-.voice-float-anchor{position:fixed;z-index:2147483000;display:flex;align-items:center;gap:6px;padding:4px;border-radius:999px;background:radial-gradient(120% 160% at var(--glow-x,100%) 50%,#3d7bff59 0%,#7c3aed26 35%,#0b102400 70%),#0b1024c7;backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);box-shadow:0 14px 36px #0b102440;color:#fff;max-width:calc(100vw - 24px);box-sizing:border-box}
-.voice-float-anchor.is-right{flex-direction:row-reverse;--glow-x:100%}.voice-float-anchor.is-left{--glow-x:0%}
-.voice-float-anchor.is-error{background:radial-gradient(120% 160% at var(--glow-x,100%) 50%,#e5484d4d 0%,#0b102400 70%),#2a0f19d9}
+/* Orb with a small light bubble beside it for messages */
+.voice-float-anchor{position:fixed;z-index:2147483000;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 24px)}
+.voice-float-anchor.is-right{flex-direction:row-reverse}
 .voice-orb-wrap{position:relative;flex-shrink:0;width:60px;height:60px}
-.voice-float-panel{min-width:0;padding:0 6px;cursor:default}.voice-float-anchor:not(.is-listening):not(.is-waiting) .voice-float-panel{cursor:pointer}
-.voice-float-panel p{margin:0;max-width:min(320px,calc(100vw - 190px));font:500 13.5px/1.35 inherit;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.voice-float-panel p.is-live{color:#dbe5ff}
-.voice-float-anchor:not(.is-listening):not(.is-waiting) .voice-float-panel p{font-size:12.5px;white-space:nowrap}
-.voice-float-icon{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer}.voice-float-icon:hover{background:#ffffff1f}
-.voice-float-actions{display:flex;gap:8px;margin-top:6px}.voice-float-actions button{height:28px;padding:0 13px;border:0;border-radius:14px;background:#ffffff1f;color:#fff;font:600 12.5px/1 inherit;cursor:pointer}.voice-float-actions button.is-primary{background:#3d7bff}.voice-float-actions button:hover{background:#ffffff33}.voice-float-actions button.is-primary:hover{background:#2f6bff}
+.voice-float-panel{position:relative;min-width:0;padding:9px 30px 9px 12px;border:1px solid #dfe6f2;border-radius:12px;background:#fff;color:#1b2840;box-shadow:0 8px 24px #1b28401f}
+.voice-float-anchor.is-error .voice-float-panel{border-color:#f5d0d0;background:#fff8f8}
+.voice-float-panel p{margin:0;max-width:min(300px,calc(100vw - 130px));font:500 13px/1.4 inherit;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.voice-float-panel p.is-live{color:#4a5872;font-style:italic}.voice-float-panel p.is-live{padding-right:0}
+.voice-float-hide{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:50%;background:transparent;color:#8a96ad;cursor:pointer}.voice-float-hide:hover{background:#0000000d}
+.voice-float-actions{display:flex;gap:6px;margin-top:8px}.voice-float-actions button{height:28px;padding:0 12px;border:1px solid #dfe6f2;border-radius:8px;background:#fff;color:#1b2840;font:600 12.5px/1 inherit;cursor:pointer}.voice-float-actions button.is-primary{background:var(--brand,#2563eb);border-color:transparent;color:#fff}.voice-float-actions button:hover{filter:brightness(.97)}
 /* Progress ring around the orb while it looks for something */
 .voice-orb-ring{position:absolute;inset:-4px;width:68px;height:68px;pointer-events:none;opacity:0;transition:opacity .2s}.voice-orb-ring circle{fill:none;stroke:#ffffffd9;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:60 201}
 .voice-float-anchor.is-searching .voice-orb-ring{opacity:1;animation:voice-orb-sweep 1s linear infinite}

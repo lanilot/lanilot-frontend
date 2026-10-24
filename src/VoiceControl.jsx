@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {Mic,MicOff,X,Ear,AudioLines} from 'lucide-react';
+import {X,Ear,AudioLines} from 'lucide-react';
 import {__,lang,appLocale} from './i18n.js';
 import {voiceLangs,parseVoiceCommand,spokenLang,isEcho,speechText,parseWake,normalize,parseYesNo} from './voice-commands.js';
 import {demoMatches} from './assistant-demo.js';
@@ -141,11 +141,9 @@ export function FloatingVoice({state,page,isOwner,labels,assistantOpen,assistant
   if(on){if(voice.mode==='off')voice.start(code,'wake');setNote({text:__("Скажите «Привет, Лани», чтобы начать"),heard:'',tone:'ok',id:Math.random()})}else{if(voice.mode==='wake')voice.stop();setNote({text:__("«Привет, Лани» выключено"),heard:'',tone:'ok',id:Math.random()})}};
  const nextLang=()=>{const i=voiceLangs.findIndex(v=>v[0]===code),n=voiceLangs[(i+1)%voiceLangs.length][0];setCode(n);saveVoiceLang(n);if(voice.mode!=='off')voice.start(n,voice.mode)};
  if(!voice.supported)return null;
- // A pill beside the orb (as on seventech.uz): status line, then pause/resume and switch-off. It opens toward the middle of
- // the screen; replies and the "search everywhere?" question appear in it instead of a separate bubble.
- const onLeft=window.innerWidth-pos.right-size/2<window.innerWidth/2,on=voice.mode!=='off',live=voice.listening&&voice.interim;
- const status=live?voice.interim:note?note.text:voice.listening?__("Слушаю…"):voice.mode==='wake'?__("Скажите «Привет, Лани»"):__("Управлять голосом");
- const closeAll=()=>{searchRun.current++;setSearching(false);pending.current=null;setNote(null);voice.stop()};
+ // Just the orb; a small light bubble beside it appears only while there is something to show (what was heard, a reply,
+ // the "search everywhere?" question). It opens toward the middle of the screen.
+ const onLeft=window.innerWidth-pos.right-size/2<window.innerWidth/2,live=voice.listening&&voice.interim,status=live?voice.interim:note?.text;
  const label=voiceLangs.find(v=>v[0]===code)?.[2];
  return <div className="voice-float"><div className={'voice-float-anchor'+(onLeft?' is-left':' is-right')+(voice.listening?' is-listening':voice.mode==='wake'?' is-waiting':'')+(searching||busy?' is-searching':'')+(note?.tone==='error'&&!live?' is-error':'')} style={onLeft?{left:window.innerWidth-pos.right-size,bottom:pos.bottom}:{right:pos.right,bottom:pos.bottom}}>
   <span className="voice-orb-wrap">
@@ -156,11 +154,10 @@ export function FloatingVoice({state,page,isOwner,labels,assistantOpen,assistant
    <button type="button" className="voice-float-lang" onClick={nextLang} title={__("Язык голосовых команд")} aria-label={__("Язык голосовых команд: {0}",[label])}>{label}</button>
    <button type="button" className={'voice-float-wake'+(wake?' is-on':'')} aria-pressed={wake} onClick={toggleWake} title={wake?__("«Привет, Лани» включено — нажмите, чтобы выключить"):__("Включить «Привет, Лани»")} aria-label={__("Голосовая активация «Привет, Лани»")}><Ear size={12}/></button>
   </span>
-  <div className="voice-float-panel" role="status" aria-live="polite" title={note?.heard?`«${note.heard}» — ${status}`:status} onClick={()=>{if(!on)toggle()}}>
+  {status&&<div className="voice-float-panel" role="status" aria-live="polite">
    <p className={live?'is-live':''}>{status}</p>
    {note?.confirm&&<span className="voice-float-actions"><button type="button" className="is-primary" onClick={()=>answer(true)}>{__("Искать")}</button><button type="button" onClick={()=>answer(false)}>{__("Нет")}</button></span>}
-  </div>
-  {on&&<button type="button" className="voice-float-icon" aria-label={voice.listening?__("Пауза"):__("Слушать")} title={voice.listening?__("Пауза"):__("Слушать")} onClick={toggle}>{voice.listening?<Mic size={20}/>:<MicOff size={20}/>}</button>}
-  {(on||note)&&<button type="button" className="voice-float-icon" aria-label={__("Выключить голосовое управление")} title={__("Выключить голосовое управление")} onClick={closeAll}><X size={20}/></button>}
+   {!live&&<button type="button" className="voice-float-hide" aria-label={__("Скрыть ответ")} onClick={()=>{if(note?.confirm)pending.current=null;setNote(null)}}><X size={14}/></button>}
+  </div>}
  </div></div>;
 }
