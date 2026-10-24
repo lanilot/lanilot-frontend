@@ -1582,5 +1582,10 @@
  "Кабинет": "Dashboard",
  "Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.": "This account isn't a member of this company. Ask the owner to send you an invitation.",
  "Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.": "No account found for this email. Ask the company owner to send you an invitation.",
- "Ссылка входа недействительна. Войдите ещё раз.": "This sign-in link is no longer valid. Please sign in again."
+ "Ссылка входа недействительна. Войдите ещё раз.": "This sign-in link is no longer valid. Please sign in again.",
+ "Открываем кабинет {0}": "Opening {0}",
+ "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "Your workspace address is still being set up. You can continue here and come back later.",
+ "Готовим адрес {0} — это займёт до минуты.": "Setting up {0} — this takes up to a minute.",
+ "Переходим на адрес вашей компании…": "Taking you to your company's address…",
+ "Остаться на app.lanilot.com": "Stay on app.lanilot.com"
 }

@@ -2,6 +2,7 @@
 // access is a membership in a company with a role: owner > dispatcher > viewer.
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 import {installOnboarding} from './onboarding.js';
+import {provisionHosts} from './provision.js';
 import {installDemoAccess} from './demo-access.js';
 import {installOAuth,configuredProviders} from './oauth.js';
 import {tenantContext,slugFromHost,hostInfo,companyUrls,companyBySlug,companyById,uniqueSlug,asCompany,movedCompany,DEFAULT_COMPANY} from './tenancy.js';
@@ -89,6 +90,7 @@ export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken
   }catch(e){raw.exec('ROLLBACK');throw e}
   seedCompany({id:companyId,demo:demo?1:0});
   asCompany(companyId,()=>{const s=JSON.parse(db.prepare("SELECT data FROM settings WHERE id='workspace'").get().data);s.company={...s.company,name:cleanName(company),contactName:cleanName(name),email:email.trim(),...(phone?{phone}:{}),...(city?{city}:{}),...profile};if(operations)s.operations=operations;db.prepare("UPDATE settings SET data=? WHERE id='workspace'").run(JSON.stringify(s))});
+  provisionHosts();
   return {userId,companyId};
  };
  const register=app=>{

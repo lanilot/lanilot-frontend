@@ -1582,5 +1582,10 @@
  "Кабинет": "Area riservata",
  "Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.": "Questo account non fa parte di questa azienda. Chiedi al proprietario di inviarti un invito.",
  "Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.": "Nessun account trovato con questa email. Chiedi un invito al proprietario dell’azienda.",
- "Ссылка входа недействительна. Войдите ещё раз.": "Questo link di accesso non è più valido. Accedi di nuovo."
+ "Ссылка входа недействительна. Войдите ещё раз.": "Questo link di accesso non è più valido. Accedi di nuovo.",
+ "Открываем кабинет {0}": "Apertura di {0}",
+ "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "L’indirizzo del tuo spazio è ancora in preparazione. Puoi continuare qui e tornare più tardi.",
+ "Готовим адрес {0} — это займёт до минуты.": "Preparazione di {0}: ci vorrà fino a un minuto.",
+ "Переходим на адрес вашей компании…": "Ti portiamo all’indirizzo della tua azienda…",
+ "Остаться на app.lanilot.com": "Resta su app.lanilot.com"
 }

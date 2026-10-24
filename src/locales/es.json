@@ -1582,5 +1582,10 @@
  "Кабинет": "Panel",
  "Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.": "Esta cuenta no pertenece a esta empresa. Pida al propietario que le envíe una invitación.",
  "Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.": "No se encontró ninguna cuenta con este email. Pida al propietario de la empresa una invitación.",
- "Ссылка входа недействительна. Войдите ещё раз.": "Este enlace de acceso ya no es válido. Inicie sesión de nuevo."
+ "Ссылка входа недействительна. Войдите ещё раз.": "Este enlace de acceso ya no es válido. Inicie sesión de nuevo.",
+ "Открываем кабинет {0}": "Abriendo {0}",
+ "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "La dirección de su espacio aún se está preparando. Puede continuar aquí y volver más tarde.",
+ "Готовим адрес {0} — это займёт до минуты.": "Preparando {0}: tardará hasta un minuto.",
+ "Переходим на адрес вашей компании…": "Le llevamos a la dirección de su empresa…",
+ "Остаться на app.lanilot.com": "Quedarse en app.lanilot.com"
 }

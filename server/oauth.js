@@ -7,6 +7,7 @@
 import {randomBytes,createHash,createPublicKey,createPrivateKey,verify,sign} from 'node:crypto';
 import express from 'express';
 import {companyBySlug,hostInfo} from './tenancy.js';
+import {dashReady} from './provision.js';
 
 const COOKIE='lanilot_oauth',STATE_MINUTES=10;
 const sha=v=>createHash('sha256').update(v).digest('hex');
@@ -32,6 +33,14 @@ export function installOAuth(app,db,{enabled,env=process.env,fetch:fetchImpl=fet
  const dashUrl=(req,slug)=>{const h=hostInfo(req.get('host'),baseDomain);return `${req.protocol}://dash.${slug}.${h.base??baseDomain}${h.port}`};
  const dashBack=(req,res,slug,code)=>res.redirect(303,`${dashUrl(req,slug)}/login?oauth_error=${code}`);
  const handoff=(req,res,user,company)=>{const t=randomBytes(24).toString('base64url'),now=Date.now();raw.prepare('INSERT INTO session_handoffs VALUES(?,?,?,?,?,NULL)').run(sha(t),user,company.id,new Date(now).toISOString(),new Date(now+120000).toISOString());res.redirect(303,`${dashUrl(req,company.slug)}/?handoff=${encodeURIComponent(t)}`)};
+ // Signed in on the app host: send the user to their company's own dashboard host (once its HTTPS is ready).
+ app.post('/api/auth/handoff/create',(req,res)=>{
+  if(!req.session||!onAppHost(req))return res.status(401).json({error:'Войдите в кабинет'});
+  const company=req.company,h=hostInfo(req.get('host'),baseDomain);if(!company||company.slug==='app'||!h.base)return res.json({url:null});
+  if(!dashReady(company.slug,env))return res.json({url:null,pending:true});
+  const t=randomBytes(24).toString('base64url'),now=Date.now();raw.prepare('INSERT INTO session_handoffs VALUES(?,?,?,?,?,NULL)').run(sha(t),req.session.user_id,company.id,new Date(now).toISOString(),new Date(now+120000).toISOString());
+  res.json({url:`${dashUrl(req,company.slug)}/?handoff=${encodeURIComponent(t)}`});
+ });
  app.post('/api/auth/handoff',(req,res)=>{
   const {token}=req.body??{},row=typeof token==='string'&&token.length<=100&&raw.prepare('SELECT * FROM session_handoffs WHERE id=?').get(sha(token));
   if(!row||row.used_at||row.expires_at<new Date().toISOString()||row.company_id!==req.company?.id)return res.status(404).json({error:'Ссылка входа недействительна. Войдите ещё раз.'});

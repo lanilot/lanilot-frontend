@@ -4,6 +4,7 @@
 // INSTEAD OF triggers stamp company_id on writes, so existing queries stay unchanged and a request without a
 // company sees no rows and cannot write (fail closed).
 import {AsyncLocalStorage} from 'node:async_hooks';
+import {provisionHosts} from './provision.js';
 
 export const tenantContext=new AsyncLocalStorage();
 export const currentTenant=()=>tenantContext.getStore()??null;
@@ -111,6 +112,7 @@ export function changeSlug(db,companyId,slug){
   raw.prepare('DELETE FROM company_slug_history WHERE slug=? AND company_id=?').run(slug,companyId);
   raw.prepare('UPDATE companies SET slug=? WHERE id=?').run(slug,companyId);raw.exec('COMMIT');
  }catch(e){raw.exec('ROLLBACK');throw e}
+ provisionHosts();
 }
 export const movedCompany=(db,slug)=>{const id=formerOwner(db,slug);return id?companyById(db,id):null};
 // Free subdomain from a company name: "Acme Trucking LLC" → acme-trucking-llc, acme-trucking-llc-2, …
@@ -134,7 +136,9 @@ export function tenantEnv(base){
 // the app host (app., the bare domain, localhost, IPs) serves the dashboard of any company (picked by session).
 export function hostInfo(host,baseDomain){
  const raw=String(host||'').toLowerCase(),port=(raw.match(/:\d+$/)||[''])[0],name=raw.slice(0,raw.length-port.length);
- if(!name||name==='localhost'||/^[\d.]+$/.test(name)||name.startsWith('['))return {slug:'app',kind:'app',base:null,port};
+ if(name==='localhost')return {slug:'app',kind:'app',base:'localhost',port};
+ // IP addresses have no subdomains: base stays null.
+ if(!name||/^[\d.]+$/.test(name)||name.startsWith('['))return {slug:'app',kind:'app',base:null,port};
  for(const base of [baseDomain,'localhost'].filter(Boolean)){
   if(name===base)return {slug:'app',kind:'app',base,port};
   if(name.endsWith('.'+base)){

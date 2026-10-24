@@ -166,3 +166,17 @@ test('Google sign-in from a company dashboard host comes back with a one-time ha
   const st=await call(p,'GET','/auth/oauth/google/start?to=nobody');assert.equal(st.status,302);
  }finally{await s.close();s.db.close()}
 });
+
+test('signed in on the app host, the user is handed over to dash.<company>',async()=>{
+ const s=await start();
+ try{
+  const p=s.port,reg=await call(p,'POST','/auth/register',{body:{name:'Ola',company:'ABC LLC',email:'ola@abc.test',password:'olapassword1'}});
+  assert.equal((await call(p,'POST','/auth/handoff/create',{body:{}})).status,401);
+  const r=await call(p,'POST','/auth/handoff/create',{cookie:reg.cookie,body:{}});assert.match(r.data.url,/^http:\/\/dash\.abc-llc\.lanilot\.com\/\?handoff=/);
+  const token=decodeURIComponent(r.data.url.split('handoff=')[1]),signed=await call(p,'POST','/auth/handoff',{host:'dash.abc-llc.lanilot.com',body:{token}});
+  assert.equal((await call(p,'GET','/auth/me',{host:'dash.abc-llc.lanilot.com',cookie:signed.cookie})).data.company.slug,'abc-llc');
+  // Locally the app host is localhost, so the dashboard is dash.<company>.localhost; an IP has nowhere to go.
+  assert.match((await call(p,'POST','/auth/handoff/create',{host:'localhost:5180',cookie:reg.cookie,body:{}})).data.url,/^http:\/\/dash\.abc-llc\.localhost:5180\/\?handoff=/);
+  assert.equal((await call(p,'POST','/auth/handoff/create',{host:'127.0.0.1:3001',cookie:reg.cookie,body:{}})).data.url,null);
+ }finally{await s.close();s.db.close()}
+});

@@ -1582,5 +1582,10 @@
  "Кабинет": "Kabinet",
  "Этот аккаунт не состоит в этой компании. Попросите владельца прислать приглашение.": "Bu akkaunt ushbu kompaniyada emas. Egasidan taklif yuborishini soʻrang.",
  "Аккаунт с этим email не найден. Попросите владельца компании прислать приглашение.": "Bu email bilan akkaunt topilmadi. Kompaniya egasidan taklif yuborishini soʻrang.",
- "Ссылка входа недействительна. Войдите ещё раз.": "Kirish havolasi yaroqsiz. Qaytadan kiring."
+ "Ссылка входа недействительна. Войдите ещё раз.": "Kirish havolasi yaroqsiz. Qaytadan kiring.",
+ "Открываем кабинет {0}": "{0} kabineti ochilmoqda",
+ "Адрес кабинета ещё готовится. Можно продолжить здесь и вернуться позже.": "Kabinet manzili hali tayyorlanmoqda. Shu yerda davom etib, keyinroq qaytishingiz mumkin.",
+ "Готовим адрес {0} — это займёт до минуты.": "{0} manzili tayyorlanmoqda — bir daqiqagacha vaqt oladi.",
+ "Переходим на адрес вашей компании…": "Kompaniyangiz manziliga oʻtilmoqda…",
+ "Остаться на app.lanilot.com": "app.lanilot.com da qolish"
 }
