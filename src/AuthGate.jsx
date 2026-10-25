@@ -8,7 +8,7 @@ import CompanyLanding from './CompanyLanding.jsx';
 import {ProductPicker,ComingSoon} from './Products.jsx';
 import './auth.css';
 
-const roleLabel=role=>({owner:__('Владелец'),dispatcher:__('Диспетчер'),viewer:__('Наблюдатель')})[role]||role;
+const roleLabel=role=>({owner:__('Владелец'),dispatcher:__('Диспетчер'),updater:__('Апдейтер'),viewer:__('Наблюдатель')})[role]||role;
 const screenPath=()=>window.location.pathname.replace(/\/+$/,'');
 const inviteToken=()=>window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]{20,})\/?$/)?.[1]??null;
 

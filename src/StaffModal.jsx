@@ -51,7 +51,7 @@ export default function StaffModal({id,email='',member=false,onClose,onDone}){
    </div></fieldset>
    <fieldset><legend>{__('Работа и доступ')}</legend><div className="staff-grid">
     {field('position',__('Должность'),{maxLength:80,placeholder:__('Диспетчер')})}{field('hireDate',__('Дата приёма'),{type:'date'})}
-    {!editing&&!member&&<label className="form-label"><span>{__('Роль в Lanilot')}<b aria-hidden="true"> *</b></span><SearchSelect aria-label={__('Роль в Lanilot')} disabled={busy} value={role} onChange={e=>setRole(e.target.value)}>{['dispatcher','viewer','owner'].map(r=><option key={r} value={r}>{roleLabel(r)}</option>)}</SearchSelect></label>}
+    {!editing&&!member&&<label className="form-label"><span>{__('Роль в Lanilot')}<b aria-hidden="true"> *</b></span><SearchSelect aria-label={__('Роль в Lanilot')} disabled={busy} value={role} onChange={e=>setRole(e.target.value)}>{['dispatcher','updater','viewer','owner'].map(r=><option key={r} value={r}>{roleLabel(r)}</option>)}</SearchSelect></label>}
    </div></fieldset>
    <fieldset><legend>{__('Экстренный контакт')}</legend><div className="staff-grid">{field('emergencyName',__('Имя и родство'),{maxLength:100})}{field('emergencyPhone',__('Телефон'),{type:'tel',maxLength:40})}</div>
     <label className="form-label">{__('Примечание')}<textarea value={form.notes} maxLength={1000} disabled={busy} onChange={set('notes')}/></label></fieldset>

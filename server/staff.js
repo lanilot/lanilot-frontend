@@ -4,7 +4,7 @@ import {randomBytes,createCipheriv,createDecipheriv} from 'node:crypto';
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {currentTenant} from './tenancy.js';
 
-export const staffOptions={gender:['male','female'],documentType:['passport','id_card','foreign_passport','residence_permit','green_card'],role:['owner','dispatcher','viewer']};
+export const staffOptions={gender:['male','female'],documentType:['passport','id_card','foreign_passport','residence_permit','green_card'],role:['owner','dispatcher','updater','viewer']};
 const textFields={middleName:60,birthPlace:120,documentIssuer:160,taxId:20,phone:40,address:200,position:80,emergencyName:100,emergencyPhone:40,notes:1000};
 const dateFields=['birthDate','documentIssued','documentExpires','hireDate'];
 const validDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;

@@ -55,13 +55,17 @@ export function parseIdentifiers(query,record){
  return {mc:mc||(!dot&&bare)||fromRecord(record?.mc),dot:dot||fromRecord(record?.dot),name:record?.name||(!mc&&!dot&&!bare?q:'')};
 }
 
+// Telematics and fuel-card feeds: a provider-approved read-only HTTPS endpoint and a Bearer token, both from server env.
+const feedProviders={telematics:{omnitracs:'Omnitracs',verizon:'Verizon Connect',trimble:'Trimble'},fuel:{wex:'WEX',octane:'Octane',comdata:'Comdata',efs:'EFS'}};
+const feedVars=id=>[`LANILOT_${id.toUpperCase()}_URL`,`LANILOT_${id.toUpperCase()}_TOKEN`];
 // Provider list for the Integrations page: configured flag, env var names (never values), last check.
 export function listProviders(db,context){
  const active=activeFactoring(context);
  return [
   ...Object.entries(eldProviders).map(([id,p])=>({id:'eld-'+id,group:'eld',name:p.name,docs:p.docs,vars:p.vars,configured:p.configured(context),...readStatus(db,'eld-'+id)})),
   {id:'fmcsa',group:'fmcsa',name:'FMCSA QCMobile',docs:'https://mobile.fmcsa.dot.gov/QCDevsite/docs/qcApi',vars:['LANILOT_FMCSA_WEBKEY'],configured:!!env(context,'LANILOT_FMCSA_WEBKEY'),...readStatus(db,'fmcsa')},
-  ...Object.entries(factoringPresets).map(([id,p])=>({id:'factoring-'+id,group:'factoring',name:p.name,docs:p.docs,vars:['LANILOT_FACTORING_PROVIDER',...factoringVars(id)],configured:!!env(context,prefix(id)+'URL'),active:active===id,partner:true,...readStatus(db,'factoring-'+id)}))
+  ...Object.entries(factoringPresets).map(([id,p])=>({id:'factoring-'+id,group:'factoring',name:p.name,docs:p.docs,vars:['LANILOT_FACTORING_PROVIDER',...factoringVars(id)],configured:!!env(context,prefix(id)+'URL'),active:active===id,partner:true,...readStatus(db,'factoring-'+id)})),
+  ...Object.entries(feedProviders).flatMap(([group,list])=>Object.entries(list).map(([id,name])=>({id:group+'-'+id,group,name,vars:feedVars(id),configured:!!env(context,feedVars(id)[0]),...readStatus(db,group+'-'+id)})))
  ];
 }
 export function registerProviderRoutes(app,db,context){
@@ -75,6 +79,7 @@ export function registerProviderRoutes(app,db,context){
   try{
    if(item.group==='eld')await eldProviders[id.slice(4)].probe(context);
    else if(item.group==='fmcsa')await safeJson(context,`${FMCSA}/carriers/docket-number/1515?webKey=${encodeURIComponent(env(context,'LANILOT_FMCSA_WEBKEY'))}`);
+   else if(item.group==='telematics'||item.group==='fuel'){const [url,token]=item.vars.map(v=>env(context,v));await safeJson(context,url,{headers:token?{Authorization:'Bearer '+token}:{}})}
    else{const fid=id.slice(10),mc=env(context,prefix(fid)+'TEST_MC');if(!mc)throw new ProviderError('Задайте MC брокера для тестового запроса в переменной LANILOT_FACTORING_<ID>_TEST_MC');await checkFactoring(context,fid,{mc,dot:'',name:''})}
    status={status:'connected',result:'API ответил успешно',checkedAt:new Date().toISOString()};
   }catch(e){status={status:'error',result:errorText(e),checkedAt:new Date().toISOString()}}

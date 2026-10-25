@@ -21,7 +21,7 @@ const day=v=>v?fmtDate(new Date(v.length===10?v+'T12:00:00':v),{day:'numeric',mo
 const baseDomain=()=>window.location.hostname.replace(/^admin\./,'');
 const companyUrl=slug=>`${window.location.protocol}//${slug==='app'?'app':slug}.${baseDomain()}${window.location.port?':'+window.location.port:''}`;
 const statusLabel=s=>({active:__('Активна'),suspended:__('Приостановлена')})[s]||s;
-const roleName=r=>({owner:__('Владелец'),dispatcher:__('Диспетчер'),viewer:__('Наблюдатель')})[r]||r;
+const roleName=r=>({owner:__('Владелец'),dispatcher:__('Диспетчер'),updater:__('Апдейтер'),viewer:__('Наблюдатель')})[r]||r;
 const stepName=s=>({contact:__('Контакты'),company:__('Компания'),fleet:__('Автопарк'),work:__('Работа'),account:__('Аккаунт создан')})[s]||s;
 const requestStatus=s=>({new:__('Новая'),contacted:__('Связались'),scheduled:__('Демо назначено'),won:__('Клиент'),lost:__('Отказ')})[s]||s;
 const requestTone={new:'info',contacted:'warn',scheduled:'warn',won:'active',lost:'muted'};

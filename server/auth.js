@@ -8,7 +8,7 @@ import {installDemoAccess} from './demo-access.js';
 import {installOAuth,configuredProviders} from './oauth.js';
 import {tenantContext,slugFromHost,hostInfo,companyUrls,companyBySlug,companyById,uniqueSlug,asCompany,movedCompany,DEFAULT_COMPANY} from './tenancy.js';
 
-export const roles=['owner','dispatcher','viewer'];
+export const roles=['owner','dispatcher','updater','viewer'];
 const SESSION_DAYS=30,INVITE_DAYS=7,COOKIE='lanilot_session';
 const sha=v=>createHash('sha256').update(v).digest('hex');
 const token=()=>randomBytes(32).toString('base64url');
@@ -28,10 +28,17 @@ const ownerOnly=(method,path)=>method!=='GET'&&/^\/api\/(settings|integrations|p
 export function installAuth(db,{enabled=true,baseDomain='lanilot.com',setupToken=process.env.LANILOT_SETUP_TOKEN,signup=process.env.LANILOT_SIGNUP!=='off',seedCompany=()=>{},brandOf=()=>null,oauthOptions={}}={}){
  const raw=db.raw;
  raw.exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE COLLATE NOCASE,name TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL);
- CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
+ CREATE TABLE IF NOT EXISTS memberships(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','updater','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
  CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),created_at TEXT NOT NULL,expires_at TEXT NOT NULL,product TEXT);
  CREATE TABLE IF NOT EXISTS activity(day TEXT NOT NULL,company_id TEXT NOT NULL,user_id TEXT NOT NULL,PRIMARY KEY(day,company_id,user_id));
  CREATE TABLE IF NOT EXISTS invites(id TEXT PRIMARY KEY,company_id TEXT NOT NULL REFERENCES companies(id),email TEXT NOT NULL COLLATE NOCASE,role TEXT NOT NULL,created_by TEXT,created_at TEXT NOT NULL,expires_at TEXT NOT NULL,accepted_at TEXT);`);
+ // The updater role (follow-ups with brokers after pickup) arrived later: widen the role CHECK of older databases.
+ if(!raw.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='memberships'").get().sql.includes("'updater'")){
+  raw.exec('PRAGMA foreign_keys=OFF');raw.exec('BEGIN IMMEDIATE');
+  try{raw.exec(`CREATE TABLE memberships_new(user_id TEXT NOT NULL REFERENCES users(id),company_id TEXT NOT NULL REFERENCES companies(id),role TEXT NOT NULL CHECK(role IN ('owner','dispatcher','updater','viewer')),created_at TEXT NOT NULL,PRIMARY KEY(user_id,company_id));
+   INSERT INTO memberships_new SELECT user_id,company_id,role,created_at FROM memberships;DROP TABLE memberships;ALTER TABLE memberships_new RENAME TO memberships;`);raw.exec('COMMIT')}
+  catch(e){raw.exec('ROLLBACK');throw e}finally{raw.exec('PRAGMA foreign_keys=ON')}
+ }
  // The product picked after signing in (products.js); null until the user chooses one.
  if(!raw.prepare('PRAGMA table_info(sessions)').all().some(c=>c.name==='product'))raw.exec('ALTER TABLE sessions ADD COLUMN product TEXT');
  // One-time owner setup for a company without members: token from LANILOT_SETUP_TOKEN or printed at start.

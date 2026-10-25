@@ -66,7 +66,7 @@ export function useVoice(onResult,wakeRef){
  const orb=el=>{if(el)orbs.current.add(el)};
  return {supported:!!Recognition,mode,listening:mode==='active',interim,start,stop,activate,toWake,orb,say,touch:()=>{if(modeRef.current==='active')bump()}};
 }
-export const voicePageLabels={overview:"Обзор",loads:"Грузы",trips:"Рейсы",offers:"Предложения",chat:"Переписка",radar:'Load Radar',lanes:"Выделенные линии",brokers:"Проверка брокеров",fleet:"Автопарк",eld:"Карта автопарка",finances:"Финансы",telegram:'Telegram',integrations:"Интеграции",settings:"Настройки",users:"Пользователи",help:"Помощь"};
+export const voicePageLabels={overview:"Обзор",loads:"Грузы",trips:"Рейсы",offers:"Предложения",chat:"Переписка",radar:'Load Radar',lanes:"Выделенные линии",brokers:"Проверка брокеров",fleet:"Автопарк",eld:"Карта автопарка",finances:"Финансы",fuel:"Топливо",safety:"Безопасность",updates:"Обновления брокерам",mail:"Защита почты",telegram:'Telegram',integrations:"Интеграции",settings:"Настройки",users:"Пользователи",help:"Помощь"};
 const wakeKey='lanilot-voice-wake',posKey='lanilot-voice-position-v2',size=60,gap=12;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 // Default is 30px from the bottom-right corner. Position is kept as the distance from the right and bottom edges and is always clamped to the viewport.
