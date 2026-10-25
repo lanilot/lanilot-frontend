@@ -1835,5 +1835,7 @@
  "Выберите тип обновления": "Elija el tipo",
  "Текст обновления: от 5 до 2000 символов": "Texto: de 5 a 2000 caracteres",
  "Выберите хотя бы один канал": "Elija al menos un canal",
- "Письмо не найдено": "Correo no encontrado"
+ "Письмо не найдено": "Correo no encontrado",
+ "В очереди": "En cola",
+ "Ошибка": "Error"
 }

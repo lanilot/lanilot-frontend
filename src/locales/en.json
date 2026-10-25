@@ -1835,5 +1835,7 @@
  "Выберите тип обновления": "Choose the update type",
  "Текст обновления: от 5 до 2000 символов": "Update text: 5 to 2000 characters",
  "Выберите хотя бы один канал": "Choose at least one channel",
- "Письмо не найдено": "Email not found"
+ "Письмо не найдено": "Email not found",
+ "В очереди": "Queued",
+ "Ошибка": "Error"
 }

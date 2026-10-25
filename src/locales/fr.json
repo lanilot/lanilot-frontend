@@ -1835,5 +1835,7 @@
  "Выберите тип обновления": "Choisissez le type",
  "Текст обновления: от 5 до 2000 символов": "Texte : 5 à 2000 caractères",
  "Выберите хотя бы один канал": "Choisissez au moins un canal",
- "Письмо не найдено": "E-mail introuvable"
+ "Письмо не найдено": "E-mail introuvable",
+ "В очереди": "En attente",
+ "Ошибка": "Erreur"
 }

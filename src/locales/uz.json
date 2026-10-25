@@ -1835,5 +1835,7 @@
  "Выберите тип обновления": "Yangilanish turini tanlang",
  "Текст обновления: от 5 до 2000 символов": "Matn: 5 dan 2000 belgigacha",
  "Выберите хотя бы один канал": "Kamida bitta kanal tanlang",
- "Письмо не найдено": "Xat topilmadi"
+ "Письмо не найдено": "Xat topilmadi",
+ "В очереди": "Navbatda",
+ "Ошибка": "Xato"
 }

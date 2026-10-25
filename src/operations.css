@@ -46,6 +46,7 @@
 .ops-history li{border:1px solid #edf0f5;border-radius:8px;padding:10px 12px}
 .ops-history p{margin:6px 0;font-size:11px;color:#3d4d66;line-height:1.5}.ops-history small{font-size:9px;color:#9aa8bc}
 .ops-history .ops-chip{cursor:default;padding:3px 8px;font-size:9px}
+.ops-deliveries{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.ops-delivery{font-size:9px;padding:3px 7px;border-radius:5px;background:#f2f4f8;color:#8795ab}.ops-delivery.sent{background:#edf9f3;color:#2f8a63}.ops-delivery.failed{background:#fdeeec;color:#c23a2a}.ops-delivery.queued{background:#fff6e8;color:#a26d12}
 .ops-banner{display:flex;align-items:center;gap:10px}
 .ops-mail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .ops-mail-load{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:10px 12px;border-radius:8px;background:#f6f8fc;font-size:11px;color:#56708f}

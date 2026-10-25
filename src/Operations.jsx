@@ -69,6 +69,8 @@ const template=(kind,t)=>{const l=t.load,ref=`${l.id} ${l.origin} → ${l.destin
  loaded:`${ref}: loaded. ETA ${date(t.delivery)}.`,
  delivered:`${ref}: delivered. POD will follow shortly.`,
  other:`${ref}: `}[kind]};
+// Delivery of each channel by the background worker; 'demo' means the channel has no connection yet.
+const deliveryLabels={queued:__('В очереди'),sent:__('Отправлено'),demo:__('Демо'),failed:__('Ошибка')};
 const DUE_HOURS=4;
 export function BrokerUpdatesPage({state,onAction}){
  const trips=state.trips.filter(t=>['planned','in_transit','delivered'].includes(t.status)),updates=state.brokerUpdates;
@@ -88,7 +90,7 @@ export function BrokerUpdatesPage({state,onAction}){
     {error&&<p className="chat-error" role="alert">{error}</p>}{sent&&<p className="fleet-success">{__('Записано в историю рейса (демо: внешняя отправка не подключена)')}</p>}
     <div className="ops-actions"><span className="ops-note">{__('Демо: email, Teams и Telegram пока не подключены')}</span><button className="button primary" disabled={busy||!channels.length||body.trim().length<5} onClick={async()=>{setBusy(true);setError('');const r=await onAction('/updates','POST',{tripId:selected.id,kind,body,channels});setBusy(false);if(r.ok)setSent(true);else setError(r.error)}}><Send size={14}/>{__('Отправить брокеру')}</button></div>
     <h3 className="ops-subhead">{__('История обновлений')}</h3>
-    <ul className="ops-history">{updates.filter(u=>u.trip_id===selected.id).map(u=><li key={u.id}><span className="ops-chip active">{kindLabels[u.kind]}</span><p>{u.body}</p><small>{fmtDate(u.created_at,undefined,'datetime')} · {u.channels.map(c=>channelLabels[c]).join(', ')}{u.author?' · '+u.author:''}</small></li>)}{!updates.some(u=>u.trip_id===selected.id)&&<li className="ops-note">{__('Обновлений ещё не было')}</li>}</ul>
+    <ul className="ops-history">{updates.filter(u=>u.trip_id===selected.id).map(u=><li key={u.id}><span className="ops-chip active">{kindLabels[u.kind]}</span><p>{u.body}</p><small>{fmtDate(u.created_at,undefined,'datetime')}{u.deliveries?.length?'':' · '+u.channels.map(c=>channelLabels[c]).join(', ')}{u.author?' · '+u.author:''}</small>{u.deliveries?.length>0&&<span className="ops-deliveries">{u.deliveries.map(d=><span key={d.channel} className={'ops-delivery '+d.status} title={d.error||undefined}>{channelLabels[d.channel]} · {deliveryLabels[d.status]||d.status}</span>)}</span>}</li>)}{!updates.some(u=>u.trip_id===selected.id)&&<li className="ops-note">{__('Обновлений ещё не было')}</li>}</ul>
    </section>}
   </div>
  </section>;

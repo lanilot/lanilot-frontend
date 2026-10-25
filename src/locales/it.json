@@ -1835,5 +1835,7 @@
  "Выберите тип обновления": "Scegli il tipo",
  "Текст обновления: от 5 до 2000 символов": "Testo: da 5 a 2000 caratteri",
  "Выберите хотя бы один канал": "Scegli almeno un canale",
- "Письмо не найдено": "Email non trovata"
+ "Письмо не найдено": "Email non trovata",
+ "В очереди": "In coda",
+ "Ошибка": "Errore"
 }
