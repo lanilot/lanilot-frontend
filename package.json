@@ -4,17 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k \"node --watch server/index.js\" \"vite --host 127.0.0.1\"",
+    "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "start": "NODE_ENV=production node server/index.js",
-    "test": "node --test tests/*.test.js",
-    "seed": "node scripts/seed.mjs",
-    "routes:cache": "node scripts/cache-routes.mjs",
-    "tenant": "node scripts/tenant.mjs",
-    "seed:demo": "node scripts/tenant.mjs demo"
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
-    "express": "^5.1.0",
     "gsap": "^3.15.0",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
@@ -27,7 +22,6 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "concurrently": "^9.1.2",
     "vite": "^6.1.0"
   }
 }

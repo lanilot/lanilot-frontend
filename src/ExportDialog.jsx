@@ -3,7 +3,7 @@ import React,{useMemo,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {Download,X,FileSpreadsheet,FileText} from 'lucide-react';
 import useDialog from './useDialog.js';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {money,counted,tripLabels,brokerRecord,tripCosts} from './ui.js';
 import {toCSV,toXLSX,download} from './export.js';
 

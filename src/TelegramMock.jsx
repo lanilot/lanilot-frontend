@@ -1,7 +1,7 @@
 import {__} from './i18n.js';
 import React,{useRef,useState} from 'react';
 import Telegram from './Telegram.jsx';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 export default function TelegramMock({state,onOpenLoad}){
  const [settings,setSettings]=useState(()=>({mode:'demo',chatId:'',enabled:false,origin:'',destination:'',equipment:'',minRate:2000,minProfit:800,interval:15,quiet:false,quietStart:'22:00',quietEnd:'08:00',status:'demo',botName:'lanilot_bot',hasToken:false,aiConfigured:false,companyName:state.settings.company.name,lastResult:'',history:[{id:'frontend-telegram-seed',status:'demo',mode:'demo',loadId:'LD-2041',text:__("Chicago → Dallas · пример уведомления компании."),created_at:new Date().toISOString()}]})),seen=useRef(new Set());
  const entry=(text,loadId)=>({id:crypto.randomUUID(),status:'demo',mode:'demo',text,loadId,created_at:new Date().toISOString()});

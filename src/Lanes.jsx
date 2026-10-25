@@ -4,7 +4,7 @@ import React,{useState} from 'react';
 import {Repeat,Plus,Pencil,Trash2,ArrowRight,Save,X,CalendarDays,Truck,Search} from 'lucide-react';
 import SearchSelect from './SearchSelect.jsx';
 import BrokerFlags from './BrokerFlags.jsx';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {money,number,date,counted} from './ui.js';
 
 const weekdays=[__("Пн"),__("Вт"),__("Ср"),__("Чт"),__("Пт"),__("Сб"),__("Вс")];

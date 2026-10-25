@@ -2,7 +2,7 @@ import {__,fmtDate} from './i18n.js';
 import LoadingBoundary from './Loading.jsx';
 import React,{useState,useId,useEffect,useRef} from 'react';
 import {ArrowUpRight,ArrowRight,Truck,Wallet,TrendingUp,Percent,ChevronRight,Mail} from 'lucide-react';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {money,date,tripLabels,offerLabels,tripCosts,counted as countWords} from './ui.js';
 import ProfitBreakdown from './ProfitBreakdown.jsx';
 const colors={planned:'#5475ff',in_transit:'#29a8ed',delivered:'#f4b64d',completed:'#22b58b',cancelled:'#ed7a8d'};

@@ -8,7 +8,7 @@ import {Search,Truck,ArrowRight,ArrowUpRight,SlidersHorizontal,MapPin,ChevronDow
 import RouteMap from './RouteMap.jsx';
 import BrokerFlags from './BrokerFlags.jsx';
 import ExportDialog from './ExportDialog.jsx';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {money,number,date,offerLabels,tripLabels,nextStatus,nextLabel,factor,counted,tripCosts} from './ui.js';
 const initials=name=>name.split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
 const sourceColors={'DAT':'#3762f0','Truckstop':'#df5770','RXO':'#262d39','J.B. Hunt':'#b98a27','Schneider':'#da7b36','Uber Freight':'#222e40'};

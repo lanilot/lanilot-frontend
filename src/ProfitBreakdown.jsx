@@ -3,7 +3,7 @@ import LoadingBoundary from './Loading.jsx';
 import React,{useState,useEffect,useRef} from 'react';
 import {createPortal} from 'react-dom';
 import {X} from 'lucide-react';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {number} from './ui.js';
 const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
 export default function ProfitBreakdown({load,rate,costs,record,entries,source,children}){

@@ -1,5 +1,6 @@
 # Project conventions
 
+- The API and database live in ../backend (TypeScript, PostgreSQL); its seeds are in backend/src/modules/demo-seed.ts and the feature modules.
 - Include useful demo seed data by default whenever adding a feature. Cover its main states and interactions so the app is populated immediately after startup.
 - Keep the startup seed additive and idempotent. Use stable fixture IDs; preserve existing user edits, statuses, read markers, and records. Never reset the database as part of normal startup.
 - Keep simulated loads, broker replies, and local-only message sending clearly identified as demo behavior.

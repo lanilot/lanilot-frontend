@@ -13,7 +13,7 @@ import Finances from './Finances.jsx';
 import {FuelPage,SafetyPage,BrokerUpdatesPage,MailGuardPage} from './Operations.jsx';
 import React,{useState,useEffect,useMemo,useRef} from 'react';
 import {Sparkles,Send,Search,Truck,ArrowRight,LayoutDashboard,Route,HelpCircle,Plus,X,Check,CheckCircle2,Mail,Copy,RefreshCw,AlertCircle,Download,MessagesSquare,Settings as SettingsIcon,Radar as RadarIcon} from 'lucide-react';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {LoadBoard,OffersTable,DispatchPlanner,Dashboard} from './workspace.jsx';
 import Radar from './Radar.jsx';
 import Lanes from './Lanes.jsx';

@@ -3,7 +3,7 @@ import LogoMark from './LogoMark.jsx';
 import gsap from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import {ArrowUpRight,ArrowDown,ArrowRight,Download,Check,Search,Calculator,MessagesSquare,Truck,Wallet,Layers,Radio,FileText,BarChart3,LoaderCircle} from 'lucide-react';
-import {calculateProfit,defaultCosts} from '../server/domain.js';
+import {calculateProfit,defaultCosts} from './domain.js';
 import pitchCss from './pitch.css?raw';
 import './pitch.css';
 gsap.registerPlugin(ScrollTrigger);

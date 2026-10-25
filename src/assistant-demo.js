@@ -1,5 +1,5 @@
 import {__} from './i18n.js';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 export const emptyCriteria={origin:'',destination:'',equipment:'',minProfit:0,minRpm:0,maxDeadhead:500};
 const aliases={'chicago':['чикаго','chicago'],'dallas':['даллас','dallas'],'atlanta':['атлант','atlanta'],'houston':['хьюстон','houston'],'denver':['денвер','denver'],'phoenix':['финикс','phoenix'],'nashville':['нэшвилл','nashville'],'detroit':['детройт','detroit'],'gary':['гэри','gary']};
 export function parseDemoRequest(text,loads){const q=text.toLowerCase(),criteria={...emptyCriteria};const cities=[...new Set(loads.flatMap(l=>[l.origin,l.destination]))];for(const city of cities){const name=city.split(',')[0].toLowerCase(),words=aliases[name]||[name];for(const word of words){const at=q.indexOf(word);if(at<0)continue;const before=q.slice(Math.max(0,at-16),at);if(/(?:\bto|\binto|\bв|\bдо|\ba|\bhacia|\bhasta|→)\s*$/u.test(before)||/(?:^|\s)(?:в|до)\s*$/.test(before))criteria.destination=city;else if(/(?:\bfrom|из|от|\bdesde|\bde)\s*$/.test(before))criteria.origin=city;}}

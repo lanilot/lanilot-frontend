@@ -6,7 +6,7 @@ import {Building2,Calculator,Save,RotateCcw,Info,Contact,Truck,LayoutGrid,Users 
 import {Choice,label} from './Onboarding.jsx';
 import {fmtDate,translateDeep} from './i18n.js';
 import SearchSelect from './SearchSelect.jsx';
-import {calculateProfit} from '../server/domain.js';
+import {calculateProfit} from './domain.js';
 import {money} from './ui.js';
 const costFields=[['fuelPrice',__("Топливо, $/gal"),.01,0,100],['mpg',__("Расход, MPG"),.1,.1,100],['driverPerMile',__("Водитель, $/mi"),.01,0,100],['tolls',__("Платные дороги, $"),1,0,100000],['factoringPercent',__("Факторинг, %"),.1,0,100],['other',__("Прочие расходы, $"),1,0,100000]];
 const profileFields=[['name',__("Название компании"),120],['legalName',__("Юридическое название"),160],['businessType',__("Тип деятельности")],['mc','MC',10],['dot','DOT',10],['website',__("Сайт"),200],['address',__("Адрес"),200],['city',__("Город и штат"),100],['timezone',__("Часовой пояс компании")]];
